@@ -1,0 +1,178 @@
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.header h1 {
+  font-size: 32px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.subtitle {
+  color: var(--color-text-secondary);
+}
+
+/* Progress Section */
+.progressSection {
+  margin-bottom: var(--spacing-xl);
+}
+
+.progressInfo {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.stepTitle {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* Step Card */
+.stepCard {
+  margin-bottom: var(--spacing-xl);
+}
+
+.stepHeader {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.stepHeader h3 {
+  font-size: 24px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.stepHeader p {
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.stepContent {
+  min-height: 400px;
+}
+
+/* Option Grid */
+.optionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+}
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.optionCard {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.optionCard:hover {
+  border-color: var(--color-accent);
+}
+
+.optionHeader {
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Asset Selection */
+.assetSelection {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.hint {
+  text-align: center;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.assetGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+}
+
+.assetCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.assetCard:hover {
+  border-color: var(--color-accent);
+}
+
+.assetName {
+  font-weight: 500;
+}
+
+.checkmark {
+  color: var(--color-accent);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* Project Name Input */
+.projectNameInput {
+  max-width: 500px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.textInput {
+  width: 100%;
+  padding: var(--spacing-md);
+  font-size: 16px;
+  background: var(--color-bg-input);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  transition: all var(--transition-fast);
+}
+
+.textInput:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(255, 111, 0, 0.2);
+}
+
+.textInput::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* Navigation */
+.navigation {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.navigation button {
+  min-width: 120px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .optionGrid,
+  .assetGrid {
+    grid-template-columns: 1fr;
+  }
+}

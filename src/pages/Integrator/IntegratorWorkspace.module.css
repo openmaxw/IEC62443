@@ -1,0 +1,326 @@
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.header h1 {
+  font-size: 32px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.subtitle {
+  color: var(--color-text-secondary);
+}
+
+/* Progress Section */
+.progressSection {
+  margin-bottom: var(--spacing-lg);
+}
+
+.progressInfo {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.stepTitle {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* Summary Card */
+.summaryCard {
+  margin-bottom: var(--spacing-lg);
+  background: linear-gradient(135deg, var(--color-bg-card), var(--color-bg));
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-around;
+}
+
+.summaryItem {
+  text-align: center;
+}
+
+.summaryLabel {
+  display: block;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.summaryValue {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+/* Step Card */
+.stepCard {
+  margin-bottom: var(--spacing-lg);
+}
+
+.stepHeader {
+  text-align: center;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.stepHeader h3 {
+  font-size: 24px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.stepHeader p {
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.stepContentWrapper {
+  min-height: 400px;
+}
+
+.stepHint {
+  text-align: center;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Zone Grid */
+.zoneGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+}
+
+.zoneCard {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.zoneCard:hover {
+  border-color: var(--color-accent);
+}
+
+.zoneHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.zoneHeader h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.zoneDesc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.zoneAssets {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* Conduit Grid */
+.conduitGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+}
+
+.conduitCard {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.conduitCard:hover {
+  border-color: var(--color-accent);
+}
+
+.conduitHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.conduitHeader h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.conduitDesc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.conduitBandwidth {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* Asset Config */
+.assetConfig {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.assetRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: var(--spacing-md);
+  align-items: center;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.assetRow span:first-child {
+  font-weight: 500;
+}
+
+.emptyAssets {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-secondary);
+}
+
+.addAsset {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.assetInput,
+.assetSelect {
+  padding: var(--spacing-sm);
+  background: var(--color-bg-input);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+}
+
+.assetInput:focus,
+.assetSelect:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+/* Flow Matrix */
+.flowMatrix {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.flowRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: var(--spacing-md);
+  align-items: center;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.emptyFlows {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-secondary);
+}
+
+.addFlow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.addFlow select {
+  padding: var(--spacing-sm);
+  background: var(--color-bg-input);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+}
+
+.addFlow select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+/* Rules List */
+.rulesList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.ruleCard {
+  border-left: 4px solid var(--color-accent);
+}
+
+.ruleHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.ruleTitle {
+  font-weight: 600;
+}
+
+.ruleDesc {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Navigation */
+.navigation {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.navigation button {
+  min-width: 120px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .zoneGrid,
+  .conduitGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .assetRow,
+  .flowRow {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+
+  .addAsset,
+  .addFlow {
+    grid-template-columns: 1fr;
+  }
+}

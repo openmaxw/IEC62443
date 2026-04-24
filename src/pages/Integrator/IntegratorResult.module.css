@@ -1,0 +1,334 @@
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.header h1 {
+  font-size: 32px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.subtitle {
+  color: var(--color-text-secondary);
+}
+
+/* Empty State */
+.empty {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  color: var(--color-text-secondary);
+}
+
+/* Summary Card */
+.summaryCard {
+  margin-bottom: var(--spacing-lg);
+}
+
+.summaryGrid {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.summaryItem {
+  text-align: center;
+  min-width: 100px;
+}
+
+.summaryValue {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.summaryLabel {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+/* Zone Card */
+.zoneCard {
+  margin-bottom: var(--spacing-lg);
+}
+
+.zoneCard h3 {
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
+}
+
+.zoneDiagram {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+}
+
+.zoneNode {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.zoneBox {
+  padding: var(--spacing-md);
+  border: 2px solid;
+  border-radius: var(--radius-md);
+  text-align: center;
+  min-width: 100px;
+}
+
+.zoneSL {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  margin-bottom: 2px;
+}
+
+.zoneName {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.zoneAssets {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.zoneArrow {
+  width: 24px;
+  height: 24px;
+  color: var(--color-border);
+}
+
+.zoneArrow svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Detail Card */
+.detailCard {
+  margin-bottom: var(--spacing-lg);
+}
+
+.detailCard h3 {
+  margin-bottom: var(--spacing-lg);
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+}
+
+.detailItem {
+  padding: var(--spacing-md);
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+}
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.detailHeader h4 {
+  font-size: 16px;
+  margin: 0;
+}
+
+.detailDesc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.detailAssets {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* Conduit List */
+.conduitList {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+}
+
+.conduitItem {
+  padding: var(--spacing-md);
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+}
+
+.conduitHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.conduitHeader h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.conduitDesc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.conduitBandwidth {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* Flow Card */
+.flowCard {
+  margin-bottom: var(--spacing-lg);
+}
+
+.flowCard h3 {
+  margin-bottom: var(--spacing-lg);
+}
+
+.flowTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.flowTable th,
+.flowTable td {
+  padding: var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.flowTable th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+}
+
+.flowTable td {
+  font-size: 14px;
+}
+
+.securityReq {
+  font-size: 12px;
+  color: var(--color-accent);
+}
+
+/* Capability Card */
+.capabilityCard {
+  margin-bottom: var(--spacing-lg);
+}
+
+.capabilityCard h3 {
+  margin-bottom: var(--spacing-lg);
+}
+
+.capabilityList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.capabilityItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+}
+
+.capabilityDesc {
+  flex: 1;
+}
+
+.capabilityDesc strong {
+  font-size: 14px;
+}
+
+.capabilityDesc p {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: var(--spacing-xs) 0 0;
+}
+
+/* Rules Card */
+.rulesCard {
+  margin-bottom: var(--spacing-lg);
+}
+
+.rulesCard h3 {
+  margin-bottom: var(--spacing-lg);
+}
+
+.rulesList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.ruleItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-accent);
+}
+
+.ruleContent {
+  flex: 1;
+}
+
+.ruleContent strong {
+  font-size: 14px;
+  display: block;
+  margin-bottom: var(--spacing-xs);
+}
+
+.ruleContent p {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .detailGrid,
+  .conduitList {
+    grid-template-columns: 1fr;
+  }
+}
