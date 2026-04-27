@@ -108,8 +108,12 @@
   transition: all var(--transition-fast);
 }
 
-.zoneCard:hover {
-  border-color: var(--color-accent);
+.zoneCard.selected {
+  transform: scale(1.02);
+}
+
+.zoneCardInner {
+  transition: all var(--transition-fast);
 }
 
 .zoneHeader {
@@ -136,6 +140,54 @@
   color: var(--color-text-muted);
 }
 
+.zoneBoundary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+}
+
+.boundaryTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.zoneSLEditor {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.slButtons {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.slButton {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.slButton:hover {
+  border-color: var(--color-accent);
+}
+
+.slButton.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
 /* Conduit Grid */
 .conduitGrid {
   display: grid;
@@ -146,6 +198,9 @@
 .conduitCard {
   cursor: pointer;
   transition: all var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
 }
 
 .conduitCard:hover {
@@ -156,7 +211,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--spacing-sm);
 }
 
 .conduitHeader h4 {
@@ -168,11 +222,50 @@
 .conduitDesc {
   font-size: 13px;
   color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-sm);
+}
+
+.conduitDetails {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: 12px;
 }
 
 .conduitBandwidth {
+  color: var(--color-text-muted);
+}
+
+.conduitMaxSL {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.detailLabel {
+  color: var(--color-text-secondary);
   font-size: 11px;
+}
+
+.conduitSecurity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.securityTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.conduitProtocols {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+}
+
+.protocolList {
   color: var(--color-text-muted);
 }
 
@@ -229,13 +322,31 @@
   margin: 0 auto;
 }
 
+.flowRowHeader {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.5fr 0.8fr auto;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--color-border);
+}
+
 .flowRow {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr 1.5fr 0.8fr auto;
   gap: var(--spacing-md);
   align-items: center;
   padding: var(--spacing-md);
   border-bottom: 1px solid var(--color-border);
+}
+
+.flowProtocol {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
 }
 
 .emptyFlows {
@@ -246,7 +357,7 @@
 
 .addFlow {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr 1.5fr auto;
   gap: var(--spacing-md);
   margin-top: var(--spacing-md);
 }
@@ -291,8 +402,12 @@
 .ruleDesc {
   font-size: 14px;
   color: var(--color-text-secondary);
-  margin: 0;
+  margin: 0 0 var(--spacing-sm);
   line-height: 1.6;
+}
+
+.ruleSrLevel {
+  margin-top: var(--spacing-sm);
 }
 
 /* Navigation */
@@ -313,14 +428,49 @@
     grid-template-columns: 1fr;
   }
 
-  .assetRow,
+  .assetRow {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+
+  .flowRowHeader {
+    display: none;
+  }
+
   .flowRow {
     grid-template-columns: 1fr;
     gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: var(--color-bg);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-sm);
   }
 
   .addAsset,
   .addFlow {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: var(--spacing-md);
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .stepHeader h3 {
+    font-size: 20px;
+  }
+
+  .summaryRow {
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+  }
+
+  .summaryValue {
+    font-size: 20px;
   }
 }

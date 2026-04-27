@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, Badge, ProgressBar } from '../../components/Common';
 import { useProject } from '../../context/ProjectContext';
-import { CAPABILITY_OPTIONS, PRODUCT_TYPES, MATURITY_LEVELS, CAPABILITY_CATEGORIES } from '../../data/capabilities';
+import { CAPABILITY_OPTIONS, PRODUCT_TYPES, CAPABILITY_MATURITY, CAPABILITY_CATEGORIES } from '../../data/capabilities';
 import styles from './VendorCapability.module.css';
 
 const STEPS = [
@@ -124,23 +124,35 @@ export function VendorCapability() {
                 <h4 className={styles.groupTitle}>
                   <Badge variant="primary">{CAPABILITY_CATEGORIES[category]?.name}</Badge>
                 </h4>
-                <div className={styles.capabilityGrid}>
-                  {options.map(opt => (
-                    <Card
-                      key={opt.id}
-                      className={styles.capabilityCard}
-                      variant={formData.capabilities.includes(opt.id) ? 'accent' : 'default'}
-                      onClick={() => toggleCapability(opt.id)}
-                    >
-                      <div className={styles.capabilityHeader}>
-                        <span className={styles.capabilityLabel}>{opt.label}</span>
-                        <Badge variant="info" size="small">{opt.fr}</Badge>
+                <div className={styles.capabilityGrid} role="group" aria-label={`${CAPABILITY_CATEGORIES[category]?.name}能力选项`}>
+                  {options.map(opt => {
+                    const isSelected = formData.capabilities.includes(opt.id);
+                    return (
+                      <div
+                        key={opt.id}
+                        className={`${styles.capabilityCard} ${isSelected ? styles.selected : ''}`}
+                        role="checkbox"
+                        aria-checked={isSelected}
+                        aria-label={`${opt.label}，满足IEC 62443 ${opt.fr}要求`}
+                        tabIndex={0}
+                        onClick={() => toggleCapability(opt.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            toggleCapability(opt.id);
+                          }
+                        }}
+                      >
+                        <div className={styles.capabilityHeader}>
+                          <span className={styles.capabilityLabel}>{opt.label}</span>
+                          <Badge variant="info" size="small" aria-hidden="true">{opt.fr}</Badge>
+                        </div>
+                        {isSelected && (
+                          <span className={styles.checkmark} aria-hidden="true">✓</span>
+                        )}
                       </div>
-                      {formData.capabilities.includes(opt.id) && (
-                        <span className={styles.checkmark}>✓</span>
-                      )}
-                    </Card>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}
@@ -166,7 +178,7 @@ export function VendorCapability() {
                       <Badge variant="info">{cap?.fr}</Badge>
                     </div>
                     <div className={styles.maturitySelector}>
-                      {MATURITY_LEVELS.map(ml => (
+                      {CAPABILITY_MATURITY.map(ml => (
                         <button
                           key={ml.level}
                           className={`${styles.maturityButton} ${formData.maturityScores[capId] === ml.level ? styles.active : ''}`}

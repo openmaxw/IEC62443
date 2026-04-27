@@ -313,4 +313,64 @@
     flex-direction: column;
     gap: var(--spacing-md);
   }
+
+  .matrixTable {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .matrixTable thead,
+  .matrixTable tbody,
+  .matrixTable th,
+  .matrixTable td,
+  .matrixTable tr {
+    display: block;
+  }
+
+  .matrixTable thead {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  .matrixTable tbody tr {
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--spacing-sm) 0;
+  }
+
+  .matrixTable td {
+    border: none;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    text-align: left;
+  }
+
+  .matrixTable td:before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    display: block;
+    margin-bottom: 2px;
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: var(--spacing-md);
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .scoreCircle {
+    width: 100px;
+    height: 100px;
+  }
+
+  .scoreNumber {
+    font-size: 20px;
+  }
 }

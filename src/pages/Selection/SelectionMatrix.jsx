@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Card, Button, Badge, ProgressBar } from '../../components/Common';
 import { useProject } from '../../context/ProjectContext';
 import { useIntegratorPath, useVendorPath } from '../../hooks/useProject';
-import { PRODUCT_TYPES, CAPABILITY_OPTIONS, MATURITY_LEVELS } from '../../data/capabilities';
+import { PRODUCT_TYPES, CAPABILITY_OPTIONS, CAPABILITY_MATURITY } from '../../data/capabilities';
 import { FR_CATEGORIES } from '../../data/rules';
 import styles from './SelectionMatrix.module.css';
 
@@ -115,10 +115,10 @@ export function SelectionMatrix() {
               <tr key={idx}>
                 <td>{detail.label}</td>
                 <td><Badge variant="primary" size="small">{detail.fr}</Badge></td>
-                <td>{MATURITY_LEVELS.find(m => m.level === detail.requiredMaturity)?.name}</td>
+                <td>{CAPABILITY_MATURITY.find(m => m.level === detail.requiredMaturity)?.name}</td>
                 <td>
                   {detail.providedMaturity > 0
-                    ? MATURITY_LEVELS.find(m => m.level === detail.providedMaturity)?.name
+                    ? CAPABILITY_MATURITY.find(m => m.level === detail.providedMaturity)?.name
                     : '-'}
                 </td>
                 <td>

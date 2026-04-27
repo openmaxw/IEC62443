@@ -76,12 +76,12 @@ export const CAPABILITY_OPTIONS = {
   ]
 };
 
-// 成熟度等级
-export const MATURITY_LEVELS = [
-  { level: 1, name: '基础', description: '具备基本能力' },
-  { level: 2, name: '标准', description: '符合行业标准' },
-  { level: 3, name: '高级', description: '增强型安全功能' },
-  { level: 4, name: '卓越', description: '最高等级安全能力' }
+// 能力成熟度等级（与 IEC 62443 SL 等级不同，这是评估能力实现深度）
+export const CAPABILITY_MATURITY = [
+  { level: 1, name: '基础', description: '具备基本安全能力，满足最低要求' },
+  { level: 2, name: '标准', description: '符合行业安全标准和最佳实践' },
+  { level: 3, name: '高级', description: '增强型安全防护，主动威胁检测' },
+  { level: 4, name: '卓越', description: '全面级安全防护，高级持续性威胁防护' }
 ];
 
 // 产品类型

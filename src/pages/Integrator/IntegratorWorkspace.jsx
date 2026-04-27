@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, Button, Badge, ProgressBar } from '../../components/Common';
 import { useOwnerPath, useProject } from '../../hooks/useProject';
-import { ZONE_TEMPLATES, CONDUIT_TEMPLATES } from '../../data/zones';
+import { ZONE_TEMPLATES, CONDUIT_TEMPLATES, PROTOCOL_TEMPLATES } from '../../data/zones';
 import styles from './IntegratorWorkspace.module.css';
 
 const STEPS = [
@@ -28,6 +28,18 @@ export function IntegratorWorkspace() {
     targetSL: riskProfile?.recommendedSL?.[0]?.level || 2,
     requiredFR: riskProfile?.frDimensions?.map(f => f.code) || []
   });
+
+  // Zone安全等级覆盖（集成商可调整）
+  const [zoneSLOverrides, setZoneSLOverrides] = useState({});
+
+  // 资产配置表单状态
+  const [newAssetName, setNewAssetName] = useState('');
+  const [newAssetZone, setNewAssetZone] = useState('');
+
+  // 通信流表单状态
+  const [newFlowSource, setNewFlowSource] = useState('');
+  const [newFlowTarget, setNewFlowTarget] = useState('');
+  const [newFlowProtocol, setNewFlowProtocol] = useState('');
 
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
@@ -61,6 +73,15 @@ export function IntegratorWorkspace() {
     });
   };
 
+  const updateZoneSL = (zoneId, newSL) => {
+    setZoneSLOverrides(prev => ({ ...prev, [zoneId]: newSL }));
+  };
+
+  const getZoneEffectiveSL = (zoneId) => {
+    const zoneTemplate = ZONE_TEMPLATES.find(z => z.id === zoneId);
+    return zoneSLOverrides[zoneId] ?? zoneTemplate?.securityLevel ?? 1;
+  };
+
   const toggleConduit = (conduitId) => {
     setPlan(prev => {
       const conduits = prev.conduits.includes(conduitId)
@@ -77,28 +98,58 @@ export function IntegratorWorkspace() {
           <div className={styles.stepContent}>
             <p className={styles.stepHint}>
               选择需要创建的安全区域。系统会根据您的风险评估自动推荐合适的分区方案。
+              点击区域卡片可调整其目标安全等级。
             </p>
             <div className={styles.zoneGrid}>
-              {ZONE_TEMPLATES.map(zone => (
-                <Card
-                  key={zone.id}
-                  className={styles.zoneCard}
-                  variant={plan.zones.includes(zone.id) ? 'accent' : 'default'}
-                  onClick={() => toggleZone(zone.id)}
-                >
-                  <div className={styles.zoneHeader}>
-                    <Badge variant={getSLBadgeVariant(zone.securityLevel)}>
-                      SL{zone.securityLevel}
-                    </Badge>
-                    <h4>{zone.name}</h4>
+              {ZONE_TEMPLATES.map(zone => {
+                const isSelected = plan.zones.includes(zone.id);
+                const effectiveSL = getZoneEffectiveSL(zone.id);
+                return (
+                  <div
+                    key={zone.id}
+                    className={`${styles.zoneCard} ${isSelected ? styles.selected : ''}`}
+                    onClick={() => toggleZone(zone.id)}
+                  >
+                    <Card variant={isSelected ? 'accent' : 'default'} className={styles.zoneCardInner}>
+                      <div className={styles.zoneHeader}>
+                        <Badge variant={getSLBadgeVariant(effectiveSL)}>
+                          SL{effectiveSL}
+                        </Badge>
+                        <h4>{zone.name}</h4>
+                      </div>
+                      <p className={styles.zoneDesc}>{zone.description}</p>
+                      <div className={styles.zoneAssets}>
+                        <span>典型资产：</span>
+                        {zone.assets.join(', ')}
+                      </div>
+                      <div className={styles.zoneBoundary}>
+                        <span className={styles.detailLabel}>边界控制:</span>
+                        <div className={styles.boundaryTags}>
+                          {zone.boundaryControls.map((ctrl, idx) => (
+                            <Badge key={idx} variant="default" size="small">{ctrl}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <div className={styles.zoneSLEditor} onClick={(e) => e.stopPropagation()}>
+                          <span className={styles.detailLabel}>调整目标SL:</span>
+                          <div className={styles.slButtons}>
+                            {[1, 2, 3, 4].map(sl => (
+                              <button
+                                key={sl}
+                                className={`${styles.slButton} ${effectiveSL === sl ? styles.active : ''}`}
+                                onClick={() => updateZoneSL(zone.id, sl)}
+                              >
+                                SL{sl}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </Card>
                   </div>
-                  <p className={styles.zoneDesc}>{zone.description}</p>
-                  <div className={styles.zoneAssets}>
-                    <span>典型资产：</span>
-                    {zone.assets.join(', ')}
-                  </div>
-                </Card>
-              ))}
+                );
+              })}
             </div>
           </div>
         );
@@ -122,8 +173,27 @@ export function IntegratorWorkspace() {
                     <Badge variant="info">{conduit.type}</Badge>
                   </div>
                   <p className={styles.conduitDesc}>{conduit.description}</p>
-                  <div className={styles.conduitBandwidth}>
-                    典型带宽: {conduit.typicalBandwidth}
+                  <div className={styles.conduitDetails}>
+                    <div className={styles.conduitBandwidth}>
+                      <span className={styles.detailLabel}>典型带宽:</span>
+                      <span>{conduit.typicalBandwidth}</span>
+                    </div>
+                    <div className={styles.conduitMaxSL}>
+                      <span className={styles.detailLabel}>支持SL:</span>
+                      <Badge variant={conduit.maxSL >= 3 ? 'warning' : 'success'}>SL{conduit.maxSL}</Badge>
+                    </div>
+                  </div>
+                  <div className={styles.conduitSecurity}>
+                    <span className={styles.detailLabel}>安全措施:</span>
+                    <div className={styles.securityTags}>
+                      {conduit.securityMeasures.map((measure, idx) => (
+                        <Badge key={idx} variant="default" size="small">{measure}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div className={styles.conduitProtocols}>
+                    <span className={styles.detailLabel}>典型协议:</span>
+                    <span className={styles.protocolList}>{conduit.typicalProtocols.join(', ')}</span>
                   </div>
                 </Card>
               ))}
@@ -171,12 +241,13 @@ export function IntegratorWorkspace() {
                   type="text"
                   className={styles.assetInput}
                   placeholder="输入资产名称"
-                  id="assetInput"
+                  value={newAssetName}
+                  onChange={(e) => setNewAssetName(e.target.value)}
                 />
                 <select
                   className={styles.assetSelect}
-                  id="zoneSelect"
-                  defaultValue=""
+                  value={newAssetZone}
+                  onChange={(e) => setNewAssetZone(e.target.value)}
                 >
                   <option value="" disabled>选择区域</option>
                   {plan.zones.map(z => {
@@ -192,14 +263,13 @@ export function IntegratorWorkspace() {
                   variant="secondary"
                   size="small"
                   onClick={() => {
-                    const input = document.getElementById('assetInput');
-                    const select = document.getElementById('zoneSelect');
-                    if (input.value && select.value) {
+                    if (newAssetName && newAssetZone) {
                       updatePlan('assets', [
                         ...plan.assets,
-                        { name: input.value, zone: select.value }
+                        { name: newAssetName, zone: newAssetZone }
                       ]);
-                      input.value = '';
+                      setNewAssetName('');
+                      setNewAssetZone('');
                     }
                   }}
                 >
@@ -217,10 +287,11 @@ export function IntegratorWorkspace() {
               定义允许的通信数据流。设置源区域、目标区域和通信协议。
             </p>
             <div className={styles.flowMatrix}>
-              <div className={styles.flowRow}>
+              <div className={styles.flowRowHeader}>
                 <span>源区域</span>
                 <span>目标区域</span>
                 <span>协议</span>
+                <span>安全等级</span>
                 <span>操作</span>
               </div>
               {plan.communicationFlows.length === 0 ? (
@@ -230,9 +301,15 @@ export function IntegratorWorkspace() {
               ) : (
                 plan.communicationFlows.map((flow, idx) => (
                   <div key={idx} className={styles.flowRow}>
-                    <Badge variant="primary">{flow.source}</Badge>
-                    <Badge variant="info">{flow.target}</Badge>
-                    <span>{flow.protocol}</span>
+                    <Badge variant="primary">{flow.sourceZoneName || flow.source}</Badge>
+                    <Badge variant="info">{flow.targetZoneName || flow.target}</Badge>
+                    <div className={styles.flowProtocol}>
+                      <span>{flow.protocol}</span>
+                      <Badge variant={flow.protocolSecurity === 'high' ? 'success' : flow.protocolSecurity === 'medium' ? 'warning' : 'default'} size="small">
+                        {flow.protocolSecurity === 'high' ? '高安全' : flow.protocolSecurity === 'medium' ? '中安全' : '基础'}
+                      </Badge>
+                    </div>
+                    <Badge variant="default" size="small">SL{flow.requiredSL || plan.targetSL}</Badge>
                     <Button
                       variant="ghost"
                       size="small"
@@ -248,7 +325,7 @@ export function IntegratorWorkspace() {
                 ))
               )}
               <div className={styles.addFlow}>
-                <select id="sourceSelect" defaultValue="">
+                <select value={newFlowSource} onChange={(e) => setNewFlowSource(e.target.value)}>
                   <option value="" disabled>源区域</option>
                   {plan.zones.map(z => {
                     const zone = ZONE_TEMPLATES.find(zt => zt.id === z);
@@ -259,7 +336,7 @@ export function IntegratorWorkspace() {
                     );
                   })}
                 </select>
-                <select id="targetSelect" defaultValue="">
+                <select value={newFlowTarget} onChange={(e) => setNewFlowTarget(e.target.value)}>
                   <option value="" disabled>目标区域</option>
                   {plan.zones.map(z => {
                     const zone = ZONE_TEMPLATES.find(zt => zt.id === z);
@@ -270,25 +347,37 @@ export function IntegratorWorkspace() {
                     );
                   })}
                 </select>
-                <select id="protocolSelect" defaultValue="">
+                <select value={newFlowProtocol} onChange={(e) => setNewFlowProtocol(e.target.value)}>
                   <option value="" disabled>协议</option>
-                  <option value="Modbus TCP">Modbus TCP</option>
-                  <option value="OPC UA">OPC UA</option>
-                  <option value="EtherNet/IP">EtherNet/IP</option>
-                  <option value="DNP3">DNP3</option>
+                  {PROTOCOL_TEMPLATES.map(p => (
+                    <option key={p.id} value={p.name}>
+                      {p.name} {p.security === 'high' ? '🔒' : ''}
+                    </option>
+                  ))}
                 </select>
                 <Button
                   variant="secondary"
                   size="small"
                   onClick={() => {
-                    const source = document.getElementById('sourceSelect').value;
-                    const target = document.getElementById('targetSelect').value;
-                    const protocol = document.getElementById('protocolSelect').value;
-                    if (source && target && protocol) {
+                    if (newFlowSource && newFlowTarget && newFlowProtocol) {
+                      const sourceZone = ZONE_TEMPLATES.find(z => z.id === newFlowSource);
+                      const targetZone = ZONE_TEMPLATES.find(z => z.id === newFlowTarget);
+                      const protocol = PROTOCOL_TEMPLATES.find(p => p.name === newFlowProtocol);
                       updatePlan('communicationFlows', [
                         ...plan.communicationFlows,
-                        { source, target, protocol }
+                        {
+                          source: newFlowSource,
+                          sourceZoneName: sourceZone?.name || newFlowSource,
+                          target: newFlowTarget,
+                          targetZoneName: targetZone?.name || newFlowTarget,
+                          protocol: newFlowProtocol,
+                          protocolSecurity: protocol?.security || 'basic',
+                          requiredSL: plan.targetSL
+                        }
                       ]);
+                      setNewFlowSource('');
+                      setNewFlowTarget('');
+                      setNewFlowProtocol('');
                     }
                   }}
                 >
@@ -313,6 +402,9 @@ export function IntegratorWorkspace() {
                     <span className={styles.ruleTitle}>{rule.title}</span>
                   </div>
                   <p className={styles.ruleDesc}>{rule.description}</p>
+                  <div className={styles.ruleSrLevel}>
+                    <Badge variant="info" size="small">SR级别: {rule.srLevel}</Badge>
+                  </div>
                 </Card>
               ))}
             </div>
@@ -431,41 +523,89 @@ function getSLBadgeVariant(level) {
 
 function generateRules(plan) {
   const rules = [];
+  const targetSL = plan.targetSL;
 
-  // FR1 rules
+  // FR1 rules - 基于目标安全等级
   rules.push({
     fr: 'FR1',
-    title: '标识与认证',
-    description: '所有远程访问会话必须使用多因素认证。建立会话管理策略，包括超时控制和会话终止机制。'
+    title: '标识与认证控制',
+    description: getFRDescription('FR1', targetSL),
+    srLevel: targetSL >= 2 ? 'SR1.1-SR1.5 必需，SR1.6-SR1.9 推荐' : 'SR1.1-SR1.4 必需'
   });
 
   // FR2 rules
   rules.push({
     fr: 'FR2',
     title: '使用控制',
-    description: '基于角色的访问控制(RBAC)应用于所有系统和数据访问。每个用户角色应遵循最小权限原则。'
+    description: getFRDescription('FR2', targetSL),
+    srLevel: targetSL >= 3 ? 'SR2.1-SR2.8 全部要求' : 'SR2.1-SR2.4 核心要求'
   });
 
   // FR3 rules
   rules.push({
     fr: 'FR3',
     title: '完整性保护',
-    description: '配置篡改检测机制，包括配置变更日志、固件验证和安全事件审计。'
+    description: getFRDescription('FR3', targetSL),
+    srLevel: targetSL >= 3 ? 'SR3.1-SR3.9 全部要求，含固件验证和配置变更审计' : 'SR3.1-SR3.4 核心要求'
+  });
+
+  // FR4 rules
+  rules.push({
+    fr: 'FR4',
+    title: '数据机密性',
+    description: targetSL >= 3 ? '所有跨Zone通信必须加密，使用TLS 1.2+或等效机制' : '敏感数据跨Zone传输时需加密',
+    srLevel: targetSL >= 3 ? 'SR4.1-SR4.5 全部要求' : 'SR4.1-SR4.2 核心要求'
   });
 
   // FR5 rules
   rules.push({
     fr: 'FR5',
     title: '限制数据流',
-    description: `配置Zone ${plan.zones.length}个区域之间的数据流控制策略。使用深度防御架构确保只有授权的数据流通过。`
+    description: `在 ${plan.zones.length} 个Zone之间实施深度防御数据流控制策略，只有授权的通信路径允许通过`,
+    srLevel: 'SR5.1-SR5.3 全部要求，Zone边界必须实施访问控制'
   });
 
   // FR6 rules
   rules.push({
     fr: 'FR6',
-    title: '事件响应',
-    description: '建立安全事件检测、报告和响应流程。配置Syslog或等价机制用于集中日志收集。'
+    title: '对事件的及时响应',
+    description: getFRDescription('FR6', targetSL),
+    srLevel: targetSL >= 2 ? 'SR6.1-SR6.3 全部要求，需集中日志收集' : 'SR6.1-SR6.2 核心要求'
+  });
+
+  // FR7 rules
+  rules.push({
+    fr: 'FR7',
+    title: '可用性',
+    description: targetSL >= 3 ? '关键系统需具备容错能力，配置冗余设备和链路' : '确保基本可用性，支持系统恢复',
+    srLevel: targetSL >= 3 ? 'SR7.1-SR7.5 全部要求，含DoS防护' : 'SR7.1-SR7.2 核心要求'
+  });
+
+  // FR8 rules
+  rules.push({
+    fr: 'FR8',
+    title: '资源可用性',
+    description: '监控网络和计算资源使用率，实施容量规划和报警机制',
+    srLevel: targetSL >= 2 ? 'SR8.1-SR8.5 全部要求' : 'SR8.1-SR8.2 核心要求'
   });
 
   return rules;
+}
+
+function getFRDescription(fr, targetSL) {
+  const descriptions = {
+    'FR1': targetSL >= 3
+      ? '所有远程访问和跨Zone访问必须使用多因素认证(MFA)，建立会话管理策略包括超时控制和会话终止机制'
+      : '访问工业系统需进行身份验证，优先使用强密码策略和多因素认证',
+    'FR2': targetSL >= 3
+      ? '基于角色的访问控制(RBAC)应用于所有系统和数据访问，每个用户角色应遵循最小权限原则，配置权限审计'
+      : '实施基于角色的访问控制，遵循最小权限原则',
+    'FR3': targetSL >= 3
+      ? '配置完整的篡改检测机制，包括配置变更日志、固件完整性验证和安全事件审计，支持操作不可否认性'
+      : '保护软件和配置的完整性，建立配置变更审计机制',
+    'FR6': targetSL >= 3
+      ? '建立安全事件检测、报告和响应流程，配置Syslog或等价机制用于集中日志收集，确保事件响应及时性'
+      : '对安全事件进行检测和响应，建立基本的事件报告机制'
+  };
+  return descriptions[fr] || '';
 }

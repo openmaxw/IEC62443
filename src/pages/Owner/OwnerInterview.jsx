@@ -198,14 +198,14 @@ export function OwnerInterview() {
             <p className={styles.hint}>选择需要重点保护的关键资产类别（可多选）</p>
             <div className={styles.assetGrid}>
               {[
-                { id: 'plc', name: 'PLC控制器' },
-                { id: 'scada', name: 'SCADA系统' },
-                { id: 'hmi', name: 'HMI人机界面' },
-                { id: 'network', name: '工业网络设备' },
-                { id: 'server', name: '工业服务器' },
-                { id: 'sensor', name: '传感器/执行器' },
-                { id: 'sis', name: '安全仪表系统' },
-                { id: 'database', name: '生产数据库' }
+                { id: 'plc', name: 'PLC控制器', context: '控制生产线电机、阀门等设备的核心控制器' },
+                { id: 'scada', name: 'SCADA系统', context: '监控工艺流程、收集生产数据的系统' },
+                { id: 'hmi', name: 'HMI人机界面', context: '操作员控制生产设备的触摸屏幕或工控机' },
+                { id: 'network', name: '工业网络设备', context: '工业交换机、路由器等网络基础设施' },
+                { id: 'server', name: '工业服务器', context: '运行工业软件的工控服务器' },
+                { id: 'sensor', name: '传感器/执行器', context: '测量温度、压力等工艺参数的设备' },
+                { id: 'sis', name: '安全仪表系统', context: '紧急停车、火灾保护等安全相关系统' },
+                { id: 'database', name: '生产数据库', context: '存储配方、工艺参数等生产核心数据' }
               ].map(asset => (
                 <Card
                   key={asset.id}
@@ -214,6 +214,7 @@ export function OwnerInterview() {
                   onClick={() => toggleArrayItem('criticalAssets', asset.id)}
                 >
                   <span className={styles.assetName}>{asset.name}</span>
+                  <span className={styles.assetContext}>{asset.context}</span>
                   {formData.criticalAssets.includes(asset.id) && (
                     <span className={styles.checkmark}>✓</span>
                   )}
@@ -229,14 +230,14 @@ export function OwnerInterview() {
             <p className={styles.hint}>选择当前面临的安全困扰（可多选）</p>
             <div className={styles.assetGrid}>
               {[
-                { id: 'unauthorized', name: '未授权访问担忧' },
-                { id: 'downtime', name: '生产中断风险' },
-                { id: 'data_leak', name: '数据泄露风险' },
-                { id: 'compliance', name: '合规要求不明确' },
-                { id: 'third_party', name: '第三方接入管理困难' },
-                { id: 'legacy', name: '老旧设备无法升级' },
-                { id: 'visibility', name: '网络可见性不足' },
-                { id: 'response', name: '事件响应能力弱' }
+                { id: 'unauthorized', name: '担心有人偷偷接入生产网络', context: '不确定是否有未授权人员访问工控系统' },
+                { id: 'downtime', name: '担心生产线突然停机', context: '害怕遭遇勒索软件或网络攻击导致生产中断' },
+                { id: 'data_leak', name: '担心生产配方外泄', context: '核心工艺参数、客户数据等商业机密外流' },
+                { id: 'compliance', name: '不确定是否符合安全监管', context: '不清楚系统是否满足等保、工信部等要求' },
+                { id: 'third_party', name: '难管理设备厂家的远程访问', context: '设备出问题需要厂家远程协助，但担心安全' },
+                { id: 'legacy', name: '老旧设备无法打补丁', context: '设备厂家已不更新，漏洞无法修复' },
+                { id: 'visibility', name: '不清楚网络里都接了哪些设备', context: '无法掌握工控网络资产全景' },
+                { id: 'response', name: '出了安全事件不知道怎么处理', context: '缺乏安全事件应急响应能力' }
               ].map(pain => (
                 <Card
                   key={pain.id}
@@ -245,6 +246,7 @@ export function OwnerInterview() {
                   onClick={() => toggleArrayItem('currentPainPoints', pain.id)}
                 >
                   <span className={styles.assetName}>{pain.name}</span>
+                  <span className={styles.assetContext}>{pain.context}</span>
                   {formData.currentPainPoints.includes(pain.id) && (
                     <span className={styles.checkmark}>✓</span>
                   )}

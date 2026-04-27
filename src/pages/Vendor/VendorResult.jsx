@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Card, Button, Badge, ProgressBar } from '../../components/Common';
 import { useVendorPath } from '../../hooks/useProject';
-import { PRODUCT_TYPES, MATURITY_LEVELS, CAPABILITY_CATEGORIES, CAPABILITY_OPTIONS } from '../../data/capabilities';
+import { PRODUCT_TYPES, CAPABILITY_MATURITY, CAPABILITY_CATEGORIES, CAPABILITY_OPTIONS } from '../../data/capabilities';
 import styles from './VendorResult.module.css';
 
 export function VendorResult() {
@@ -129,7 +129,7 @@ export function VendorResult() {
                       <Badge variant="info" size="small">{cap.fr}</Badge>
                     </div>
                     <div className={styles.maturityIndicator}>
-                      {MATURITY_LEVELS.map(ml => (
+                      {CAPABILITY_MATURITY.map(ml => (
                         <div
                           key={ml.level}
                           className={`${styles.maturityDot} ${

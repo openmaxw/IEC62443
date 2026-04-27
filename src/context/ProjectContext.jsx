@@ -1,4 +1,6 @@
-import { createContext, useContext, useReducer } from 'react';
+import { createContext, useContext, useReducer, useEffect } from 'react';
+
+const STORAGE_KEY = 'iec-62443-project-data';
 
 // 初始状态
 const initialState = {
@@ -11,6 +13,29 @@ const initialState = {
   matchResults: null,
   currentStep: 0
 };
+
+// 从 localStorage 加载状态
+function loadStateFromStorage() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return { ...initialState, ...parsed };
+    }
+  } catch (e) {
+    console.warn('Failed to load state from localStorage:', e);
+  }
+  return initialState;
+}
+
+// 保存状态到 localStorage
+function saveStateToStorage(state) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.warn('Failed to save state to localStorage:', e);
+  }
+}
 
 // 操作类型
 const ActionTypes = {
@@ -65,6 +90,7 @@ function projectReducer(state, action) {
       return { ...state, currentStep: action.payload };
 
     case ActionTypes.RESET_PROJECT:
+      localStorage.removeItem(STORAGE_KEY);
       return initialState;
 
     default:
@@ -77,7 +103,12 @@ const ProjectContext = createContext(null);
 
 // Provider
 export function ProjectProvider({ children }) {
-  const [state, dispatch] = useReducer(projectReducer, initialState);
+  const [state, dispatch] = useReducer(projectReducer, loadStateFromStorage());
+
+  // 每次 state 变化时自动保存到 localStorage
+  useEffect(() => {
+    saveStateToStorage(state);
+  }, [state]);
 
   const actions = {
     setRole: (role) => dispatch({ type: ActionTypes.SET_ROLE, payload: role }),
