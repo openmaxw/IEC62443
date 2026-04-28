@@ -1,17 +1,20 @@
 import { Link } from 'react-router-dom';
-import { Card, Button, Badge, ProgressBar } from '../../components/Common';
-import { useVendorPath } from '../../hooks/useProject';
-import { PRODUCT_TYPES, CAPABILITY_MATURITY, CAPABILITY_CATEGORIES, CAPABILITY_OPTIONS } from '../../data/capabilities';
+import { Card, Button, Badge } from '../../components/Common';
+import { useVendorPath, useIntegratorPath, useProject } from '../../hooks/useProject';
+import { performMatching } from '../../utils/matchEngine';
+import { MATCH_STATUSES } from '../../data/matchStatuses';
 import styles from './VendorResult.module.css';
 
 export function VendorResult() {
+  const { actions } = useProject();
   const { capabilities } = useVendorPath();
+  const { plan } = useIntegratorPath();
 
   if (!capabilities || capabilities.length === 0) {
     return (
       <div className={styles.container}>
         <div className={styles.empty}>
-          <p>暂无能力数据，请先录入产品能力。</p>
+          <p>暂无设备能力数据，请先完成能力声明。</p>
           <Link to="/vendor">
             <Button variant="primary">去录入</Button>
           </Link>
@@ -20,187 +23,88 @@ export function VendorResult() {
     );
   }
 
-  const latestCapability = capabilities[capabilities.length - 1];
-  const productTypeName = PRODUCT_TYPES.find(t => t.id === latestCapability.productType)?.name || latestCapability.productType;
+  const latest = capabilities[capabilities.length - 1];
+  const match = plan ? performMatching(plan, [latest]) : null;
+  const top = match?.results?.[0] || null;
 
-  // 计算各项 FR 的覆盖率
-  const frCoverage = calculateFRCoverage(latestCapability.capabilities);
+  if (match) {
+    actions.setMatchResults(match);
+  }
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1>设备能力评估报告</h1>
-        <p className={styles.subtitle}>{latestCapability.productName}</p>
+        <h1>设备能力声明结果</h1>
+        <p className={styles.subtitle}>{latest.productMeta?.productName || '未命名产品'}</p>
       </div>
 
-      {/* Summary Card */}
       <Card className={styles.summaryCard} variant="accent">
         <div className={styles.summaryGrid}>
           <div className={styles.summaryItem}>
-            <div className={styles.summaryValue}>{latestCapability.productName}</div>
-            <div className={styles.summaryLabel}>产品名称</div>
+            <div className={styles.summaryValue}>SL {latest.productMeta?.securityLevel}</div>
+            <div className={styles.summaryLabel}>能力等级声明</div>
           </div>
           <div className={styles.summaryItem}>
-            <div className={styles.summaryValue}>{productTypeName}</div>
-            <div className={styles.summaryLabel}>产品类型</div>
+            <div className={styles.summaryValue}>{latest.capabilityClaims.length}</div>
+            <div className={styles.summaryLabel}>能力声明项</div>
           </div>
           <div className={styles.summaryItem}>
-            <div className={styles.summaryValue}>SL {latestCapability.securityLevel}</div>
-            <div className={styles.summaryLabel}>安全等级</div>
-          </div>
-          <div className={styles.summaryItem}>
-            <div className={styles.summaryValue}>{latestCapability.capabilities.length}</div>
-            <div className={styles.summaryLabel}>能力项</div>
+            <div className={styles.summaryValue}>{top?.overallScore ?? 0}%</div>
+            <div className={styles.summaryLabel}>项目匹配度</div>
           </div>
         </div>
       </Card>
 
-      {/* Capability Profile */}
-      <Card className={styles.profileCard}>
-        <h3>能力画像</h3>
-        <div className={styles.capabilityCloud}>
-          {latestCapability.capabilities.map(capId => {
-            const cap = Object.values(CAPABILITY_OPTIONS)
-              .flat()
-              .find(opt => opt.id === capId);
-            const maturity = latestCapability.maturityScores[capId] || 1;
-            return (
-              <div key={capId} className={styles.capabilityTag}>
-                <Badge variant="primary">{cap?.label}</Badge>
-                <span className={styles.maturityLevel}>L{maturity}</span>
+      <Card className={styles.detailCard}>
+        <h3>能力声明</h3>
+        <div className={styles.capabilityList}>
+          {latest.capabilityClaims.map((claim) => (
+            <div key={claim.capabilityId} className={styles.capabilityItem}>
+              <div className={styles.capabilityHeader}>
+                <Badge variant="primary">{claim.capabilityId}</Badge>
+                <Badge variant={MATCH_STATUSES[claim.satisfaction]?.badge || 'info'}>{MATCH_STATUSES[claim.satisfaction]?.label || claim.satisfaction}</Badge>
               </div>
-            );
-          })}
-        </div>
-      </Card>
-
-      {/* FR Coverage */}
-      <Card className={styles.coverageCard}>
-        <h3>FR 维度覆盖度</h3>
-        <div className={styles.coverageList}>
-          {Object.entries(frCoverage).map(([fr, data]) => (
-            <div key={fr} className={styles.coverageItem}>
-              <div className={styles.coverageHeader}>
-                <Badge variant={data.percentage >= 70 ? 'success' : data.percentage >= 40 ? 'warning' : 'danger'}>
-                  {fr}
-                </Badge>
-                <span className={styles.coverageName}>{data.name}</span>
-                <span className={styles.coveragePercent}>{data.percentage}%</span>
-              </div>
-              <ProgressBar
-                value={data.percentage}
-                variant={data.percentage >= 70 ? 'success' : data.percentage >= 40 ? 'warning' : 'danger'}
-                size="medium"
-              />
-              <div className={styles.coverageDetails}>
-                已覆盖: {data.covered}/{data.total} 项能力
-              </div>
+              <p>能力等级：SL{claim.securityLevel} | 证据：{claim.evidenceType}</p>
+              {claim.dependency && <p>依赖条件：{claim.dependency}</p>}
+              {claim.claimScope && <p>声明边界：{claim.claimScope}</p>}
+              {claim.limitation && <p>适用边界：{claim.limitation}</p>}
+              {claim.riskNote && <p>风险备注：{claim.riskNote}</p>}
             </div>
           ))}
         </div>
       </Card>
 
-      {/* Capability Details */}
-      <Card className={styles.detailsCard}>
-        <h3>能力详情</h3>
-        {Object.entries(CAPABILITY_CATEGORIES).map(([category, info]) => {
-          const categoryCaps = latestCapability.capabilities
-            .filter(capId => {
-              const cap = Object.values(CAPABILITY_OPTIONS)
-                .flat()
-                .find(opt => opt.id === capId);
-              return cap && CAPABILITY_OPTIONS[category]?.some(opt => opt.id === capId);
-            })
-            .map(capId => Object.values(CAPABILITY_OPTIONS)
-              .flat()
-              .find(opt => opt.id === capId))
-            .filter(Boolean);
-
-          if (categoryCaps.length === 0) return null;
-
-          return (
-            <div key={category} className={styles.detailGroup}>
-              <h4>{info.name}</h4>
-              <div className={styles.detailList}>
-                {categoryCaps.map(cap => (
-                  <div key={cap.id} className={styles.detailItem}>
-                    <div className={styles.detailHeader}>
-                      <span className={styles.detailLabel}>{cap.label}</span>
-                      <Badge variant="info" size="small">{cap.fr}</Badge>
-                    </div>
-                    <div className={styles.maturityIndicator}>
-                      {CAPABILITY_MATURITY.map(ml => (
-                        <div
-                          key={ml.level}
-                          className={`${styles.maturityDot} ${
-                            (latestCapability.maturityScores[cap.id] || 0) >= ml.level ? styles.active : ''
-                          }`}
-                          title={ml.name}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+      <Card className={styles.detailCard}>
+        <h3>统一依赖与限制</h3>
+        <p>{latest.dependencies || '无统一依赖说明'}</p>
+        <p>{latest.limitations || '无已知不适配边界说明'}</p>
       </Card>
 
-      {/* Evidence Notes */}
-      {latestCapability.evidenceNotes && (
-        <Card className={styles.evidenceCard}>
-          <h3>证据说明</h3>
-          <p className={styles.evidenceText}>{latestCapability.evidenceNotes}</p>
+      {top && (
+        <Card className={styles.detailCard}>
+          <h3>项目适配摘要</h3>
+          <p>{top.recommendations.label}：{top.recommendations.description}</p>
+          <div className={styles.capabilityList}>
+            <Badge variant="success">原生满足 {top.statusBreakdown.native}</Badge>
+            <Badge variant="info">配置后满足 {top.statusBreakdown.configured}</Badge>
+            <Badge variant="warning">依赖外围控制 {top.statusBreakdown.external}</Badge>
+            <Badge variant="warning">补偿措施可接受 {top.statusBreakdown.compensating}</Badge>
+            <Badge variant="danger">不满足 {top.statusBreakdown.missing}</Badge>
+          </div>
         </Card>
       )}
 
-      {/* Actions */}
       <div className={styles.actions}>
+        <Link to="/translation-center">
+          <Button variant="ghost">查看翻译中心</Button>
+        </Link>
         <Link to="/vendor">
-          <Button variant="ghost">继续录入</Button>
+          <Button variant="ghost">继续调整</Button>
         </Link>
         <Link to="/selection">
-          <Button variant="primary">进入选型匹配</Button>
+          <Button variant="primary">查看选型匹配</Button>
         </Link>
       </div>
     </div>
   );
-}
-
-function calculateFRCoverage(capabilities) {
-  const frList = ['FR1', 'FR2', 'FR3', 'FR4', 'FR5', 'FR6', 'FR7', 'FR8'];
-  const coverage = {};
-
-  const frNames = {
-    FR1: '标识与认证控制',
-    FR2: '使用控制',
-    FR3: '完整性',
-    FR4: '数据机密性',
-    FR5: '限制数据流',
-    FR6: '事件响应',
-    FR7: '可用性',
-    FR8: '资源可用性'
-  };
-
-  frList.forEach(fr => {
-    const allCaps = Object.values(CAPABILITY_OPTIONS)
-      .flat()
-      .filter(opt => opt.fr === fr);
-
-    const coveredCaps = allCaps.filter(cap =>
-      capabilities.includes(cap.id)
-    );
-
-    coverage[fr] = {
-      name: frNames[fr],
-      total: allCaps.length,
-      covered: coveredCaps.length,
-      percentage: allCaps.length > 0
-        ? Math.round((coveredCaps.length / allCaps.length) * 100)
-        : 0
-    };
-  });
-
-  return coverage;
 }

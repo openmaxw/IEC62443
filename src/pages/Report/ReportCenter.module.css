@@ -1,5 +1,5 @@
 .container {
-  max-width: 900px;
+  max-width: 1080px;
   margin: 0 auto;
   padding: var(--spacing-xl);
 }
@@ -18,7 +18,6 @@
   color: var(--color-text-secondary);
 }
 
-/* Empty State */
 .empty {
   text-align: center;
   padding: var(--spacing-2xl);
@@ -33,15 +32,11 @@
   text-decoration: none;
   border-radius: var(--radius-md);
   font-weight: 600;
-  transition: all var(--transition-fast);
 }
 
-.goButton:hover {
-  background: var(--color-accent-light);
-}
-
-/* Selector Card */
-.selectorCard {
+.selectorCard,
+.reportCard,
+.exportCard {
   margin-bottom: var(--spacing-lg);
 }
 
@@ -53,7 +48,7 @@
 
 .modeButton {
   flex: 1;
-  min-width: 100px;
+  min-width: 140px;
   padding: var(--spacing-md);
   background: var(--color-bg);
   border: 2px solid var(--color-border);
@@ -61,12 +56,6 @@
   color: var(--color-text-secondary);
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.modeButton:hover {
-  border-color: var(--color-accent);
-  color: var(--color-text);
 }
 
 .modeButton.active {
@@ -75,29 +64,13 @@
   color: #fff;
 }
 
-/* Report Card */
-.reportCard {
-  margin-bottom: var(--spacing-lg);
-}
-
-/* Report Content */
-.reportContent {
-  color: var(--color-text);
-}
-
 .reportHeader {
   padding-bottom: var(--spacing-lg);
   border-bottom: 2px solid var(--color-accent);
   margin-bottom: var(--spacing-lg);
 }
 
-.reportHeader h2 {
-  font-size: 24px;
-  margin-bottom: var(--spacing-sm);
-}
-
 .reportMeta {
-  font-size: 14px;
   color: var(--color-text-secondary);
 }
 
@@ -106,151 +79,32 @@
 }
 
 .reportSection h3 {
-  font-size: 18px;
+  color: var(--color-accent);
   margin-bottom: var(--spacing-md);
-  color: var(--color-accent);
 }
 
-/* Owner Report Sections */
-.riskResult {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-lg);
-}
-
-.riskResult p {
-  font-size: 16px;
-  color: var(--color-text-secondary);
-}
-
-.slRecommendation {
+.itemList {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
 }
 
-.slItem {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  background: var(--color-bg);
-  border-radius: var(--radius-md);
-}
-
-.slLevel {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-accent);
-}
-
-.slTarget {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  margin-left: auto;
-}
-
-.frList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
-}
-
-.frItem {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--color-bg);
-  border-radius: var(--radius-md);
-}
-
-.protectionList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.protectionList li {
-  padding: var(--spacing-sm) 0;
-  border-bottom: 1px solid var(--color-border);
-}
-
-/* Integrator Report Sections */
-.zoneList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
-}
-
-.rulesList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.ruleItem {
-  padding: var(--spacing-md);
-  background: var(--color-bg);
-  border-radius: var(--radius-md);
-  border-left: 3px solid var(--color-accent);
-}
-
-/* Vendor Report Sections */
-.productInfo {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-md);
-}
-
-.infoItem {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-md);
-  background: var(--color-bg);
-  border-radius: var(--radius-md);
-}
-
-.infoItem span {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-}
-
-.infoItem strong {
-  font-size: 16px;
-}
-
-.capabilityList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
-}
-
-/* No Data */
+.itemCard,
 .noData {
-  text-align: center;
-  padding: var(--spacing-xl);
-  color: var(--color-text-secondary);
+  padding: var(--spacing-md);
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
 }
 
-/* Export Card */
-.exportCard {
+.completeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
   margin-bottom: var(--spacing-lg);
-}
-
-.exportCard h3 {
-  margin-bottom: var(--spacing-md);
 }
 
 .exportButtons {
   display: flex;
   gap: var(--spacing-md);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .productInfo {
-    grid-template-columns: 1fr;
-  }
 }

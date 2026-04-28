@@ -1,15 +1,17 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Button, Badge, ProgressBar } from '../../components/Common';
-import { useProject } from '../../context/ProjectContext';
-import { useIntegratorPath, useVendorPath } from '../../hooks/useProject';
-import { PRODUCT_TYPES, CAPABILITY_OPTIONS, CAPABILITY_MATURITY } from '../../data/capabilities';
+import { Card, Button, Badge, ProgressBar, ViewModeTabs } from '../../components/Common';
+import { useIntegratorPath, useVendorPath, useProject } from '../../hooks/useProject';
+import { performMatching } from '../../utils/matchEngine';
 import { FR_CATEGORIES } from '../../data/rules';
+import { getMatchStatusLabel, getMatchStatusVariant } from '../../utils/matchPresentation';
 import styles from './SelectionMatrix.module.css';
 
 export function SelectionMatrix() {
-  const { state } = useProject();
+  const { actions } = useProject();
   const { plan } = useIntegratorPath();
   const { capabilities } = useVendorPath();
+  const [viewMode, setViewMode] = useState('basic');
 
   if (!plan || !capabilities || capabilities.length === 0) {
     return (
@@ -17,280 +19,122 @@ export function SelectionMatrix() {
         <div className={styles.empty}>
           <p>请先完成集成商规划和设备商能力录入。</p>
           <div className={styles.emptyLinks}>
-            <Link to="/integrator">
-              <Button variant="secondary">集成商规划</Button>
-            </Link>
-            <Link to="/vendor">
-              <Button variant="secondary">设备商录入</Button>
-            </Link>
+            <Link to="/integrator"><Button variant="secondary">集成商规划</Button></Link>
+            <Link to="/vendor"><Button variant="secondary">设备商录入</Button></Link>
           </div>
         </div>
       </div>
     );
   }
 
-  const latestCapability = capabilities[capabilities.length - 1];
-  const productTypeName = PRODUCT_TYPES.find(t => t.id === latestCapability.productType)?.name || '';
-
-  // 计算匹配度
-  const matchScore = calculateMatchScore(plan, latestCapability);
+  const match = performMatching(plan, capabilities);
+  const primary = match.results[0];
+  actions.setMatchResults(match);
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h1>选型匹配中心</h1>
-        <p className={styles.subtitle}>设备能力与项目需求匹配分析</p>
+        <p className={styles.subtitle}>结构化比对能力声明与项目需求</p>
       </div>
 
-      {/* Match Score Overview */}
+      <Card className={styles.matrixCard}>
+        <h3>解释层级</h3>
+        <ViewModeTabs value={viewMode} onChange={setViewMode} />
+      </Card>
+
       <Card className={styles.scoreCard} variant="accent">
         <div className={styles.scoreSection}>
-          <div className={styles.scoreCircle}>
-            <svg viewBox="0 0 120 120" className={styles.scoreSvg}>
-              <circle
-                cx="60"
-                cy="60"
-                r="50"
-                fill="none"
-                stroke="var(--color-bg-input)"
-                strokeWidth="10"
-              />
-              <circle
-                cx="60"
-                cy="60"
-                r="50"
-                fill="none"
-                stroke={getScoreColor(matchScore.percentage)}
-                strokeWidth="10"
-                strokeLinecap="round"
-                strokeDasharray={`${matchScore.percentage * 3.14} 314`}
-                transform="rotate(-90 60 60)"
-              />
-            </svg>
-            <div className={styles.scoreValue}>
-              <span className={styles.scoreNumber}>{matchScore.percentage}%</span>
-              <span className={styles.scoreLabel}>匹配度</span>
-            </div>
+          <div className={styles.scoreValue}>
+            <span className={styles.scoreNumber}>{primary?.overallScore || 0}%</span>
+            <span className={styles.scoreLabel}>匹配度</span>
           </div>
-
           <div className={styles.scoreDetails}>
-            <div className={styles.scoreDetail}>
-              <Badge variant="success">完全满足</Badge>
-              <span>{matchScore.fullMatch} 项</span>
-            </div>
-            <div className={styles.scoreDetail}>
-              <Badge variant="warning">部分满足</Badge>
-              <span>{matchScore.partialMatch} 项</span>
-            </div>
-            <div className={styles.scoreDetail}>
-              <Badge variant="danger">未满足</Badge>
-              <span>{matchScore.missingCount} 项</span>
-            </div>
+            <div className={styles.scoreDetail}><Badge variant="success">原生满足</Badge><span>{primary?.statusBreakdown.native || 0}</span></div>
+            <div className={styles.scoreDetail}><Badge variant="info">配置后满足</Badge><span>{primary?.statusBreakdown.configured || 0}</span></div>
+            <div className={styles.scoreDetail}><Badge variant="warning">依赖外围控制</Badge><span>{primary?.statusBreakdown.external || 0}</span></div>
+            <div className={styles.scoreDetail}><Badge variant="warning">补偿措施可接受</Badge><span>{primary?.statusBreakdown.compensating || 0}</span></div>
+            <div className={styles.scoreDetail}><Badge variant="danger">不满足</Badge><span>{primary?.statusBreakdown.missing || 0}</span></div>
           </div>
-
           <div className={styles.recommendation}>
-            <Badge variant={matchScore.percentage >= 70 ? 'success' : matchScore.percentage >= 40 ? 'warning' : 'danger'} size="large">
-              {matchScore.percentage >= 70 ? '推荐选型' : matchScore.percentage >= 40 ? '需评估差距' : '不满足基本需求'}
+            <Badge variant={primary?.recommendations.level === 'excellent' ? 'success' : primary?.recommendations.level === 'good' ? 'info' : primary?.recommendations.level === 'warning' ? 'warning' : 'danger'} size="large">
+              {primary?.recommendations.label || '待评估'}
             </Badge>
-            <p>{getRecommendationText(matchScore.percentage)}</p>
+            <p>{primary?.recommendations.description}</p>
           </div>
         </div>
       </Card>
 
-      {/* Capability Requirements vs Provided */}
       <Card className={styles.matrixCard}>
-        <h3>需求匹配矩阵</h3>
+        <h3>能力需求矩阵</h3>
         <table className={styles.matrixTable}>
           <thead>
             <tr>
-              <th>需求项</th>
+              <th>能力项</th>
+              <th>控制目标</th>
               <th>FR</th>
-              <th>最低等级</th>
-              <th>产品等级</th>
+              <th>满足方式</th>
+              <th>证据</th>
               <th>状态</th>
             </tr>
           </thead>
           <tbody>
-            {matchScore.details.map((detail, idx) => (
-              <tr key={idx}>
-                <td>{detail.label}</td>
-                <td><Badge variant="primary" size="small">{detail.fr}</Badge></td>
-                <td>{CAPABILITY_MATURITY.find(m => m.level === detail.requiredMaturity)?.name}</td>
-                <td>
-                  {detail.providedMaturity > 0
-                    ? CAPABILITY_MATURITY.find(m => m.level === detail.providedMaturity)?.name
-                    : '-'}
-                </td>
-                <td>
-                  <Badge
-                    variant={detail.status === 'full' ? 'success' : detail.status === 'partial' ? 'warning' : 'danger'}
-                    size="small"
-                  >
-                    {detail.status === 'full' ? '满足' : detail.status === 'partial' ? '部分' : '未满足'}
-                  </Badge>
-                </td>
+            {(primary?.details || []).map((detail, index) => (
+              <tr key={`${detail.capabilityId}-${index}`}>
+                <td>{detail.capabilityId}</td>
+                <td>{detail.controlObjective}</td>
+                <td>{viewMode !== 'basic' ? detail.sourceFR.map((fr) => <Badge key={fr} variant="primary" size="small">{fr}</Badge>) : '-'}</td>
+                <td>{detail.providedBy || '-'}</td>
+                <td>{viewMode === 'professional' ? (detail.evidenceType || '-') : '-'}</td>
+                <td><Badge variant={getMatchStatusVariant(detail.status)} size="small">{getMatchStatusLabel(detail.status)}</Badge></td>
               </tr>
             ))}
           </tbody>
         </table>
       </Card>
 
-      {/* FR Coverage */}
       <Card className={styles.frCoverageCard}>
-        <h3>FR 维度覆盖分析</h3>
+        <h3>FR 覆盖概览</h3>
         <div className={styles.frCoverageList}>
-          {plan.requiredFR.map(frCode => {
-            const frDetails = FR_CATEGORIES[frCode];
-            const matchedCaps = matchScore.details.filter(
-              d => d.fr === frCode && d.status !== 'missing'
-            ).length;
-            const totalCaps = matchScore.details.filter(d => d.fr === frCode).length;
-            const percentage = totalCaps > 0 ? Math.round((matchedCaps / totalCaps) * 100) : 0;
-
+          {(plan.requiredFR || []).map((frCode) => {
+            const total = (primary?.details || []).filter((item) => item.sourceFR.includes(frCode)).length;
+            const matched = (primary?.details || []).filter((item) => item.sourceFR.includes(frCode) && item.status !== 'missing').length;
+            const percentage = total > 0 ? Math.round((matched / total) * 100) : 0;
             return (
               <div key={frCode} className={styles.frCoverageItem}>
                 <div className={styles.frHeader}>
                   <Badge variant="primary">{frCode}</Badge>
-                  <span className={styles.frName}>{frDetails?.name}</span>
+                  <span className={styles.frName}>{FR_CATEGORIES[frCode]?.name}</span>
                   <span className={styles.frPercent}>{percentage}%</span>
                 </div>
-                <ProgressBar
-                  value={percentage}
-                  variant={percentage >= 70 ? 'success' : percentage >= 40 ? 'warning' : 'danger'}
-                  size="medium"
-                />
-                <p className={styles.frDesc}>{frDetails?.description}</p>
+                <ProgressBar value={percentage} variant={percentage >= 70 ? 'success' : percentage >= 40 ? 'warning' : 'danger'} size="medium" />
+                <p className={styles.frDesc}>{FR_CATEGORIES[frCode]?.description}</p>
               </div>
             );
           })}
         </div>
       </Card>
 
-      {/* Gap Analysis */}
-      {matchScore.missingCount > 0 && (
-        <Card className={styles.gapCard}>
-          <h3>差距分析</h3>
-          <div className={styles.gapList}>
-            {matchScore.details.filter(d => d.status !== 'full').map((detail, idx) => (
-              <div key={idx} className={`${styles.gapItem} ${styles[detail.status]}`}>
-                <div className={styles.gapHeader}>
-                  <span className={styles.gapLabel}>{detail.label}</span>
-                  <Badge
-                    variant={detail.status === 'partial' ? 'warning' : 'danger'}
-                    size="small"
-                  >
-                    {detail.status === 'partial' ? '部分满足' : '未满足'}
-                  </Badge>
-                </div>
-                <p className={styles.gapDesc}>
-                  {detail.status === 'partial'
-                    ? `当前等级 ${detail.providedMaturity}，建议提升至 ${detail.requiredMaturity}`
-                    : `缺少此能力，需要补充`}
-                </p>
+      <Card className={styles.gapCard}>
+        <h3>差距分析</h3>
+        <div className={styles.gapList}>
+          {[...(primary?.partial || []), ...(primary?.external || []), ...(primary?.compensating || []), ...(primary?.missing || [])].map((detail, index) => (
+            <div key={`${detail.capabilityId}-${index}`} className={`${styles.gapItem} ${styles.warning}`}>
+              <div className={styles.gapHeader}>
+                <span className={styles.gapLabel}>{detail.capabilityId}</span>
+                <Badge variant={getMatchStatusVariant(detail.status)} size="small">{getMatchStatusLabel(detail.status)}</Badge>
               </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Product Info */}
-      <Card className={styles.productCard}>
-        <h3>候选产品信息</h3>
-        <div className={styles.productInfo}>
-          <div className={styles.productMain}>
-            <h4>{latestCapability.productName}</h4>
-            <Badge variant="info">{productTypeName}</Badge>
-            <Badge variant="primary">SL {latestCapability.securityLevel}</Badge>
-          </div>
-          <div className={styles.productStats}>
-            <div className={styles.productStat}>
-              <span className={styles.statValue}>{latestCapability.capabilities.length}</span>
-              <span className={styles.statLabel}>能力项</span>
+              <p className={styles.gapDesc}>{viewMode === 'basic' ? '建议结合外围系统、补偿措施或配置策略进一步评估。' : (detail.limitation || detail.dependency || '建议结合外围系统或补偿措施进一步评估。')}</p>
             </div>
-            <div className={styles.productStat}>
-              <span className={styles.statValue}>
-                {Object.values(latestCapability.maturityScores).filter((m, i, a) => a.indexOf(m) === i).length || 1}
-              </span>
-              <span className={styles.statLabel}>成熟度级别</span>
-            </div>
-          </div>
+          ))}
         </div>
       </Card>
 
-      {/* Actions */}
       <div className={styles.actions}>
-        <Link to="/vendor">
-          <Button variant="ghost">调整能力录入</Button>
-        </Link>
-        <Link to="/report">
-          <Button variant="primary">生成报告</Button>
-        </Link>
+        <Link to="/translation-center"><Button variant="ghost">查看翻译中心</Button></Link>
+        <Link to="/vendor"><Button variant="ghost">调整能力声明</Button></Link>
+        <Link to="/report"><Button variant="primary">查看交付中心</Button></Link>
       </div>
     </div>
   );
-}
-
-function calculateMatchScore(plan, capability) {
-  const requiredCaps = [];
-
-  // 根据 plan.requiredFR 生成需求能力列表
-  plan.requiredFR.forEach(fr => {
-    Object.entries(CAPABILITY_OPTIONS).forEach(([category, options]) => {
-      options.filter(opt => opt.fr === fr).forEach(opt => {
-        requiredCaps.push({
-          ...opt,
-          minMaturity: plan.targetSL
-        });
-      });
-    });
-  });
-
-  const details = requiredCaps.map(req => {
-    // capability.capabilities is an array of capability IDs
-    const providedCapId = capability.capabilities.find(c => c === req.id);
-    const providedMaturity = providedCapId ? (capability.maturityScores[req.id] || 1) : 0;
-
-    let status = 'missing';
-    if (providedCapId) {
-      status = providedMaturity >= req.minMaturity ? 'full' : 'partial';
-    }
-
-    return {
-      ...req,
-      providedMaturity,
-      status,
-      fr: req.fr
-    };
-  });
-
-  const fullMatch = details.filter(d => d.status === 'full').length;
-  const partialMatch = details.filter(d => d.status === 'partial').length;
-  const missingCount = details.filter(d => d.status === 'missing').length;
-
-  const percentage = details.length > 0
-    ? Math.round(((fullMatch * 2 + partialMatch) / (details.length * 2)) * 100)
-    : 0;
-
-  return {
-    details: details.slice(0, 15), // 限制显示数量
-    fullMatch,
-    partialMatch,
-    missingCount,
-    percentage
-  };
-}
-
-function getScoreColor(percentage) {
-  if (percentage >= 70) return 'var(--color-success)';
-  if (percentage >= 40) return 'var(--color-warning)';
-  return 'var(--color-danger)';
-}
-
-function getRecommendationText(percentage) {
-  if (percentage >= 70) {
-    return '该产品基本满足项目需求，建议进入候选名单进行进一步评估。';
-  } else if (percentage >= 40) {
-    return '该产品部分满足需求，建议评估差距项是否可接受或寻求替代方案。';
-  }
-  return '该产品无法满足项目基本安全需求，建议寻找其他供应商或产品。';
 }

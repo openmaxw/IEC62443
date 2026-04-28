@@ -1,16 +1,152 @@
-# React + Vite
+# IEC 62443 驱动的安全网络规划与选型辅助系统
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+一个面向 IEC 62443 初学者的前端原型系统，帮助业主、集成商和设备商在同一项目语境下完成风险翻译、规划建议、能力声明与选型匹配。
 
-Currently, two official plugins are available:
+## 项目定位
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+本系统是一个“辅助规划与选型系统”，不是：
+- 标准阅读器
+- 自动认证工具
+- 合规判定系统
+- 唯一正确架构生成器
 
-## React Compiler
+系统目标是完成三次翻译：
+- 业主语言 -> 安全目标语言
+- 安全目标语言 -> 系统规划语言
+- 系统规划语言 -> 设备能力语言
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 当前实现方向
 
-## Expanding the ESLint configuration
+当前版本聚焦前端原型验证，强调：
+- 角色优先：先选业主、集成商或设备商
+- 任务优先：先完成任务，再逐步理解 IEC 62443 概念
+- 结果导向：每一步产生可交接结果
+- 可解释：系统输出应尽量给出输入、风险关注、FR 映射与建议依据
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 页面与路由
+
+- `/` `首页`：系统定位、角色入口、流程说明与继续项目入口
+- `/dashboard` `项目工作台`：项目状态、缺失输入、下一步建议、最新交接物
+- `/owner` `业主路径`：风险访谈与业务输入采集
+- `/owner/result` `业主交接物`：风险关注摘要、对集成商需求、采购关注点、验收关注点
+- `/integrator` `集成商路径`：Zone / Conduit 规划、通信流录入、控制要求生成
+- `/integrator/result` `系统规划结果`：通信矩阵、系统规则、能力需求矩阵、风险保留项
+- `/vendor` `设备商路径`：能力声明、证据与适用边界录入
+- `/vendor/result` `能力声明结果`：设备商能力说明与项目适配摘要
+- `/selection` `选型匹配中心`：需求与能力匹配、差距分析、五档状态结果
+- `/translation-center` `翻译中心`：三栏视图展示输入摘要、翻译链和建议结果
+- `/report` `交付中心`：固定输出业主摘要、规划草案、能力说明、验收检查表与完整交付包
+- `/learning` `学习模式`：FR、SL、角色关系和常见误区说明
+
+## 当前数据模型方向
+
+### 1. 业主评估
+
+重点描述业务后果、暴露面、现状成熟度和验收偏好，例如：
+- 人身安全 / 环境 / 产能 / 财务 / 合规影响
+- 远程运维需求与第三方接入频率
+- 网络隔离、账号管理、日志、补丁成熟度
+- 验收偏好：功能优先 / 安全优先 / 运维优先
+
+### 2. 风险翻译结果
+
+风险结果不是“认证结论”，而是结构化翻译结果，包含：
+- 驱动因子 `drivers`
+- 风险关注 `riskConcerns`
+- FR 重点 `frFocus`
+- 目标等级候选 `targetLevelCandidates`
+- 控制目标 `controlObjectives`
+- 对集成商需求 `ownerRequirements`
+- 验收关注点 `acceptanceFocus`
+- 可解释链 `explanations`
+
+### 3. 集成规划
+
+规划结果应逐步覆盖：
+- Zone / Conduit 规划
+- 资产与区域绑定
+- 通信矩阵
+- 边界控制
+- 系统规则建议
+- 设备能力需求
+- 风险保留项
+
+### 4. 设备能力声明
+
+设备能力不再只是一组标签，而应逐步演进为：
+- 产品元信息
+- 能力声明项
+- 对应 FR / SR
+- 满足方式
+- 证据类型
+- 适用边界与依赖条件
+- 风险备注
+
+## 规则与方法说明
+
+项目中的 IEC 62443 映射采用“帮助理解与规划”的表达方式。默认仅作为前期规划辅助，不直接替代：
+- 正式风险评估
+- 详细设计评审
+- 专家审核
+- 认证或合规审查
+
+当前前端规则底座已统一为：
+- 业务输入 -> 风险关注
+- 风险关注 -> FR 重点
+- FR 重点 -> 控制目标
+- 控制目标 -> 能力需求
+
+## 技术栈
+
+- React
+- Vite
+- React Router
+- 本地状态管理 + localStorage
+- 本地静态规则表与 JSON/JS 数据
+
+## 开发说明
+
+安装依赖：
+
+```bash
+npm install
+```
+
+启动开发环境：
+
+```bash
+npm run dev
+```
+
+构建：
+
+```bash
+npm run build
+```
+
+## 当前限制
+
+- 当前为前端原型，不接入后端或真实设备库
+- 规则引擎采用静态映射与条件模板
+- PDF 导出尚未作为强保证能力
+- 所有建议均需结合真实工艺、资产关键性和专家审查进一步确认
+
+## 当前实现状态
+
+当前版本已完成以下收口：
+- 项目对象状态管理与 localStorage 恢复
+- 统一风险翻译引擎、规划建议引擎与匹配分析引擎
+- 业主交接物、系统规划结果、设备能力声明结果与选型匹配中心
+- 项目工作台、翻译中心、交付中心
+- 小白 / 进阶 / 专业 三视图解释层
+
+## 后续整改路线
+
+- 继续增强翻译中心与交付中心的解释复用
+- 细化设备声明中的证据字段与适用边界校验
+- 优化页面间的状态联动与缺失输入提示
+- 强化可打印 HTML 导出体验
+
+## 免责声明
+
+本系统用于 IEC 62443 驱动的安全规划辅助，不替代专家评审、正式风险分析或合规认证。输出内容仅用于项目沟通、方案辅助与交付准备，不应视为认证结论或唯一正确架构。

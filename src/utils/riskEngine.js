@@ -1,165 +1,260 @@
-// 风险评估引擎
-import { RISK_MAPPING, OWNER_TO_FR, FR_CATEGORIES, SECURITY_LEVELS, SL_RECOMMENDATION } from '../data/rules';
+import {
+  DRIVER_DEFINITIONS,
+  OWNER_TO_CONCERNS,
+  RISK_CONCERNS,
+  FR_CATEGORIES,
+  TARGET_LEVEL_CANDIDATES,
+  CONTROL_OBJECTIVES,
+  BUSINESS_IMPACT_GUIDANCE,
+  SECURITY_LEVELS,
+  DISCLAIMER
+} from '../data/rules.js';
+import { UNIFIED_DISCLAIMER } from '../data/disclaimer';
 
-/**
- * 计算总体风险等级
- * @param {Object} assessment - 业主评估数据
- * @returns {Object} 风险评估结果
- */
-export function calculateRiskLevel(assessment) {
-  let totalScore = 0;
-  let maxScore = 0;
-  const factorScores = {};
+function normalizeValue(field, value) {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
 
-  // 计算各维度得分
-  const factors = ['downtimeTolerance', 'dataSensitivity', 'remoteAccessNeed', 'thirdPartyAccess'];
+  const definition = DRIVER_DEFINITIONS[field];
+  if (!definition) return value;
+  return Object.prototype.hasOwnProperty.call(definition.values, value) ? value : null;
+}
 
-  factors.forEach(factor => {
-    const value = assessment[factor];
-    if (value && RISK_MAPPING[factor] && RISK_MAPPING[factor][value]) {
-      const mapping = RISK_MAPPING[factor][value];
-      factorScores[factor] = {
-        value,
-        weight: mapping.weight,
-        level: mapping.level
+export function collectDrivers(assessment = {}) {
+  return Object.entries(DRIVER_DEFINITIONS)
+    .map(([key, definition]) => {
+      const normalizedValue = normalizeValue(key, assessment[key]);
+      if (!normalizedValue) return null;
+
+      return {
+        key,
+        label: definition.label,
+        value: normalizedValue,
+        score: definition.values[normalizedValue]
       };
-      totalScore += mapping.weight;
-      maxScore += 3; // 最大权重为3
-    }
+    })
+    .filter(Boolean)
+    .sort((left, right) => right.score - left.score);
+}
+
+export function deriveRiskConcerns(drivers = []) {
+  const concernMap = new Map();
+
+  drivers.forEach((driver) => {
+    const linkedConcerns = OWNER_TO_CONCERNS[driver.key] || [];
+    linkedConcerns.forEach((concernId) => {
+      const baseConcern = RISK_CONCERNS[concernId];
+      if (!baseConcern) return;
+
+      const existing = concernMap.get(concernId) || {
+        ...baseConcern,
+        score: 0,
+        drivers: []
+      };
+
+      existing.score += driver.score;
+      existing.drivers.push({
+        key: driver.key,
+        label: driver.label,
+        value: driver.value,
+        score: driver.score
+      });
+
+      concernMap.set(concernId, existing);
+    });
   });
 
-  // 计算总体风险等级
-  const riskPercentage = maxScore > 0 ? totalScore / maxScore : 0;
-  let riskLevel = 'low';
-  let riskLabel = '低风险';
+  return Array.from(concernMap.values())
+    .sort((left, right) => right.score - left.score)
+    .map((concern) => ({
+      ...concern,
+      level: concern.score >= 7 ? 'high' : concern.score >= 4 ? 'medium' : 'baseline'
+    }));
+}
 
-  if (riskPercentage >= 0.6) {
-    riskLevel = 'high';
-    riskLabel = '高风险';
-  } else if (riskPercentage >= 0.3) {
-    riskLevel = 'medium';
-    riskLabel = '中风险';
+export function deriveFRFocus(riskConcerns = []) {
+  const frMap = new Map();
+
+  riskConcerns.forEach((concern) => {
+    concern.fr.forEach((frCode) => {
+      const existing = frMap.get(frCode) || {
+        code: frCode,
+        ...FR_CATEGORIES[frCode],
+        score: 0,
+        sources: []
+      };
+
+      existing.score += concern.score;
+      existing.sources.push({
+        concernId: concern.id,
+        concernTitle: concern.title,
+        level: concern.level
+      });
+
+      frMap.set(frCode, existing);
+    });
+  });
+
+  return Array.from(frMap.values()).sort((left, right) => right.score - left.score);
+}
+
+export function recommendTargetLevels(drivers = [], riskConcerns = []) {
+  const totalDriverScore = drivers.reduce((sum, item) => sum + item.score, 0);
+  const highConcernCount = riskConcerns.filter((item) => item.level === 'high').length;
+
+  let recommendedMin = 1;
+  let recommendedMax = 2;
+  let rationale = '当前场景以基础防护和分段控制为主，建议从 SL1-SL2 起步。';
+
+  if (totalDriverScore >= 18 || highConcernCount >= 3) {
+    recommendedMin = 3;
+    recommendedMax = 4;
+    rationale = '当前场景具有较高后果或较高暴露面，建议以 SL3 为主，并评估是否存在需要提高到 SL4 的关键区域。';
+  } else if (totalDriverScore >= 10 || highConcernCount >= 1) {
+    recommendedMin = 2;
+    recommendedMax = 3;
+    rationale = '当前场景存在明显的远程接入、第三方接入或高连续性要求，建议以 SL2 为基础，并对重点区域评估 SL3。';
   }
 
   return {
-    score: totalScore,
-    maxScore,
-    percentage: Math.round(riskPercentage * 100),
-    level: riskLevel,
-    label: riskLabel,
-    factorScores
+    recommendedMin,
+    recommendedMax,
+    rationale,
+    candidates: TARGET_LEVEL_CANDIDATES.filter((candidate) => (
+      candidate.level >= recommendedMin && candidate.level <= recommendedMax
+    )).map((candidate) => ({
+      ...candidate,
+      ...SECURITY_LEVELS[`SL${candidate.level}`]
+    }))
   };
 }
 
-/**
- * 推荐安全等级
- * @param {string} riskLevel - 风险等级
- * @returns {Array} 推荐的安全等级列表
- */
-export function recommendSecurityLevel(riskLevel) {
-  const config = SL_RECOMMENDATION[`${riskLevel}Risk`] || SL_RECOMMENDATION.lowRisk;
-  return config.recommended.map(level => ({
-    level,
-    ...SECURITY_LEVELS[`SL${level}`]
+export function deriveControlObjectives(frFocus = []) {
+  return Object.values(CONTROL_OBJECTIVES)
+    .map((objective) => {
+      const matchedFR = frFocus.filter((fr) => objective.fr.includes(fr.code));
+      if (matchedFR.length === 0) return null;
+
+      return {
+        ...objective,
+        priority: matchedFR.reduce((sum, fr) => sum + fr.score, 0),
+        matchedFR: matchedFR.map((fr) => fr.code)
+      };
+    })
+    .filter(Boolean)
+    .sort((left, right) => right.priority - left.priority);
+}
+
+function buildConcernSummary(riskConcerns = []) {
+  return riskConcerns.slice(0, 3).map((concern) => ({
+    id: concern.id,
+    title: concern.title,
+    level: concern.level,
+    summary: concern.description
   }));
 }
 
-/**
- * 映射业务需求到FR维度
- * @param {Object} assessment - 业主评估数据
- * @returns {Array} 相关的FR维度列表
- */
-export function mapToFRDimensions(assessment) {
-  const frSet = new Set();
+function buildOwnerRequirements(riskConcerns = [], targetLevels) {
+  const recommendations = [];
 
-  Object.keys(OWNER_TO_FR).forEach(key => {
-    const value = assessment[key];
-    if (value && OWNER_TO_FR[key][value]) {
-      OWNER_TO_FR[key][value].forEach(fr => frSet.add(fr));
-    }
+  riskConcerns.forEach((concern) => {
+    const guidance = BUSINESS_IMPACT_GUIDANCE[concern.id] || [];
+    guidance.forEach((item) => {
+      recommendations.push({
+        concernId: concern.id,
+        priority: concern.level,
+        text: item
+      });
+    });
   });
 
-  return Array.from(frSet).map(fr => ({
-    code: fr,
-    ...FR_CATEGORIES[fr]
-  }));
+  recommendations.push({
+    concernId: 'target-level',
+    priority: targetLevels.recommendedMax >= 3 ? 'high' : 'medium',
+    text: `向集成商明确提出“重点区域目标安全等级建议位于 SL${targetLevels.recommendedMin}-SL${targetLevels.recommendedMax} 区间”的设计要求。`
+  });
+
+  return recommendations;
 }
 
-/**
- * 生成风险画像
- * @param {Object} assessment - 业主评估数据
- * @returns {Object} 完整的风险画像
- */
-export function generateRiskProfile(assessment) {
-  const riskLevel = calculateRiskLevel(assessment);
-  const frDimensions = mapToFRDimensions(assessment);
-  const recommendedSL = recommendSecurityLevel(riskLevel.level);
-
-  // 生成保护重点
-  const protectionFocus = [];
-  if (assessment.downtimeTolerance === 'critical' || assessment.downtimeTolerance === 'high') {
-    protectionFocus.push('系统可用性 - 防止生产中断');
-  }
-  if (assessment.dataSensitivity === 'confidential' || assessment.dataSensitivity === 'top-secret') {
-    protectionFocus.push('数据机密性 - 防止信息泄露');
-  }
-  if (assessment.remoteAccessNeed === 'extensive') {
-    protectionFocus.push('远程访问安全 - 防止未授权访问');
-  }
-  if (assessment.thirdPartyAccess === 'regular') {
-    protectionFocus.push('第三方接入管理 - 限制外部风险');
-  }
-
-  // 生成风险雷达图数据
-  const radarData = [
-    { dimension: '可用性', value: assessment.downtimeTolerance === 'critical' ? 100 : assessment.downtimeTolerance === 'high' ? 75 : assessment.downtimeTolerance === 'medium' ? 50 : 25 },
-    { dimension: '机密性', value: assessment.dataSensitivity === 'top-secret' ? 100 : assessment.dataSensitivity === 'confidential' ? 75 : assessment.dataSensitivity === 'internal' ? 50 : 25 },
-    { dimension: '远程访问', value: assessment.remoteAccessNeed === 'extensive' ? 100 : assessment.remoteAccessNeed === 'limited' ? 50 : 0 },
-    { dimension: '第三方接入', value: assessment.thirdPartyAccess === 'regular' ? 100 : assessment.thirdPartyAccess === 'occasional' ? 50 : 0 },
-    { dimension: '完整性', value: 60 + Math.random() * 40 } // 示例值
+function buildAcceptanceFocus(assessment = {}, frFocus = []) {
+  const items = [
+    '关键远程访问路径应具备身份鉴别、审批与留痕机制。',
+    '关键跨区通信应具备明确业务理由、方向限制和边界控制。'
   ];
 
+  if (assessment.acceptancePreference === 'security-first') {
+    items.push('验收时优先检查日志、审计、账户边界和配置变更控制。');
+  }
+
+  if (assessment.acceptancePreference === 'operations-first') {
+    items.push('验收时应同时确认运维窗口、恢复路径和变更执行可操作性。');
+  }
+
+  if (frFocus.some((item) => item.code === 'FR7')) {
+    items.push('针对高连续性资产，应检查备份恢复、冗余或故障处置预案。');
+  }
+
+  return items;
+}
+
+function buildExplanations(drivers = [], riskConcerns = [], controlObjectives = []) {
+  return controlObjectives.map((objective) => ({
+    controlObjective: objective.title,
+    inputConditions: drivers
+      .filter((driver) => objective.matchedFR.some((frCode) => {
+        const linkedConcernIds = OWNER_TO_CONCERNS[driver.key] || [];
+        return linkedConcernIds.some((concernId) => {
+          const concern = riskConcerns.find((item) => item.id === concernId);
+          return concern?.fr.includes(frCode);
+        });
+      }))
+      .map((driver) => `${driver.label}: ${driver.value}`),
+    riskConcerns: riskConcerns
+      .filter((concern) => objective.matchedFR.some((frCode) => concern.fr.includes(frCode)))
+      .map((concern) => concern.title),
+    fr: objective.matchedFR,
+    systemControls: [objective.title],
+    capabilityNeeds: objective.capabilities
+  }));
+}
+
+export function generateRiskProfile(assessment = {}) {
+  const drivers = collectDrivers(assessment);
+  const riskConcerns = deriveRiskConcerns(drivers);
+  const frFocus = deriveFRFocus(riskConcerns);
+  const targetLevels = recommendTargetLevels(drivers, riskConcerns);
+  const controlObjectives = deriveControlObjectives(frFocus);
+  const ownerRequirements = buildOwnerRequirements(riskConcerns, targetLevels);
+  const acceptanceFocus = buildAcceptanceFocus(assessment, frFocus);
+  const explanations = buildExplanations(drivers, riskConcerns, controlObjectives);
+
   return {
-    riskLevel,
-    frDimensions,
-    recommendedSL,
-    protectionFocus,
-    radarData,
-    summary: generateSummary(assessment, riskLevel, frDimensions)
+    generatedAt: new Date().toISOString(),
+    disclaimer: UNIFIED_DISCLAIMER || DISCLAIMER,
+    drivers,
+    riskConcerns,
+    riskConcernSummary: buildConcernSummary(riskConcerns),
+    frFocus,
+    targetLevelCandidates: targetLevels.candidates,
+    targetLevelRange: {
+      min: targetLevels.recommendedMin,
+      max: targetLevels.recommendedMax,
+      rationale: targetLevels.rationale
+    },
+    controlObjectives,
+    ownerRequirements,
+    acceptanceFocus,
+    explanations,
+    summary: {
+      title: `${assessment.projectName || '当前项目'} 风险翻译结果`,
+      description: `系统已根据业务后果、暴露面和现状成熟度生成风险关注画像，建议重点关注 ${riskConcerns.slice(0, 2).map((item) => item.title).join('、') || '基础分段与访问控制'}。`,
+      recommendedTarget: `建议重点区域按 SL${targetLevels.recommendedMin}-SL${targetLevels.recommendedMax} 进行目标等级评估。`
+    }
   };
 }
 
-/**
- * 生成风险摘要
- */
-function generateSummary(assessment, riskLevel, frDimensions) {
-  const industry = assessment.industry || '工业';
-  const riskLabel = riskLevel.label;
-
-  const frNames = frDimensions.map(fr => fr.name).join('、');
-
-  return {
-    title: `${industry}安全风险评估报告`,
-    description: `基于您的业务需求分析，系统识别为${riskLabel}级别。重点关注的安全维度包括：${frNames || '基础安全'}。建议达到安全等级SL${riskLevel.level >= 2 ? riskLevel.level : 2}或以上。`,
-    keyRisks: [
-      {
-        id: 1,
-        risk: '生产中断风险',
-        level: assessment.downtimeTolerance === 'critical' || assessment.downtimeTolerance === 'high' ? 'high' : 'medium',
-        description: '停机容忍度' + (assessment.downtimeTolerance === 'critical' ? '极低' : '较低')
-      },
-      {
-        id: 2,
-        risk: '数据泄露风险',
-        level: assessment.dataSensitivity === 'confidential' || assessment.dataSensitivity === 'top-secret' ? 'high' : 'medium',
-        description: '数据敏感度为' + (assessment.dataSensitivity === 'top-secret' ? '绝密' : assessment.dataSensitivity === 'confidential' ? '机密' : '一般')
-      },
-      {
-        id: 3,
-        risk: '未授权访问风险',
-        level: assessment.remoteAccessNeed === 'extensive' ? 'high' : 'medium',
-        description: '远程访问需求' + (assessment.remoteAccessNeed === 'extensive' ? '广泛' : '有限')
-      }
-    ].filter(r => r.level !== 'medium')
-  };
+export function recommendSecurityLevelFromProfile(profile) {
+  return profile?.targetLevelCandidates || [];
 }

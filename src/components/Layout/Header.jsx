@@ -22,6 +22,12 @@ export function Header() {
         <Link to="/" className={`${styles.navLink} ${isActive('/') ? styles.active : ''}`}>
           首页
         </Link>
+        <Link to="/dashboard" className={`${styles.navLink} ${isActive('/dashboard') ? styles.active : ''}`}>
+          工作台
+        </Link>
+        <Link to="/translation-center" className={`${styles.navLink} ${isActive('/translation-center') ? styles.active : ''}`}>
+          翻译中心
+        </Link>
         <Link to="/learning" className={`${styles.navLink} ${isActive('/learning') ? styles.active : ''}`}>
           学习模式
         </Link>

@@ -11,6 +11,8 @@ import { VendorResult } from './pages/Vendor/VendorResult';
 import { SelectionMatrix } from './pages/Selection/SelectionMatrix';
 import { ReportCenter } from './pages/Report/ReportCenter';
 import { LearningMode } from './pages/Learning/LearningMode';
+import { Dashboard } from './pages/Dashboard/Dashboard';
+import { TranslationCenter } from './pages/TranslationCenter/TranslationCenter';
 import './index.css';
 
 export default function App() {
@@ -28,6 +30,8 @@ export default function App() {
             <Route path="/vendor" element={<VendorCapability />} />
             <Route path="/vendor/result" element={<VendorResult />} />
             <Route path="/selection" element={<SelectionMatrix />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/translation-center" element={<TranslationCenter />} />
             <Route path="/report" element={<ReportCenter />} />
             <Route path="/learning" element={<LearningMode />} />
           </Routes>

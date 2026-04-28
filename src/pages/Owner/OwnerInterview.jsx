@@ -2,45 +2,46 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, ProgressBar, Badge } from '../../components/Common';
 import { INDUSTRIES } from '../../data/industries';
-import { useProject } from '../../context/ProjectContext';
+import { useProject } from '../../hooks/useProject';
 import { generateRiskProfile } from '../../utils/riskEngine';
+import {
+  CONSEQUENCE_LEVEL_OPTIONS,
+  REMOTE_ACCESS_OPTIONS,
+  THIRD_PARTY_ACCESS_OPTIONS,
+  ACCEPTANCE_PREFERENCE_OPTIONS,
+  REMOTE_OWNERSHIP_OPTIONS
+} from '../../data/enums';
 import styles from './OwnerInterview.module.css';
 
 const STEPS = [
-  { id: 'industry', title: '行业类型', description: '您的企业属于哪个行业' },
-  { id: 'downtime', title: '停机容忍度', description: '系统停机对业务的影响程度' },
-  { id: 'remoteAccess', title: '远程维护', description: '是否需要远程访问工业系统' },
-  { id: 'dataSensitivity', title: '数据敏感度', description: '工业数据的保密需求' },
-  { id: 'thirdParty', title: '第三方接入', description: '第三方访问工业网络的频率' },
-  { id: 'assets', title: '关键资产', description: '需要重点保护的关键资产' },
-  { id: 'painPoints', title: '当前痛点', description: '现有网络安全方面的困扰' },
-  { id: 'projectName', title: '项目信息', description: '为您的项目起个名字' }
+  { id: 'industry', title: '行业类型', description: '识别项目所处行业和业务背景' },
+  { id: 'impacts', title: '业务后果', description: '识别安全事件的主要后果类型' },
+  { id: 'exposure', title: '暴露面', description: '识别远程运维与第三方接入情况' },
+  { id: 'maturity', title: '现状成熟度', description: '识别现有安全控制基础' },
+  { id: 'constraints', title: '约束条件', description: '识别运维和验收偏好' },
+  { id: 'assets', title: '关键资产', description: '识别重点保护对象' },
+  { id: 'projectName', title: '项目信息', description: '确认项目名称并生成结果' }
 ];
 
-const DOWNTIME_OPTIONS = [
-  { value: 'critical', label: '零容忍', description: '任何停机都会造成重大损失', color: 'danger' },
-  { value: 'high', label: '高度敏感', description: '停机超过几小时会造成重大影响', color: 'danger' },
-  { value: 'medium', label: '一般容忍', description: '停机一天内可接受', color: 'warning' },
-  { value: 'low', label: '可容忍', description: '较长时间停机影响有限', color: 'success' }
+const IMPACT_FIELDS = [
+  { key: 'safetyImpact', label: '人身安全后果' },
+  { key: 'environmentalImpact', label: '环境后果' },
+  { key: 'productionImpact', label: '产能影响' },
+  { key: 'qualityImpact', label: '质量影响' },
+  { key: 'financialImpact', label: '财务影响' },
+  { key: 'complianceImpact', label: '合规影响' },
+  { key: 'brandImpact', label: '品牌影响' }
 ];
 
-const REMOTE_ACCESS_OPTIONS = [
-  { value: 'extensive', label: '广泛需求', description: '频繁需要远程访问和控制' },
-  { value: 'limited', label: '有限需求', description: '偶尔需要远程监控或诊断' },
-  { value: 'none', label: '无需求', description: '主要在现场操作' }
-];
-
-const DATA_SENSITIVITY_OPTIONS = [
-  { value: 'top-secret', label: '绝密', description: '核心技术、配方等绝密信息' },
-  { value: 'confidential', label: '机密', description: '重要生产数据需要保护' },
-  { value: 'internal', label: '内部', description: '一般内部使用保密' },
-  { value: 'public', label: '公开', description: '可对外公开的信息' }
-];
-
-const THIRD_PARTY_OPTIONS = [
-  { value: 'regular', label: '频繁', description: '设备商、集成商频繁远程访问' },
-  { value: 'occasional', label: '偶尔', description: '偶尔需要第三方技术支持' },
-  { value: 'none', label: '无', description: '无第三方远程访问需求' }
+const ASSETS = [
+  { id: 'plc', name: 'PLC 控制器', context: '控制生产动作和工艺执行' },
+  { id: 'scada', name: 'SCADA / 监控系统', context: '负责监控、采集与可视化' },
+  { id: 'engineering', name: '工程师站', context: '进行下载、配置和调试' },
+  { id: 'historian', name: '历史数据库', context: '记录生产数据和关键事件' },
+  { id: 'network', name: '工业网络设备', context: '交换机、防火墙、边界设备' },
+  { id: 'safety', name: '安全系统', context: 'SIS、紧急停车等安全功能系统' },
+  { id: 'remote-gateway', name: '远程接入网关', context: '承载远程运维和第三方访问' },
+  { id: 'server', name: '工业服务器', context: '运行工业应用与管理平台' }
 ];
 
 export function OwnerInterview() {
@@ -49,164 +50,233 @@ export function OwnerInterview() {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
+    projectName: '',
     industry: '',
-    downtimeTolerance: '',
+    safetyImpact: '',
+    environmentalImpact: '',
+    productionImpact: '',
+    qualityImpact: '',
+    financialImpact: '',
+    complianceImpact: '',
+    brandImpact: '',
     remoteAccessNeed: '',
-    dataSensitivity: '',
     thirdPartyAccess: '',
-    criticalAssets: [],
-    currentPainPoints: [],
-    projectName: ''
+    networkSegmentationMaturity: '',
+    identityMaturity: '',
+    loggingMaturity: '',
+    patchMaturity: '',
+    maintenanceWindow: '',
+    upgradeWindow: '',
+    remoteOperationsOwnership: 'shared',
+    acceptancePreference: 'security-first',
+    criticalAssets: []
   });
 
   const currentStepInfo = STEPS[currentStep];
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
+  const updateFormData = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const toggleArrayItem = (field, item) => {
+    setFormData((prev) => {
+      const source = prev[field];
+      return source.includes(item)
+        ? { ...prev, [field]: source.filter((entry) => entry !== item) }
+        : { ...prev, [field]: [...source, item] };
+    });
+  };
+
   const handleNext = () => {
     if (currentStep < STEPS.length - 1) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep((prev) => prev + 1);
     }
   };
 
   const handleBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep((prev) => prev - 1);
     }
   };
 
   const handleComplete = () => {
+    actions.setProjectMeta({ projectName: formData.projectName, status: 'owner-completed' });
     actions.setOwnerAssessment(formData);
     actions.setProjectName(formData.projectName);
-
-    // 计算风险并直接设置到全局状态
-    const profile = generateRiskProfile(formData);
-    actions.setRiskProfile(profile);
+    actions.setRiskProfile(generateRiskProfile(formData));
     navigate('/owner/result');
   };
 
-  const updateFormData = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const toggleArrayItem = (field, item) => {
-    setFormData(prev => {
-      const arr = prev[field];
-      if (arr.includes(item)) {
-        return { ...prev, [field]: arr.filter(i => i !== item) };
-      } else {
-        return { ...prev, [field]: [...arr, item] };
-      }
-    });
-  };
+  const renderLevelSelector = (field) => (
+    <div className={styles.optionList}>
+      {CONSEQUENCE_LEVEL_OPTIONS.map((option) => (
+        <Card
+          key={option.value}
+          className={styles.optionCard}
+          variant={formData[field] === option.value ? 'accent' : 'default'}
+          onClick={() => updateFormData(field, option.value)}
+        >
+          <div className={styles.optionHeader}>
+            <h4>{option.label}</h4>
+            <Badge variant={option.badge}>{option.label}</Badge>
+          </div>
+          <p>{option.description}</p>
+        </Card>
+      ))}
+    </div>
+  );
 
   const renderStepContent = () => {
     switch (currentStepInfo.id) {
       case 'industry':
         return (
           <div className={styles.optionGrid}>
-            {INDUSTRIES.map(ind => (
+            {INDUSTRIES.map((industry) => (
               <Card
-                key={ind.id}
+                key={industry.id}
                 className={styles.optionCard}
-                variant={formData.industry === ind.id ? 'accent' : 'default'}
-                onClick={() => updateFormData('industry', ind.id)}
+                variant={formData.industry === industry.id ? 'accent' : 'default'}
+                onClick={() => updateFormData('industry', industry.id)}
               >
-                <h4>{ind.name}</h4>
-                <p>{ind.description}</p>
+                <h4>{industry.name}</h4>
+                <p>{industry.description}</p>
               </Card>
             ))}
           </div>
         );
 
-      case 'downtime':
+      case 'impacts':
         return (
-          <div className={styles.optionList}>
-            {DOWNTIME_OPTIONS.map(opt => (
-              <Card
-                key={opt.value}
-                className={styles.optionCard}
-                variant={formData.downtimeTolerance === opt.value ? 'accent' : 'default'}
-                onClick={() => updateFormData('downtimeTolerance', opt.value)}
-              >
-                <div className={styles.optionHeader}>
-                  <Badge variant={opt.color}>{opt.label}</Badge>
-                </div>
-                <p>{opt.description}</p>
-              </Card>
+          <div className={styles.stepContent}>
+            {IMPACT_FIELDS.map((field) => (
+              <div key={field.key} className={styles.sectionBlock}>
+                <h4>{field.label}</h4>
+                {renderLevelSelector(field.key)}
+              </div>
             ))}
           </div>
         );
 
-      case 'remoteAccess':
+      case 'exposure':
         return (
-          <div className={styles.optionList}>
-            {REMOTE_ACCESS_OPTIONS.map(opt => (
-              <Card
-                key={opt.value}
-                className={styles.optionCard}
-                variant={formData.remoteAccessNeed === opt.value ? 'accent' : 'default'}
-                onClick={() => updateFormData('remoteAccessNeed', opt.value)}
-              >
-                <h4>{opt.label}</h4>
-                <p>{opt.description}</p>
-              </Card>
+          <div className={styles.stepContent}>
+            <div className={styles.sectionBlock}>
+              <h4>远程运维需求</h4>
+              <div className={styles.optionList}>
+                {REMOTE_ACCESS_OPTIONS.map((option) => (
+                  <Card
+                    key={option.value}
+                    className={styles.optionCard}
+                    variant={formData.remoteAccessNeed === option.value ? 'accent' : 'default'}
+                    onClick={() => updateFormData('remoteAccessNeed', option.value)}
+                  >
+                    <h4>{option.label}</h4>
+                    <p>{option.description}</p>
+                  </Card>
+                ))}
+              </div>
+            </div>
+            <div className={styles.sectionBlock}>
+              <h4>第三方接入频率</h4>
+              <div className={styles.optionList}>
+                {THIRD_PARTY_ACCESS_OPTIONS.map((option) => (
+                  <Card
+                    key={option.value}
+                    className={styles.optionCard}
+                    variant={formData.thirdPartyAccess === option.value ? 'accent' : 'default'}
+                    onClick={() => updateFormData('thirdPartyAccess', option.value)}
+                  >
+                    <h4>{option.label}</h4>
+                    <p>{option.description}</p>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'maturity':
+        return (
+          <div className={styles.stepContent}>
+            {[
+              ['networkSegmentationMaturity', '网络隔离成熟度'],
+              ['identityMaturity', '账号与身份管理成熟度'],
+              ['loggingMaturity', '日志审计成熟度'],
+              ['patchMaturity', '补丁与维护成熟度']
+            ].map(([key, label]) => (
+              <div key={key} className={styles.sectionBlock}>
+                <h4>{label}</h4>
+                {renderLevelSelector(key)}
+              </div>
             ))}
           </div>
         );
 
-      case 'dataSensitivity':
+      case 'constraints':
         return (
-          <div className={styles.optionList}>
-            {DATA_SENSITIVITY_OPTIONS.map(opt => (
-              <Card
-                key={opt.value}
-                className={styles.optionCard}
-                variant={formData.dataSensitivity === opt.value ? 'accent' : 'default'}
-                onClick={() => updateFormData('dataSensitivity', opt.value)}
-              >
-                <div className={styles.optionHeader}>
-                  <Badge variant={opt.value === 'top-secret' || opt.value === 'confidential' ? 'danger' : 'default'}>
-                    {opt.label}
-                  </Badge>
-                </div>
-                <p>{opt.description}</p>
-              </Card>
-            ))}
-          </div>
-        );
-
-      case 'thirdParty':
-        return (
-          <div className={styles.optionList}>
-            {THIRD_PARTY_OPTIONS.map(opt => (
-              <Card
-                key={opt.value}
-                className={styles.optionCard}
-                variant={formData.thirdPartyAccess === opt.value ? 'accent' : 'default'}
-                onClick={() => updateFormData('thirdPartyAccess', opt.value)}
-              >
-                <h4>{opt.label}</h4>
-                <p>{opt.description}</p>
-              </Card>
-            ))}
+          <div className={styles.stepContent}>
+            <div className={styles.sectionBlock}>
+              <h4>常规维护窗口</h4>
+              <input
+                className={styles.projectInput}
+                type="text"
+                placeholder="例如：每周日 02:00-06:00"
+                value={formData.maintenanceWindow}
+                onChange={(event) => updateFormData('maintenanceWindow', event.target.value)}
+              />
+            </div>
+            <div className={styles.sectionBlock}>
+              <h4>系统改造窗口</h4>
+              <input
+                className={styles.projectInput}
+                type="text"
+                placeholder="例如：仅年度停产期可实施"
+                value={formData.upgradeWindow}
+                onChange={(event) => updateFormData('upgradeWindow', event.target.value)}
+              />
+            </div>
+            <div className={styles.sectionBlock}>
+              <h4>远程运维责任归属</h4>
+              <div className={styles.optionList}>
+                {REMOTE_OWNERSHIP_OPTIONS.map((option) => (
+                  <Card
+                    key={option.value}
+                    className={styles.optionCard}
+                    variant={formData.remoteOperationsOwnership === option.value ? 'accent' : 'default'}
+                    onClick={() => updateFormData('remoteOperationsOwnership', option.value)}
+                  >
+                    <h4>{option.label}</h4>
+                    <p>{option.description}</p>
+                  </Card>
+                ))}
+              </div>
+            </div>
+            <div className={styles.sectionBlock}>
+              <h4>验收偏好</h4>
+              <div className={styles.optionList}>
+                {ACCEPTANCE_PREFERENCE_OPTIONS.map((option) => (
+                  <Card
+                    key={option.value}
+                    className={styles.optionCard}
+                    variant={formData.acceptancePreference === option.value ? 'accent' : 'default'}
+                    onClick={() => updateFormData('acceptancePreference', option.value)}
+                  >
+                    <h4>{option.label}</h4>
+                    <p>{option.description}</p>
+                  </Card>
+                ))}
+              </div>
+            </div>
           </div>
         );
 
       case 'assets':
         return (
           <div className={styles.assetSelection}>
-            <p className={styles.hint}>选择需要重点保护的关键资产类别（可多选）</p>
+            <p className={styles.hint}>选择重点保护的关键资产（可多选）</p>
             <div className={styles.assetGrid}>
-              {[
-                { id: 'plc', name: 'PLC控制器', context: '控制生产线电机、阀门等设备的核心控制器' },
-                { id: 'scada', name: 'SCADA系统', context: '监控工艺流程、收集生产数据的系统' },
-                { id: 'hmi', name: 'HMI人机界面', context: '操作员控制生产设备的触摸屏幕或工控机' },
-                { id: 'network', name: '工业网络设备', context: '工业交换机、路由器等网络基础设施' },
-                { id: 'server', name: '工业服务器', context: '运行工业软件的工控服务器' },
-                { id: 'sensor', name: '传感器/执行器', context: '测量温度、压力等工艺参数的设备' },
-                { id: 'sis', name: '安全仪表系统', context: '紧急停车、火灾保护等安全相关系统' },
-                { id: 'database', name: '生产数据库', context: '存储配方、工艺参数等生产核心数据' }
-              ].map(asset => (
+              {ASSETS.map((asset) => (
                 <Card
                   key={asset.id}
                   className={styles.assetCard}
@@ -224,49 +294,19 @@ export function OwnerInterview() {
           </div>
         );
 
-      case 'painPoints':
-        return (
-          <div className={styles.assetSelection}>
-            <p className={styles.hint}>选择当前面临的安全困扰（可多选）</p>
-            <div className={styles.assetGrid}>
-              {[
-                { id: 'unauthorized', name: '担心有人偷偷接入生产网络', context: '不确定是否有未授权人员访问工控系统' },
-                { id: 'downtime', name: '担心生产线突然停机', context: '害怕遭遇勒索软件或网络攻击导致生产中断' },
-                { id: 'data_leak', name: '担心生产配方外泄', context: '核心工艺参数、客户数据等商业机密外流' },
-                { id: 'compliance', name: '不确定是否符合安全监管', context: '不清楚系统是否满足等保、工信部等要求' },
-                { id: 'third_party', name: '难管理设备厂家的远程访问', context: '设备出问题需要厂家远程协助，但担心安全' },
-                { id: 'legacy', name: '老旧设备无法打补丁', context: '设备厂家已不更新，漏洞无法修复' },
-                { id: 'visibility', name: '不清楚网络里都接了哪些设备', context: '无法掌握工控网络资产全景' },
-                { id: 'response', name: '出了安全事件不知道怎么处理', context: '缺乏安全事件应急响应能力' }
-              ].map(pain => (
-                <Card
-                  key={pain.id}
-                  className={styles.assetCard}
-                  variant={formData.currentPainPoints.includes(pain.id) ? 'warning' : 'default'}
-                  onClick={() => toggleArrayItem('currentPainPoints', pain.id)}
-                >
-                  <span className={styles.assetName}>{pain.name}</span>
-                  <span className={styles.assetContext}>{pain.context}</span>
-                  {formData.currentPainPoints.includes(pain.id) && (
-                    <span className={styles.checkmark}>✓</span>
-                  )}
-                </Card>
-              ))}
-            </div>
-          </div>
-        );
-
       case 'projectName':
         return (
-          <div className={styles.projectNameInput}>
-            <p className={styles.hint}>为您的安全规划项目起一个名称</p>
-            <input
-              type="text"
-              className={styles.textInput}
-              placeholder="例如：某化工厂安全升级项目"
-              value={formData.projectName}
-              onChange={(e) => updateFormData('projectName', e.target.value)}
-            />
+          <div className={styles.stepContent}>
+            <div className={styles.sectionBlock}>
+              <h4>项目名称</h4>
+              <input
+                className={styles.projectInput}
+                type="text"
+                placeholder="例如：某化工厂 OT 安全规划项目"
+                value={formData.projectName}
+                onChange={(event) => updateFormData('projectName', event.target.value)}
+              />
+            </div>
           </div>
         );
 
@@ -275,77 +315,30 @@ export function OwnerInterview() {
     }
   };
 
-  const canProceed = () => {
-    switch (currentStepInfo.id) {
-      case 'industry':
-        return !!formData.industry;
-      case 'downtime':
-        return !!formData.downtimeTolerance;
-      case 'remoteAccess':
-        return !!formData.remoteAccessNeed;
-      case 'dataSensitivity':
-        return !!formData.dataSensitivity;
-      case 'thirdParty':
-        return !!formData.thirdPartyAccess;
-      case 'assets':
-        return formData.criticalAssets.length > 0;
-      case 'painPoints':
-        return true; // 可选
-      case 'projectName':
-        return !!formData.projectName.trim();
-      default:
-        return false;
-    }
-  };
-
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1>业主安全需求评估</h1>
-        <p className={styles.subtitle}>回答以下问题，系统将自动生成风险画像和安全建议</p>
+        <Badge variant="primary">业主路径</Badge>
+        <h1>{currentStepInfo.title}</h1>
+        <p>{currentStepInfo.description}</p>
+        <ProgressBar value={progress} variant="accent" size="large" />
       </div>
 
-      <div className={styles.progressSection}>
-        <div className={styles.progressInfo}>
-          <span>步骤 {currentStep + 1} / {STEPS.length}</span>
-          <span className={styles.stepTitle}>{currentStepInfo.title}</span>
-        </div>
-        <ProgressBar value={progress} variant="primary" showLabel size="large" />
-      </div>
-
-      <Card className={styles.stepCard}>
-        <div className={styles.stepHeader}>
-          <h3>{currentStepInfo.title}</h3>
-          <p>{currentStepInfo.description}</p>
-        </div>
-        <div className={styles.stepContent}>
-          {renderStepContent()}
-        </div>
+      <Card className={styles.contentCard}>
+        {renderStepContent()}
       </Card>
 
-      <div className={styles.navigation}>
-        <Button
-          variant="ghost"
-          onClick={handleBack}
-          disabled={currentStep === 0}
-        >
+      <div className={styles.actions}>
+        <Button variant="ghost" onClick={handleBack} disabled={currentStep === 0}>
           上一步
         </Button>
-        {currentStep < STEPS.length - 1 ? (
-          <Button
-            variant="primary"
-            onClick={handleNext}
-            disabled={!canProceed()}
-          >
-            下一步
+        {currentStep === STEPS.length - 1 ? (
+          <Button variant="primary" onClick={handleComplete}>
+            生成风险翻译结果
           </Button>
         ) : (
-          <Button
-            variant="primary"
-            onClick={handleComplete}
-            disabled={!canProceed()}
-          >
-            完成评估
+          <Button variant="primary" onClick={handleNext}>
+            下一步
           </Button>
         )}
       </div>

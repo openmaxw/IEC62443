@@ -1,0 +1,59 @@
+.panelSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.panelTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.panelHint {
+  color: var(--color-text-secondary);
+  font-size: 0.92rem;
+}
+
+.itemList,
+.traceList,
+.resultList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.itemCard,
+.traceCard,
+.resultCard,
+.emptyCard {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+}
+
+.itemMeta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.pageHeader {
+  margin-bottom: var(--spacing-xl);
+}
+
+.pageHeader h1 {
+  margin-bottom: 0.5rem;
+}
+
+.pageHeader p {
+  color: var(--color-text-secondary);
+}
+
+.mainColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}

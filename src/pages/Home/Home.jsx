@@ -1,8 +1,17 @@
 import { Link } from 'react-router-dom';
 import { Card, Button } from '../../components/Common';
+import { useProject } from '../../hooks/useProject';
 import styles from './Home.module.css';
 
 export function Home() {
+  const { state } = useProject();
+  const hasProject = Boolean(
+    state.projectMeta?.projectName ||
+    state.ownerProfile?.assessment ||
+    state.integratorDesign?.plan ||
+    state.vendorCatalog?.capabilities?.length
+  );
+
   return (
     <div className={styles.container}>
       <div className={styles.hero}>
@@ -17,6 +26,11 @@ export function Home() {
           面向 IEC 62443 初学者的智能规划平台<br/>
           让业主、集成商、设备商轻松完成需求翻译、规则映射与设备选型
         </p>
+        {hasProject && (
+          <Link to="/dashboard" className={styles.roleLink}>
+            <Button variant="secondary" size="large">继续当前项目</Button>
+          </Link>
+        )}
       </div>
 
       <div className={styles.roleCards}>

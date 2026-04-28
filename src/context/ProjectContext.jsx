@@ -1,45 +1,99 @@
-import { createContext, useContext, useReducer, useEffect } from 'react';
+import { useReducer, useEffect } from 'react';
+import { ProjectContext } from './projectContextInstance';
 
 const STORAGE_KEY = 'iec-62443-project-data';
 
-// 初始状态
 const initialState = {
   currentRole: null,
-  projectName: '',
-  ownerAssessment: null,
-  riskProfile: null,
-  integratorPlan: null,
-  vendorCapabilities: [],
-  matchResults: null,
-  currentStep: 0
+  currentStep: 0,
+  projectMeta: {
+    projectName: '',
+    status: 'draft',
+    experienceLevel: 'beginner'
+  },
+  ownerProfile: {
+    assessment: null
+  },
+  riskTranslation: {
+    profile: null
+  },
+  integratorDesign: {
+    plan: null
+  },
+  vendorCatalog: {
+    capabilities: []
+  },
+  selectionAnalysis: {
+    results: null
+  },
+  deliverables: {
+    reports: []
+  }
 };
 
-// 从 localStorage 加载状态
+function migrateLegacyState(parsed) {
+  const nextState = { ...initialState, ...parsed };
+
+  if (!nextState.projectMeta) {
+    nextState.projectMeta = { ...initialState.projectMeta };
+  }
+
+  if (!nextState.ownerProfile) {
+    nextState.ownerProfile = { assessment: parsed.ownerAssessment || null };
+  }
+
+  if (!nextState.riskTranslation) {
+    nextState.riskTranslation = { profile: parsed.riskProfile || null };
+  }
+
+  if (!nextState.integratorDesign) {
+    nextState.integratorDesign = { plan: parsed.integratorPlan || null };
+  }
+
+  if (!nextState.vendorCatalog) {
+    nextState.vendorCatalog = { capabilities: parsed.vendorCapabilities || [] };
+  }
+
+  if (!nextState.selectionAnalysis) {
+    nextState.selectionAnalysis = { results: parsed.matchResults || null };
+  }
+
+  if (!nextState.deliverables) {
+    nextState.deliverables = { reports: [] };
+  }
+
+  if (parsed.projectName && !nextState.projectMeta.projectName) {
+    nextState.projectMeta.projectName = parsed.projectName;
+  }
+
+  return nextState;
+}
+
 function loadStateFromStorage() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return { ...initialState, ...parsed };
+      return migrateLegacyState(parsed);
     }
-  } catch (e) {
-    console.warn('Failed to load state from localStorage:', e);
+  } catch (error) {
+    console.warn('Failed to load state from localStorage:', error);
   }
   return initialState;
 }
 
-// 保存状态到 localStorage
 function saveStateToStorage(state) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch (e) {
-    console.warn('Failed to save state to localStorage:', e);
+  } catch (error) {
+    console.warn('Failed to save state to localStorage:', error);
   }
 }
 
-// 操作类型
 const ActionTypes = {
   SET_ROLE: 'SET_ROLE',
+  SET_CURRENT_STEP: 'SET_CURRENT_STEP',
+  SET_PROJECT_META: 'SET_PROJECT_META',
   SET_PROJECT_NAME: 'SET_PROJECT_NAME',
   SET_OWNER_ASSESSMENT: 'SET_OWNER_ASSESSMENT',
   SET_RISK_PROFILE: 'SET_RISK_PROFILE',
@@ -47,47 +101,100 @@ const ActionTypes = {
   ADD_VENDOR_CAPABILITY: 'ADD_VENDOR_CAPABILITY',
   UPDATE_VENDOR_CAPABILITY: 'UPDATE_VENDOR_CAPABILITY',
   SET_MATCH_RESULTS: 'SET_MATCH_RESULTS',
-  SET_CURRENT_STEP: 'SET_CURRENT_STEP',
+  SET_REPORTS: 'SET_REPORTS',
   RESET_PROJECT: 'RESET_PROJECT'
 };
 
-// Reducer
 function projectReducer(state, action) {
   switch (action.type) {
     case ActionTypes.SET_ROLE:
       return { ...state, currentRole: action.payload };
 
+    case ActionTypes.SET_CURRENT_STEP:
+      return { ...state, currentStep: action.payload };
+
+    case ActionTypes.SET_PROJECT_META:
+      return {
+        ...state,
+        projectMeta: {
+          ...state.projectMeta,
+          ...action.payload
+        }
+      };
+
     case ActionTypes.SET_PROJECT_NAME:
-      return { ...state, projectName: action.payload };
+      return {
+        ...state,
+        projectMeta: {
+          ...state.projectMeta,
+          projectName: action.payload
+        }
+      };
 
     case ActionTypes.SET_OWNER_ASSESSMENT:
-      return { ...state, ownerAssessment: action.payload };
+      return {
+        ...state,
+        ownerProfile: {
+          ...state.ownerProfile,
+          assessment: action.payload
+        }
+      };
 
     case ActionTypes.SET_RISK_PROFILE:
-      return { ...state, riskProfile: action.payload };
+      return {
+        ...state,
+        riskTranslation: {
+          ...state.riskTranslation,
+          profile: action.payload
+        }
+      };
 
     case ActionTypes.SET_INTEGRATOR_PLAN:
-      return { ...state, integratorPlan: action.payload };
+      return {
+        ...state,
+        integratorDesign: {
+          ...state.integratorDesign,
+          plan: action.payload
+        }
+      };
 
     case ActionTypes.ADD_VENDOR_CAPABILITY:
       return {
         ...state,
-        vendorCapabilities: [...state.vendorCapabilities, action.payload]
+        vendorCatalog: {
+          ...state.vendorCatalog,
+          capabilities: [...state.vendorCatalog.capabilities, action.payload]
+        }
       };
 
     case ActionTypes.UPDATE_VENDOR_CAPABILITY:
       return {
         ...state,
-        vendorCapabilities: state.vendorCapabilities.map((v, idx) =>
-          idx === action.payload.index ? action.payload.data : v
-        )
+        vendorCatalog: {
+          ...state.vendorCatalog,
+          capabilities: state.vendorCatalog.capabilities.map((item, index) => (
+            index === action.payload.index ? action.payload.data : item
+          ))
+        }
       };
 
     case ActionTypes.SET_MATCH_RESULTS:
-      return { ...state, matchResults: action.payload };
+      return {
+        ...state,
+        selectionAnalysis: {
+          ...state.selectionAnalysis,
+          results: action.payload
+        }
+      };
 
-    case ActionTypes.SET_CURRENT_STEP:
-      return { ...state, currentStep: action.payload };
+    case ActionTypes.SET_REPORTS:
+      return {
+        ...state,
+        deliverables: {
+          ...state.deliverables,
+          reports: action.payload
+        }
+      };
 
     case ActionTypes.RESET_PROJECT:
       localStorage.removeItem(STORAGE_KEY);
@@ -98,20 +205,29 @@ function projectReducer(state, action) {
   }
 }
 
-// Context
-const ProjectContext = createContext(null);
+function createLegacyCompatState(state) {
+  return {
+    ...state,
+    projectName: state.projectMeta.projectName,
+    ownerAssessment: state.ownerProfile.assessment,
+    riskProfile: state.riskTranslation.profile,
+    integratorPlan: state.integratorDesign.plan,
+    vendorCapabilities: state.vendorCatalog.capabilities,
+    matchResults: state.selectionAnalysis.results
+  };
+}
 
-// Provider
 export function ProjectProvider({ children }) {
   const [state, dispatch] = useReducer(projectReducer, loadStateFromStorage());
 
-  // 每次 state 变化时自动保存到 localStorage
   useEffect(() => {
     saveStateToStorage(state);
   }, [state]);
 
   const actions = {
     setRole: (role) => dispatch({ type: ActionTypes.SET_ROLE, payload: role }),
+    setCurrentStep: (step) => dispatch({ type: ActionTypes.SET_CURRENT_STEP, payload: step }),
+    setProjectMeta: (meta) => dispatch({ type: ActionTypes.SET_PROJECT_META, payload: meta }),
     setProjectName: (name) => dispatch({ type: ActionTypes.SET_PROJECT_NAME, payload: name }),
     setOwnerAssessment: (assessment) => dispatch({ type: ActionTypes.SET_OWNER_ASSESSMENT, payload: assessment }),
     setRiskProfile: (profile) => dispatch({ type: ActionTypes.SET_RISK_PROFILE, payload: profile }),
@@ -119,22 +235,13 @@ export function ProjectProvider({ children }) {
     addVendorCapability: (capability) => dispatch({ type: ActionTypes.ADD_VENDOR_CAPABILITY, payload: capability }),
     updateVendorCapability: (index, data) => dispatch({ type: ActionTypes.UPDATE_VENDOR_CAPABILITY, payload: { index, data } }),
     setMatchResults: (results) => dispatch({ type: ActionTypes.SET_MATCH_RESULTS, payload: results }),
-    setCurrentStep: (step) => dispatch({ type: ActionTypes.SET_CURRENT_STEP, payload: step }),
+    setReports: (reports) => dispatch({ type: ActionTypes.SET_REPORTS, payload: reports }),
     resetProject: () => dispatch({ type: ActionTypes.RESET_PROJECT })
   };
 
   return (
-    <ProjectContext.Provider value={{ state, actions }}>
+    <ProjectContext.Provider value={{ state: createLegacyCompatState(state), actions }}>
       {children}
     </ProjectContext.Provider>
   );
-}
-
-// Hook
-export function useProject() {
-  const context = useContext(ProjectContext);
-  if (!context) {
-    throw new Error('useProject must be used within ProjectProvider');
-  }
-  return context;
 }

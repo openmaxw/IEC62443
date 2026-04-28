@@ -1,81 +1,37 @@
-import { useProject as useProjectContext } from '../context/ProjectContext';
+import { useContext } from 'react';
+import { ProjectContext } from '../context/projectContextInstance';
 
-// Re-export for convenience
-export { useProjectContext as useProject };
-
-/**
- * 项目状态管理 Hook
- */
-export function useProjectState() {
-  const { state, actions } = useProjectContext();
-
-  return {
-    // 状态
-    currentRole: state.currentRole,
-    projectName: state.projectName,
-    ownerAssessment: state.ownerAssessment,
-    riskProfile: state.riskProfile,
-    integratorPlan: state.integratorPlan,
-    vendorCapabilities: state.vendorCapabilities,
-    matchResults: state.matchResults,
-    currentStep: state.currentStep,
-
-    // 操作
-    setRole: actions.setRole,
-    setProjectName: actions.setProjectName,
-    setOwnerAssessment: actions.setOwnerAssessment,
-    setRiskProfile: actions.setRiskProfile,
-    setIntegratorPlan: actions.setIntegratorPlan,
-    addVendorCapability: actions.addVendorCapability,
-    updateVendorCapability: actions.updateVendorCapability,
-    setMatchResults: actions.setMatchResults,
-    setCurrentStep: actions.setCurrentStep,
-    resetProject: actions.resetProject
-  };
+export function useProject() {
+  const context = useContext(ProjectContext);
+  if (!context) {
+    throw new Error('useProject must be used within ProjectProvider');
+  }
+  return context;
 }
 
-/**
- * 业主路径 Hook
- */
 export function useOwnerPath() {
-  const { state, actions } = useProjectContext();
-
+  const { state } = useProject();
   return {
-    assessment: state.ownerAssessment,
-    riskProfile: state.riskProfile,
-    setAssessment: actions.setOwnerAssessment,
-    setRiskProfile: actions.setRiskProfile,
-    isComplete: state.ownerAssessment !== null && state.riskProfile !== null
+    projectMeta: state.projectMeta,
+    assessment: state.ownerProfile?.assessment ?? state.ownerAssessment,
+    riskProfile: state.riskTranslation?.profile ?? state.riskProfile
   };
 }
 
-/**
- * 集成商路径 Hook
- */
 export function useIntegratorPath() {
-  const { state, actions } = useProjectContext();
-
+  const { state } = useProject();
   return {
-    plan: state.integratorPlan,
-    ownerAssessment: state.ownerAssessment,
-    riskProfile: state.riskProfile,
-    setPlan: actions.setIntegratorPlan,
-    isComplete: state.integratorPlan !== null
+    projectMeta: state.projectMeta,
+    riskProfile: state.riskTranslation?.profile ?? state.riskProfile,
+    plan: state.integratorDesign?.plan ?? state.integratorPlan
   };
 }
 
-/**
- * 设备商路径 Hook
- */
 export function useVendorPath() {
-  const { state, actions } = useProjectContext();
-
+  const { state } = useProject();
   return {
-    capabilities: state.vendorCapabilities,
-    matchResults: state.matchResults,
-    addCapability: actions.addVendorCapability,
-    updateCapability: actions.updateVendorCapability,
-    setMatchResults: actions.setMatchResults,
-    isComplete: state.vendorCapabilities.length > 0
+    projectMeta: state.projectMeta,
+    capabilities: state.vendorCatalog?.capabilities ?? state.vendorCapabilities ?? [],
+    matchResults: state.selectionAnalysis?.results ?? state.matchResults
   };
 }
