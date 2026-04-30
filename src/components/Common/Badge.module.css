@@ -2,61 +2,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  gap: 4px;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
-
-/* Sizes */
-.small {
-  padding: 2px 6px;
-  font-size: 10px;
-}
-
-.medium {
-  padding: 4px 10px;
-  font-size: 12px;
-}
-
-.large {
-  padding: 6px 14px;
-  font-size: 14px;
-}
-
-/* Variants */
-.default {
-  background: var(--color-bg-card);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
-}
-
-.primary {
-  background: rgba(255, 111, 0, 0.2);
-  color: var(--color-accent);
-  border: 1px solid var(--color-accent);
-}
-
-.success {
-  background: rgba(0, 200, 83, 0.2);
-  color: var(--color-success);
-  border: 1px solid var(--color-success);
-}
-
-.warning {
-  background: rgba(255, 214, 0, 0.2);
-  color: var(--color-warning);
-  border: 1px solid var(--color-warning);
-}
-
-.danger {
-  background: rgba(255, 23, 68, 0.2);
-  color: var(--color-danger);
-  border: 1px solid var(--color-danger);
-}
-
-.info {
-  background: rgba(0, 176, 255, 0.2);
-  color: var(--color-info);
-  border: 1px solid var(--color-info);
-}
+.small { min-height: 18px; padding: 0 6px; font-size: 10px; }
+.medium { min-height: 22px; padding: 0 8px; font-size: 11px; }
+.large { min-height: 26px; padding: 0 10px; font-size: 12px; }
+.default { color: var(--color-text-secondary); background: rgba(255, 255, 255, 0.04); border: 1px solid var(--color-border); }
+.primary { color: var(--color-accent); background: var(--color-accent-soft); border: 1px solid rgba(255, 138, 42, 0.34); }
+.success { color: var(--color-success); background: rgba(68, 209, 123, 0.12); border: 1px solid rgba(68, 209, 123, 0.28); }
+.warning { color: var(--color-warning); background: rgba(255, 193, 77, 0.12); border: 1px solid rgba(255, 193, 77, 0.28); }
+.danger { color: var(--color-danger); background: rgba(255, 98, 126, 0.12); border: 1px solid rgba(255, 98, 126, 0.28); }
+.info { color: var(--color-info); background: rgba(83, 184, 255, 0.12); border: 1px solid rgba(83, 184, 255, 0.28); }

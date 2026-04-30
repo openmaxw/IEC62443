@@ -1,175 +1,57 @@
 import { Link } from 'react-router-dom';
-import { Card, Button } from '../../components/Common';
+import { Button, Badge } from '../../components/Common';
 import { useProject } from '../../hooks/useProject';
+import { INDUSTRIES } from '../../data/industries';
 import styles from './Home.module.css';
 
+function deriveStage(state) {
+  if (state.selectionAnalysis?.results?.results?.length || state.selectionAnalysis?.results?.results?.[0]) return { route: '/selection', action: '查看当前结果' };
+  if (state.vendorCatalog?.capabilities?.length) return { route: '/vendor/result', action: '进入当前步骤' };
+  if (state.integratorDesign?.plan) return { route: '/integrator/result', action: '进入当前步骤' };
+  if (state.ownerProfile?.assessment && state.riskTranslation?.profile) return { route: '/owner/result', action: '进入当前步骤' };
+  return { route: '/owner', action: '从需求开始' };
+}
+
 export function Home() {
-  const { state } = useProject();
-  const hasProject = Boolean(
-    state.projectMeta?.projectName ||
-    state.ownerProfile?.assessment ||
-    state.integratorDesign?.plan ||
-    state.vendorCatalog?.capabilities?.length
-  );
+  const { state, actions } = useProject();
+  const currentStage = deriveStage(state);
+  const projectMeta = state.projectMeta || {};
+  const updateMeta = (field, value) => actions.setProjectMeta({ [field]: value });
 
   return (
-    <div className={styles.container}>
-      <div className={styles.hero}>
-        <div className={styles.heroIcon}>
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
-          </svg>
+    <div className={styles.page}>
+      <section className={styles.topBar}>
+        <div>
+          <Badge variant="primary" size="medium">项目</Badge>
+          <strong className={styles.projectTitle}>{projectMeta.projectName || 'IEC 62443 协同工作台'}</strong>
         </div>
-        <h1 className={styles.title}>IEC 62443</h1>
-        <p className={styles.subtitle}>安全网络规划与选型辅助系统</p>
-        <p className={styles.description}>
-          面向 IEC 62443 初学者的智能规划平台<br/>
-          让业主、集成商、设备商轻松完成需求翻译、规则映射与设备选型
-        </p>
-        {hasProject && (
-          <Link to="/dashboard" className={styles.roleLink}>
-            <Button variant="secondary" size="large">继续当前项目</Button>
-          </Link>
-        )}
-      </div>
+        <Link to={currentStage.route}><Button variant="primary" size="medium">{currentStage.action}</Button></Link>
+      </section>
 
-      <div className={styles.roleCards}>
-        <Card className={styles.roleCard} variant="default">
-          <div className={styles.roleIcon} data-role="owner">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-            </svg>
-          </div>
-          <h3 className={styles.roleTitle}>业主 / 资产所有者</h3>
-          <p className={styles.roleDesc}>
-            明确业务风险与安全目标<br/>
-            生成对集成商的需求说明
-          </p>
-          <Link to="/owner" className={styles.roleLink}>
-            <Button variant="primary" size="large">
-              开始评估
-            </Button>
-          </Link>
-        </Card>
+      <section className={styles.projectPanel}>
+        <input value={projectMeta.projectName || ''} onChange={(event) => updateMeta('projectName', event.target.value)} placeholder="项目名称" />
+        <input value={projectMeta.organizationName || ''} onChange={(event) => updateMeta('organizationName', event.target.value)} placeholder="业主单位" />
+        <input value={projectMeta.siteName || ''} onChange={(event) => updateMeta('siteName', event.target.value)} placeholder="工厂/装置/站点" />
+        <select value={projectMeta.industry || ''} onChange={(event) => updateMeta('industry', event.target.value)}>
+          <option value="">行业/场景</option>
+          {INDUSTRIES.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+        </select>
+        <select value={projectMeta.scenarioType || ''} onChange={(event) => updateMeta('scenarioType', event.target.value)}>
+          <option value="">项目类型</option>
+          <option value="new-build">新建</option>
+          <option value="retrofit">改造</option>
+          <option value="expansion">扩建</option>
+          <option value="assessment">评估</option>
+        </select>
+        <input value={projectMeta.projectObjective || ''} onChange={(event) => updateMeta('projectObjective', event.target.value)} placeholder="一句话目标" />
+      </section>
 
-        <Card className={styles.roleCard} variant="default">
-          <div className={styles.roleIcon} data-role="integrator">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
-            </svg>
-          </div>
-          <h3 className={styles.roleTitle}>集成商 / 方案设计方</h3>
-          <p className={styles.roleDesc}>
-            制定分区分域方案<br/>
-            生成设备能力需求清单
-          </p>
-          <Link to="/integrator" className={styles.roleLink}>
-            <Button variant="secondary" size="large">
-              开始规划
-            </Button>
-          </Link>
-        </Card>
-
-        <Card className={styles.roleCard} variant="default">
-          <div className={styles.roleIcon} data-role="vendor">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/>
-            </svg>
-          </div>
-          <h3 className={styles.roleTitle}>设备商 / 产品供应商</h3>
-          <p className={styles.roleDesc}>
-            建立产品能力画像<br/>
-            生成项目匹配分析
-          </p>
-          <Link to="/vendor" className={styles.roleLink}>
-            <Button variant="ghost" size="large">
-              录入能力
-            </Button>
-          </Link>
-        </Card>
-      </div>
-
-      <div className={styles.flowSection}>
-        <h2 className={styles.flowTitle}>三方协作流程</h2>
-        <div className={styles.flowChart}>
-          <div className={styles.flowStep}>
-            <div className={styles.flowNumber}>1</div>
-            <div className={styles.flowContent}>
-              <h4>业主定目标</h4>
-              <p>明确业务风险与安全目标</p>
-            </div>
-          </div>
-          <div className={styles.flowArrow}>
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
-            </svg>
-          </div>
-          <div className={styles.flowStep}>
-            <div className={styles.flowNumber}>2</div>
-            <div className={styles.flowContent}>
-              <h4>集成商搭系统</h4>
-              <p>分区分域与规则设计</p>
-            </div>
-          </div>
-          <div className={styles.flowArrow}>
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
-            </svg>
-          </div>
-          <div className={styles.flowStep}>
-            <div className={styles.flowNumber}>3</div>
-            <div className={styles.flowContent}>
-              <h4>设备商供能力</h4>
-              <p>产品能力与证据输入</p>
-            </div>
-          </div>
-          <div className={styles.flowArrow}>
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
-            </svg>
-          </div>
-          <div className={styles.flowStep}>
-            <div className={styles.flowNumber}>4</div>
-            <div className={styles.flowContent}>
-              <h4>系统做翻译</h4>
-              <p>需求匹配与选型建议</p>
-            </div>
-          </div>
-          <div className={styles.flowArrow}>
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
-            </svg>
-          </div>
-          <div className={styles.flowStep}>
-            <div className={styles.flowNumber}>5</div>
-            <div className={styles.flowContent}>
-              <h4>项目可验收</h4>
-              <p>方案输出与运维基线</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className={styles.quickLinks}>
-        <Link to="/selection" className={styles.quickLink}>
-          <span>选型匹配中心</span>
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
-          </svg>
-        </Link>
-        <Link to="/report" className={styles.quickLink}>
-          <span>报告中心</span>
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
-          </svg>
-        </Link>
-        <Link to="/learning" className={styles.quickLink}>
-          <span>学习模式</span>
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
-          </svg>
-        </Link>
-      </div>
+      <section className={styles.menuTable}>
+        <div className={styles.menuRow}><span>需求</span><small>业主访谈</small><Link to="/owner"><Button variant="secondary" size="small">进入</Button></Link></div>
+        <div className={styles.menuRow}><span>设计</span><small>集成商设计</small><Link to="/integrator"><Button variant="secondary" size="small">进入</Button></Link></div>
+        <div className={styles.menuRow}><span>能力</span><small>设备商声明</small><Link to="/vendor"><Button variant="secondary" size="small">进入</Button></Link></div>
+        <div className={styles.menuRow}><span>差距</span><small>匹配结果</small><Link to="/selection"><Button variant="secondary" size="small">进入</Button></Link></div>
+      </section>
     </div>
   );
 }
