@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/Common';
 import { ProjectStageShell } from '../../components/ProjectFlow';
 import { useProject } from '../../hooks/useProject';
@@ -125,7 +125,7 @@ export function OwnerInterview() {
       <div className={styles.stepTabs}>{STEPS.map((item, index) => <button key={item.id} type="button" className={`${styles.stepTab} ${index === currentStep ? styles.stepTabActive : ''}`} onClick={() => setCurrentStep(index)}>{String(index + 1).padStart(2, '0')} {item.title}</button>)}</div>
       <div className={styles.panel}>{content}</div>
       <div className={styles.actions}>
-        <Button variant="ghost" size="medium" onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 0))} disabled={currentStep === 0}>上一步</Button>
+        {currentStep === 0 ? <Link to="/project"><Button variant="ghost" size="medium">上一步</Button></Link> : <Button variant="ghost" size="medium" onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 0))}>上一步</Button>}
         {currentStep === STEPS.length - 1 ? <Button variant="primary" size="medium" onClick={handleComplete}>生成需求结果</Button> : <Button variant="primary" size="medium" onClick={() => setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1))}>下一步</Button>}
       </div>
     </ProjectStageShell>

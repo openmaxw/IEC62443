@@ -4,28 +4,22 @@ import { useProject } from '../../hooks/useProject';
 import { INDUSTRIES } from '../../data/industries';
 import styles from './Home.module.css';
 
-function deriveStage(state) {
-  if (state.selectionAnalysis?.results?.results?.length || state.selectionAnalysis?.results?.results?.[0]) return { route: '/selection', action: '查看当前结果' };
-  if (state.vendorCatalog?.capabilities?.length) return { route: '/vendor/result', action: '进入当前步骤' };
-  if (state.integratorDesign?.plan) return { route: '/integrator/result', action: '进入当前步骤' };
-  if (state.ownerProfile?.assessment && state.riskTranslation?.profile) return { route: '/owner/result', action: '进入当前步骤' };
-  return { route: '/owner', action: '从需求开始' };
-}
-
 export function Home() {
   const { state, actions } = useProject();
-  const currentStage = deriveStage(state);
   const projectMeta = state.projectMeta || {};
   const updateMeta = (field, value) => actions.setProjectMeta({ [field]: value });
 
   return (
     <div className={styles.page}>
-      <section className={styles.topBar}>
-        <div>
-          <Badge variant="primary" size="medium">项目</Badge>
-          <strong className={styles.projectTitle}>{projectMeta.projectName || 'IEC 62443 协同工作台'}</strong>
+      <section className={styles.guidanceSection}>
+        <div className={styles.guidanceText}>
+          <Badge variant="primary" size="medium">项目初始化</Badge>
+          <p>本页用于填写项目基础信息，形成后续需求整理、设计分析、能力声明与差距比对的共同上下文。</p>
+          <div className={styles.guidanceMeta}>
+            <span><strong>适用角色：</strong>项目负责人 / 业主侧牵头人</span>
+            <span><strong>使用方式：</strong>补充项目基础信息后，进入需求页面开展后续工作</span>
+          </div>
         </div>
-        <Link to={currentStage.route}><Button variant="primary" size="medium">{currentStage.action}</Button></Link>
       </section>
 
       <section className={styles.projectPanel}>
@@ -46,11 +40,11 @@ export function Home() {
         <input value={projectMeta.projectObjective || ''} onChange={(event) => updateMeta('projectObjective', event.target.value)} placeholder="一句话目标" />
       </section>
 
-      <section className={styles.menuTable}>
-        <div className={styles.menuRow}><span>需求</span><small>业主访谈</small><Link to="/owner"><Button variant="secondary" size="small">进入</Button></Link></div>
-        <div className={styles.menuRow}><span>设计</span><small>集成商设计</small><Link to="/integrator"><Button variant="secondary" size="small">进入</Button></Link></div>
-        <div className={styles.menuRow}><span>能力</span><small>设备商声明</small><Link to="/vendor"><Button variant="secondary" size="small">进入</Button></Link></div>
-        <div className={styles.menuRow}><span>差距</span><small>匹配结果</small><Link to="/selection"><Button variant="secondary" size="small">进入</Button></Link></div>
+      <section className={styles.navSection}>
+        <div className={styles.navActions}>
+          <Link to="/"><Button variant="ghost" size="medium">上一步</Button></Link>
+          <Link to="/owner"><Button variant="primary" size="medium">下一步</Button></Link>
+        </div>
       </section>
     </div>
   );

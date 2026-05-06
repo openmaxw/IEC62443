@@ -1,0 +1,13 @@
+.page { width: min(1200px, calc(100vw - 32px)); margin: 0 auto; padding: 24px 0 36px; display: grid; gap: 18px; }
+.hero { display: grid; gap: 14px; padding: 32px; border: 1px solid var(--color-border); border-radius: 24px; background: linear-gradient(135deg, rgba(255,138,42,.12), rgba(83,184,255,.08) 55%, rgba(255,255,255,.02)); }
+.hero h1 { margin: 0; max-width: 920px; font-size: clamp(34px, 4.6vw, 56px); line-height: 1.12; letter-spacing: -0.02em; }
+.lead { margin: 0; max-width: 860px; color: var(--color-text-secondary); font-size: 18px; line-height: 1.75; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.valueSection { display: grid; }
+.valueList { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.valueCard { display: grid; gap: 14px; padding: 20px; border-radius: 18px; border: 1px solid var(--color-border); background: rgba(255,255,255,.02); }
+.valueCard strong { font-size: 20px; }
+.pointList { display: grid; gap: 10px; }
+.pointList p { margin: 0; color: var(--color-text-secondary); line-height: 1.75; }
+@media (max-width: 960px) { .valueList { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .page { width: min(100vw - 16px, 1200px); padding-top: 16px; } .hero { padding: 22px; } .hero h1 { font-size: 30px; } .lead { font-size: 16px; } }

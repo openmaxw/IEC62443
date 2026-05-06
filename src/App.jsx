@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ProjectProvider } from './context/ProjectContext';
 import { Header } from './components/Layout';
+import { Footer } from './components/Footer/Footer';
 import { Home } from './pages/Home/Home';
+import { Landing } from './pages/Landing/Landing';
 import { OwnerInterview } from './pages/Owner/OwnerInterview';
 import { OwnerResult } from './pages/Owner/OwnerResult';
 import { IntegratorWorkspace } from './pages/Integrator/IntegratorWorkspace';
@@ -15,14 +17,17 @@ import { Dashboard } from './pages/Dashboard/Dashboard';
 import { TranslationCenter } from './pages/TranslationCenter/TranslationCenter';
 import './index.css';
 
+const basename = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.replace(/\/$/, '');
+
 export default function App() {
   return (
     <ProjectProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={basename}>
         <Header />
         <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Landing />} />
+            <Route path="/project" element={<Home />} />
             <Route path="/owner" element={<OwnerInterview />} />
             <Route path="/owner/result" element={<OwnerResult />} />
             <Route path="/integrator" element={<IntegratorWorkspace />} />
@@ -36,6 +41,7 @@ export default function App() {
             <Route path="/learning" element={<LearningMode />} />
           </Routes>
         </main>
+        <Footer />
       </BrowserRouter>
     </ProjectProvider>
   );

@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import styles from './Header.module.css';
 
 const NAV_ITEMS = [
-  { to: '/', label: '项目', hint: '基础信息' },
+  { to: '/project', label: '项目', hint: '基础信息' },
   { to: '/owner', label: '需求', hint: '业主访谈' },
   { to: '/integrator', label: '设计', hint: '集成商设计' },
   { to: '/vendor', label: '能力', hint: '设备商声明' },
@@ -30,7 +30,7 @@ export function Header() {
           </div>
           <div className={styles.brandText}>
             <strong>IEC 62443 协同工作台</strong>
-            <span>让三方在同一项目语境下协同推进</span>
+            <span>让业主 / 集成商 / 设备商在同一项目语境下协同推进</span>
           </div>
         </Link>
 
