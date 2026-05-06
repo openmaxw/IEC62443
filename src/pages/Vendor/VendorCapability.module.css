@@ -1,9 +1,14 @@
 .workspace { display: grid; gap: 10px; }
+.modeHint, .productHint { padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: rgba(255,255,255,.02); color: var(--color-text-secondary); font-size: 12px; line-height: 1.7; }
 .topForm { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .table { width: 100%; border-collapse: collapse; border: 1px solid var(--color-border); }
 .table th, .table td { padding: 8px 10px; border-bottom: 1px solid var(--color-border); text-align: left; vertical-align: top; font-size: 12px; }
 .table th { color: var(--color-text-muted); font-weight: 700; background: rgba(255,255,255,.02); }
 .requiredRow td:first-child { color: #ffd6b8; font-weight: 700; }
+.metaText { margin-top: 4px; color: var(--color-text-muted); font-size: 11px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace; }
+.appTag { display: inline-flex; align-items: center; justify-content: center; min-width: 82px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.appTagFit { border: 1px solid rgba(68,209,123,.35); background: rgba(68,209,123,.12); color: #dcffe8; }
+.appTagNeutral { border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05); color: var(--color-text-secondary); }
 .bottomBar { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
 .submitWrap { display: flex; align-items: flex-end; justify-content: flex-end; }
 @media (max-width: 1100px) { .topForm, .bottomBar { grid-template-columns: 1fr; } }

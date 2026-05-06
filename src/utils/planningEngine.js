@@ -4,14 +4,14 @@ function getZoneName(zoneId) {
   return ZONE_TEMPLATES.find((item) => item.id === zoneId)?.name || zoneId;
 }
 
-function getProtocolTemplate(protocolName) {
-  return CONDUIT_TEMPLATES.find((item) => item.protocols?.includes(protocolName));
+function getConduitTemplateByProtocol(protocolName) {
+  return CONDUIT_TEMPLATES.find((item) => item.typicalProtocols?.includes(protocolName));
 }
 
 export function hasCompleteCommunicationMatrix(plan) {
   const flows = plan?.communicationFlows || [];
   return flows.length > 0 && flows.every((flow) => (
-    flow.source && flow.target && flow.protocol && flow.direction && flow.businessReason
+    flow.source && flow.target && flow.protocol && flow.businessReason
   ));
 }
 
@@ -22,7 +22,7 @@ export function buildCommunicationMatrix(plan) {
   if (!complete) {
     return {
       complete: false,
-      missingFields: ['source', 'target', 'protocol', 'direction', 'businessReason'],
+      missingFields: ['source', 'target', 'protocol', 'businessReason'],
       rows: []
     };
   }
@@ -37,9 +37,9 @@ export function buildCommunicationMatrix(plan) {
       target: flow.target,
       targetName: getZoneName(flow.target),
       protocol: flow.protocol,
-      direction: flow.direction,
+      direction: `${getZoneName(flow.source)} → ${getZoneName(flow.target)}`,
       businessReason: flow.businessReason,
-      boundaryHint: getProtocolTemplate(flow.protocol)?.securityMeasures || []
+      boundaryHint: getConduitTemplateByProtocol(flow.protocol)?.securityMeasures || []
     }))
   };
 }
@@ -90,9 +90,9 @@ export function buildSystemRules(plan, riskProfile, communicationMatrix) {
   const rules = [];
 
   if (communicationMatrix.complete) {
-    rules.push('所有跨区通信都应具备明确业务理由、方向限制和最小开放范围。');
+    rules.push('所有跨区通信都应具备明确业务理由和最小开放范围。');
   } else {
-    rules.push('当前通信流信息不完整，暂不能形成完整通信矩阵，应先补齐源/目的/协议/方向/业务理由。');
+    rules.push('当前通信流信息不完整，暂不能形成完整通信矩阵，应先补齐源/目的/协议/业务理由。');
   }
 
   if ((riskProfile?.riskConcerns || []).some((item) => item.id === 'remoteAccess')) {

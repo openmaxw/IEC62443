@@ -8,17 +8,29 @@ export function Home() {
   const { state, actions } = useProject();
   const projectMeta = state.projectMeta || {};
   const updateMeta = (field, value) => actions.setProjectMeta({ [field]: value });
+  const handleReset = () => {
+    if (window.confirm('初始化后将清空当前项目及后续流程的全部已填写信息，是否继续？')) {
+      actions.resetProject();
+    }
+  };
 
   return (
     <div className={styles.page}>
-      <section className={styles.guidanceSection}>
-        <div className={styles.guidanceText}>
-          <Badge variant="primary" size="medium">项目初始化</Badge>
-          <p>本页用于填写项目基础信息，形成后续需求整理、设计分析、能力声明与差距比对的共同上下文。</p>
-          <div className={styles.guidanceMeta}>
-            <span><strong>适用角色：</strong>项目负责人 / 业主侧牵头人</span>
-            <span><strong>使用方式：</strong>补充项目基础信息后，进入需求页面开展后续工作</span>
-          </div>
+      <section className={styles.toolbarRow}>
+        <div className={styles.titleGroup}>
+          <Badge variant="primary" size="medium">阶段 0</Badge>
+          <strong>项目</strong>
+        </div>
+        <div className={styles.actionGroup}>
+          <Button variant="secondary" size="medium" onClick={handleReset}>初始化</Button>
+        </div>
+      </section>
+
+      <section className={styles.guidanceRow}>
+        <p>本页用于填写项目基础信息，形成后续需求整理、设计分析、能力声明与差距比对的共同上下文。</p>
+        <div className={styles.guidanceMeta}>
+          <span><strong>填写角色：</strong>项目负责人 / 业主侧牵头人</span>
+          <span><strong>使用方式：</strong>补充项目基础信息后，进入需求页面开展后续工作</span>
         </div>
       </section>
 

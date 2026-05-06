@@ -2,6 +2,7 @@
 .topGrid, .dualGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .block { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: rgba(255,255,255,.02); padding: 10px; }
 .blockTitle { font-size: 12px; font-weight: 700; color: var(--color-text-muted); margin-bottom: 8px; text-transform: uppercase; }
+.blockHint { margin: -2px 0 10px; color: var(--color-text-secondary); font-size: 12px; line-height: 1.7; }
 .tagMatrix { display: flex; flex-wrap: wrap; gap: 8px; }
 .tag { min-height: 30px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--color-border); background: rgba(255,255,255,.03); color: var(--color-text-secondary); font-size: 12px; }
 .activeTag { border-color: rgba(255,138,42,.45); color: #fff; background: linear-gradient(135deg, rgba(255,138,42,.24), rgba(255,107,0,.18)); }
@@ -14,3 +15,6 @@
 .footerBar { display: flex; justify-content: flex-end; }
 .empty { padding: 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); }
 @media (max-width: 1100px) { .topGrid, .dualGrid, .inlineForm { grid-template-columns: 1fr; } }
+
+.groupTitle { font-weight: 700; color: var(--color-text); }
+.capabilityCode { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace; font-size: 12px; color: #ffd6b8; }

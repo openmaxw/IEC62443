@@ -3,6 +3,12 @@
 .titleGroup { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .titleGroup strong { font-size: 14px; }
 .actionGroup { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.guidanceRow { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: rgba(255,255,255,.02); }
+.guidanceRow p { margin: 0; color: var(--color-text-secondary); line-height: 1.75; }
+.guidanceMeta { display: grid; gap: 8px; color: var(--color-text-secondary); }
+.guidanceMeta span { font-size: 13px; line-height: 1.6; }
 .statusRow { display: flex; gap: 12px; flex-wrap: wrap; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: rgba(255,255,255,.015); color: var(--color-text-muted); font-size: 12px; }
 .body { display: grid; gap: 10px; }
-@media (max-width: 768px) { .page { width: min(100vw - 16px, 1480px); } }
+.navRow { padding-top: 2px; }
+.navActions { display: flex; justify-content: space-between; gap: 8px; }
+@media (max-width: 768px) { .page { width: min(100vw - 16px, 1480px); } .navActions { flex-direction: column; } }

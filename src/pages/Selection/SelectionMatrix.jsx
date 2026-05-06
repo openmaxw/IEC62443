@@ -14,10 +14,17 @@ export function SelectionMatrix() {
   if (!plan || !capabilities?.length) {
     return (
       <div className={styles.page}>
+        <section className={styles.guidanceSection}>
+          <p>本页用于查看能力匹配结果、差距重点与补偿方向，作为三方共同判断的参考页面。</p>
+          <div className={styles.guidanceMeta}>
+            <span><strong>填写角色：</strong>业主 / 集成商 / 设备商</span>
+            <span><strong>使用方式：</strong>先完成设计与能力声明，再返回本页查看差距结果</span>
+          </div>
+        </section>
         <Card className={styles.empty} title="暂无匹配结果" subtitle="请先完成集成设计和设备能力声明。">
           <div className={styles.actions}>
-            <Link to="/integrator"><Button variant="secondary" size="large">去集成设计</Button></Link>
-            <Link to="/vendor"><Button variant="primary" size="large">去设备声明</Button></Link>
+            <Link to="/integrator"><Button variant="secondary" size="large">上一步</Button></Link>
+            <Link to="/vendor"><Button variant="primary" size="large">下一步</Button></Link>
           </div>
         </Card>
       </div>
@@ -26,6 +33,14 @@ export function SelectionMatrix() {
 
   return (
     <div className={styles.page}>
+      <section className={styles.guidanceSection}>
+        <p>本页用于查看能力匹配结果、差距重点与补偿方向，作为三方共同判断的参考页面。</p>
+        <div className={styles.guidanceMeta}>
+          <span><strong>填写角色：</strong>业主 / 集成商 / 设备商</span>
+          <span><strong>使用方式：</strong>结合匹配结果识别差距重点，支持方案比较与选型判断</span>
+        </div>
+      </section>
+
       <section className={styles.hero}>
         <div>
           <Badge variant="primary" size="large">选型匹配中心</Badge>
@@ -56,6 +71,13 @@ export function SelectionMatrix() {
             ))}
           </div>
         </Card>
+      </section>
+
+      <section className={styles.navSection}>
+        <div className={styles.navActions}>
+          <Link to="/vendor"><Button variant="ghost" size="medium">上一步</Button></Link>
+          <span />
+        </div>
       </section>
     </div>
   );

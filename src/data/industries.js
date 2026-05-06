@@ -40,6 +40,63 @@ export const INDUSTRIES = [
     ]
   },
   {
+    id: 'semiconductor',
+    name: '半导体',
+    nameEn: 'Semiconductor',
+    description: '晶圆制造、封装测试、洁净厂务',
+    icon: 'cpu',
+    painPoints: [
+      '洁净环境连续运行要求高',
+      '工艺设备高度自动化',
+      '厂务系统与生产系统耦合紧密',
+      '停机对良率与交付影响大'
+    ],
+    typicalAssets: [
+      'MES接口设备',
+      '工艺机台控制器',
+      '洁净室厂务系统',
+      'AMHS物流控制系统'
+    ]
+  },
+  {
+    id: 'metallurgy',
+    name: '冶金',
+    nameEn: 'Metallurgy',
+    description: '钢铁、有色、冶炼与轧制生产',
+    icon: 'anvil',
+    painPoints: [
+      '高温高危场景连续生产',
+      '关键工序停机损失大',
+      '大型生产线控制链条复杂',
+      '设备改造与兼容压力高'
+    ],
+    typicalAssets: [
+      '高炉控制系统',
+      '轧线PLC',
+      '能源介质调度系统',
+      '过程监控与质量检测系统'
+    ]
+  },
+  {
+    id: 'medical',
+    name: '医疗',
+    nameEn: 'Healthcare',
+    description: '医院、医疗设备、实验室与医药场景',
+    icon: 'heart-pulse',
+    painPoints: [
+      '关键业务连续性要求高',
+      '患者安全与隐私要求高',
+      '医疗设备来源复杂',
+      '运维窗口和变更限制严格'
+    ],
+    typicalAssets: [
+      '医学影像设备',
+      '实验室自动化系统',
+      '楼宇与环境控制系统',
+      '医疗专用服务器与终端'
+    ]
+  },
+  {
     id: 'energy',
     name: '能源行业',
     nameEn: 'Energy',

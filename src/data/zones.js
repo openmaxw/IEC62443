@@ -83,7 +83,7 @@ export const CONDUIT_TEMPLATES = [
     typicalBandwidth: '1Gbps',
     securityMeasures: ['工业防火墙', 'MRP环网冗余', 'DPI检测'],
     maxSL: 3,
-    typicalProtocols: ['Modbus TCP', 'EtherNet/IP', 'PROFINET', 'OPC UA']
+    typicalProtocols: ['Modbus TCP', 'EtherNet/IP', 'PROFINET', 'OPC UA', 'EtherCAT', 'MQTT']
   },
   {
     id: 'conduit-fieldbus',
@@ -113,7 +113,7 @@ export const CONDUIT_TEMPLATES = [
     typicalBandwidth: '54Mbps - 300Mbps',
     securityMeasures: ['WPA3-Enterprise', 'VPN隧道', '网络准入控制'],
     maxSL: 3,
-    typicalProtocols: ['WirelessHART', 'ISA100.11a', 'Wi-Fi']
+    typicalProtocols: ['WirelessHART', 'ISA100.11a', 'Wi-Fi', 'MQTT']
   },
   {
     id: 'conduit-opcua',
@@ -128,6 +128,12 @@ export const CONDUIT_TEMPLATES = [
 ];
 
 export const PROTOCOL_TEMPLATES = [
+  { id: 'http', name: 'HTTP', port: 80, layer: 7, security: 'basic' },
+  { id: 'https', name: 'HTTPS', port: 443, layer: 7, security: 'high' },
+  { id: 'ssh', name: 'SSH', port: 22, layer: 7, security: 'high' },
+  { id: 'mqtt', name: 'MQTT', port: 1883, layer: 7, security: 'medium' },
+  { id: 'tcp-ip', name: '普通TCP/IP', port: null, layer: 4, security: 'basic' },
+  { id: 'ethercat', name: 'EtherCAT', port: null, layer: 2, security: 'medium' },
   { id: 'modbus-tcp', name: 'Modbus TCP', port: 502, layer: 4, security: 'basic' },
   { id: 'opc-ua', name: 'OPC UA', port: 4840, layer: 4, security: 'high' },
   { id: 'ethernet-ip', name: 'EtherNet/IP', port: 44818, layer: 4, security: 'medium' },
@@ -144,22 +150,22 @@ export const PROTOCOL_TEMPLATES = [
 // 安全等级与协议匹配建议
 export const SL_PROTOCOL_RECOMMENDATION = {
   1: {
-    protocols: ['modbus-tcp', 'bacnet'],
+    protocols: ['modbus-tcp', 'bacnet', 'http', 'tcp-ip'],
     minSecurity: 'basic',
     description: '基础安全，适合SL1，使用标准工业协议'
   },
   2: {
-    protocols: ['modbus-tcp', 'ethernet-ip', 'dnp3', 'bacnet'],
+    protocols: ['modbus-tcp', 'ethernet-ip', 'dnp3', 'bacnet', 'https', 'ssh', 'mqtt', 'tcp-ip'],
     minSecurity: 'medium',
     description: '标准安全，适合SL2，需启用协议安全特性'
   },
   3: {
-    protocols: ['opc-ua', 'ethernet-ip', 'dnp3'],
+    protocols: ['opc-ua', 'ethernet-ip', 'dnp3', 'https', 'ssh', 'mqtt', 'ethercat'],
     minSecurity: 'high',
     description: '高级安全，适合SL3，推荐使用OPC UA或加密隧道'
   },
   4: {
-    protocols: ['opc-ua'],
+    protocols: ['opc-ua', 'https', 'ssh'],
     minSecurity: 'high',
     description: '最高安全，适合SL4，必须使用端到端加密和证书认证'
   }
