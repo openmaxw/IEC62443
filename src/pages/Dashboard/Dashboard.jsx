@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Button, Badge, Card } from '../../components/Common';
+import { Button, Card } from '../../components/Common';
+import { ProjectStageShell } from '../../components/ProjectFlow';
 import { useOwnerPath, useIntegratorPath, useVendorPath, useProject, useProjectStatus } from '../../hooks/useProject';
 import styles from './Dashboard.module.css';
 
@@ -63,74 +64,75 @@ export function Dashboard() {
   ];
 
   return (
-    <div className={styles.page}>
-      <section className={styles.hero}>
-        <div>
-          <Badge variant="primary" size="medium">项目工作台</Badge>
-          <h1>{projectMeta.projectName || '当前项目'}</h1>
-          <p>
-            {[projectMeta.organizationName, projectMeta.siteName, projectMeta.industry, projectMeta.scenarioType].filter(Boolean).join(' / ') || '先从业主步骤 01 填写项目场景与基础信息，再按阶段推进 IEC 62443 协同工作流。'}
-          </p>
-        </div>
-        <div className={styles.heroAction}>
-          <div className={styles.progressValue}>{progress.percentage}%</div>
-          <div className={styles.progressText}>已完成 {progress.completed} / {progress.total} 个阶段</div>
-          <Link to={nextAction.route}><Button variant="primary" size="medium">继续：{nextAction.label}</Button></Link>
-        </div>
-      </section>
+    <ProjectStageShell
+      stageNumber="00"
+      title="工作台"
+      projectName={projectMeta.projectName}
+      outputLabel={`总进度 ${progress.completed} / ${progress.total}`}
+      guidance={{
+        summary: '工作台用于查看当前项目进度、关键缺口和下一步动作，作为各阶段的统一入口。',
+        role: '项目经理 / 业主 / 集成商 / 设备商',
+        usage: '优先补齐缺失输入，再按阶段进入对应页面继续完善。'
+      }}
+      toolbar={<><Button variant="secondary" size="small" onClick={handleLoadDemo}>加载演示项目</Button><Button variant="ghost" size="small" onClick={handleReset}>重置项目</Button></>}
+    >
+      <section className={styles.page}>
+        <section className={styles.hero}>
+          <div>
+            <h1>{projectMeta.projectName || '当前项目'}</h1>
+            <p>
+              {[projectMeta.organizationName, projectMeta.siteName, projectMeta.industry, projectMeta.scenarioType].filter(Boolean).join(' / ') || '先从业主步骤 01 填写项目场景与基础信息，再按阶段推进 IEC 62443 协同工作流。'}
+            </p>
+          </div>
+          <div className={styles.heroAction}>
+            <div className={styles.progressValue}>{progress.percentage}%</div>
+            <div className={styles.progressText}>已完成 {progress.completed} / {progress.total} 个阶段</div>
+            {nextAction ? <Link to={nextAction.route}><Button variant="primary" size="small">下一步：{nextAction.label}</Button></Link> : <Link to="/report"><Button variant="secondary" size="small">查看交付中心</Button></Link>}
+          </div>
+        </section>
 
-      <section className={styles.grid}>
-        <Card title="快速开始" description="从这里初始化项目，或一键加载演示数据查看完整链路。">
-          <div className={styles.nextActionCard}>
-            <strong>{state.projectMeta?.projectName ? '当前已存在项目数据' : '当前尚未初始化项目数据'}</strong>
-            <span>建议先进入业主步骤 01 填写项目基础信息与项目场景（现已并入业主页）；如需快速查看流程，可先加载演示数据。</span>
-            <div className={styles.inlineActions}>
-              <Button variant="secondary" size="small" onClick={handleLoadDemo}>加载演示数据</Button>
-              <Button variant="ghost" size="small" onClick={handleReset}>初始化</Button>
+        <section className={styles.progressSection}>
+          {progress.stages.map((stage) => (
+            <div key={stage.id} className={`${styles.stageItem} ${progress.stageStatus[stage.id] ? styles.stageDone : ''}`}>
+              <span>{stage.id === 'project' ? '阶段 00' : stage.id === 'owner' ? '阶段 01' : stage.id === 'integrator' ? '阶段 02' : stage.id === 'vendor' ? '阶段 03' : stage.id === 'selection' ? '阶段 04' : '阶段 06'}</span>
+              <strong>{STAGE_LABELS[stage.id]}</strong>
             </div>
-          </div>
-        </Card>
+          ))}
+        </section>
 
-        <Card title="下一步建议" description="优先引导到最值得继续推进的页面。">
-          <div className={styles.nextActionCard}>
-            <strong>{nextAction.label}</strong>
-            <span>建议继续前往 `{nextAction.route}` 完成当前阶段任务。</span>
-            <Link to={nextAction.route}><Button variant="secondary" size="small">前往处理</Button></Link>
-          </div>
-        </Card>
-      </section>
-
-      <section className={styles.progressSection}>
-        {progress.stages.map((stage) => (
-          <div key={stage.id} className={`${styles.stageItem} ${progress.stageStatus[stage.id] ? styles.stageDone : ''}`}>
-            <span>{STAGE_LABELS[stage.id]}</span>
-            <strong>{progress.stageStatus[stage.id] ? '已完成' : '待推进'}</strong>
-          </div>
-        ))}
-      </section>
-
-      <section className={styles.grid}>
-        <Card title="缺失输入" description="系统根据当前项目状态判断接下来需要补齐的内容。">
-          <div className={styles.listBlock}>
-            {missingInputs.length ? missingInputs.map((item) => (
-              <Link key={item.id} to={item.route} className={styles.linkRow}>{item.label}</Link>
-            )) : <div className={styles.empty}>当前关键输入已基本齐备，可继续完善设计和交付。</div>}
-          </div>
-        </Card>
-      </section>
-
-      <section className={styles.cardGrid}>
-        {cards.map((card) => (
-          <article key={card.id} className={styles.statusCard}>
-            <div className={styles.statusHead}>
-              <strong>{card.title}</strong>
-              <span className={card.ready ? styles.ready : styles.pending}>{card.ready ? '已具备' : '待补齐'}</span>
+        <section className={styles.grid}>
+          <Card title="下一步建议" subtitle="根据当前项目状态，优先补齐关键输入和阶段输出。">
+            <div className={styles.nextActionCard}>
+              <strong>{nextAction?.label || '当前阶段已基本完成'}</strong>
+              <span>{nextAction?.description || '可以转入交付中心查看阶段成果，或回到具体页面继续细化内容。'}</span>
+              <div className={styles.inlineActions}>
+                {nextAction ? <Link to={nextAction.route}><Button variant="primary" size="small">前往处理</Button></Link> : <Link to="/report"><Button variant="secondary" size="small">查看交付中心</Button></Link>}
+              </div>
             </div>
-            <p>{card.detail}</p>
-            <Link to={card.route}><Button variant={card.ready ? 'secondary' : 'primary'} size="small">查看阶段</Button></Link>
-          </article>
-        ))}
+          </Card>
+
+          <Card title="缺失输入" subtitle="这些信息会直接影响后续设计、能力声明和交付完整度。">
+            <div className={styles.listBlock}>
+              {missingInputs.length ? missingInputs.map((item) => (
+                <Link key={item.id} to={item.route} className={styles.linkRow}>{item.label}</Link>
+              )) : <div className={styles.empty}>当前关键输入已基本齐备，可继续完善设计和交付。</div>}
+            </div>
+          </Card>
+        </section>
+
+        <section className={styles.cardGrid}>
+          {cards.map((card) => (
+            <article key={card.id} className={styles.statusCard}>
+              <div className={styles.statusHead}>
+                <strong>{card.title}</strong>
+                <span className={card.ready ? styles.ready : styles.pending}>{card.ready ? '已具备' : '待补齐'}</span>
+              </div>
+              <p>{card.detail}</p>
+              <Link to={card.route}><Button variant={card.ready ? 'secondary' : 'primary'} size="small">查看阶段</Button></Link>
+            </article>
+          ))}
+        </section>
       </section>
-    </div>
+    </ProjectStageShell>
   );
 }

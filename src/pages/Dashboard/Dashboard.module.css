@@ -1,22 +1,25 @@
 .page {
-  padding: 32px;
+  width: min(1440px, calc(100vw - 24px));
+  margin: 0 auto;
+  padding: 8px 0 18px;
   display: grid;
-  gap: 24px;
+  gap: 12px;
 }
 
 .hero {
   display: flex;
   justify-content: space-between;
-  gap: 28px;
-  padding: 28px;
-  border-radius: 24px;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: var(--radius-xl);
   background: linear-gradient(135deg, rgba(255, 138, 42, 0.16), rgba(88, 183, 255, 0.14));
   border: 1px solid rgba(170, 184, 195, 0.2);
   box-shadow: var(--shadow-md);
 }
 
 .hero h1 {
-  margin: 12px 0 10px;
+  margin: 4px 0 6px;
+  font-size: clamp(24px, 3vw, 34px);
 }
 
 .hero p,
@@ -27,16 +30,16 @@
 }
 
 .heroAction {
-  min-width: 260px;
+  min-width: 220px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .progressValue {
-  font-size: 40px;
+  font-size: 30px;
   font-weight: 800;
   color: var(--color-primary);
   line-height: 1;
@@ -45,25 +48,25 @@
 .progressSection {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .stageItem {
-  padding: 14px 16px;
-  border-radius: 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
   background: rgba(255,255,255,.02);
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .stageItem span {
   color: var(--color-text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .stageItem strong {
-  font-size: 14px;
+  font-size: var(--font-size-md);
   color: var(--color-warning);
 }
 
@@ -79,22 +82,22 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
 }
 
 .nextActionCard {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .nextActionCard strong {
-  font-size: 16px;
+  font-size: var(--font-size-xl);
   color: var(--color-text);
 }
 
 .nextActionCard span {
   color: var(--color-text-secondary);
-  line-height: 1.7;
+  line-height: var(--line-height-relaxed);
 }
 
 .inlineActions {
@@ -105,12 +108,12 @@
 
 .listBlock {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .linkRow {
-  padding: 12px 14px;
-  border-radius: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
   border: 1px solid rgba(246, 195, 91, 0.22);
   background: var(--color-warning-soft);
   color: #ffe4a8;
@@ -125,39 +128,39 @@
 .cardGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
 }
 
 .statusCard {
-  padding: 18px;
-  border-radius: 18px;
+  padding: 14px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
   background: rgba(255,255,255,.02);
   display: grid;
-  gap: 12px;
+  gap: 10px;
   box-shadow: var(--shadow-sm);
 }
 
 .statusCard p {
-  line-height: 1.7;
+  line-height: var(--line-height-relaxed);
 }
 
 .statusHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
 .statusHead strong {
-  font-size: 16px;
+  font-size: var(--font-size-xl);
 }
 
 .ready,
 .pending {
   padding: 4px 10px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 700;
 }
 
@@ -191,7 +194,10 @@
 }
 
 @media (max-width: 768px) {
-  .page,
+  .page {
+    width: min(100vw - 16px, 1440px);
+  }
+
   .cardGrid,
   .progressSection {
     grid-template-columns: 1fr;

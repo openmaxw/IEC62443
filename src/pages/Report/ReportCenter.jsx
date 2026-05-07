@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { ProjectStageShell } from '../../components/ProjectFlow';
 import { useOwnerPath, useIntegratorPath, useVendorPath, useProject } from '../../hooks/useProject';
 import { getCapabilityDisplay } from '../../data/capabilities';
 import styles from './ReportCenter.module.css';
@@ -25,24 +26,35 @@ export function ReportCenter() {
   ];
 
   return (
-    <div className={styles.page}>
-      <div className={styles.headerRow}><strong>{meta.projectName || '交付中心'}</strong><span>{[meta.organizationName, meta.siteName, meta.industry, meta.scenarioType].filter(Boolean).join(' / ')}</span></div>
+    <ProjectStageShell
+      stageNumber="06"
+      title="交付中心"
+      projectName={meta.projectName}
+      outputLabel={`闭环项 ${gapClosureItems.length} / 高严重度 ${highRiskCount}`}
+      prevAction={{ to: '/gap', label: '上一步' }}
+      guidance={{
+        summary: '交付中心用于汇总各阶段输出，检查差距闭环状态，并形成统一的项目交付索引。',
+        role: '项目经理 / 交付负责人 / 验收协调人',
+        usage: '先确认各阶段结果已具备，再检查闭环项是否完成并进入追溯查看。'
+      }}
+    >
+      <section className={styles.page}>
+        <section className={styles.section}>
+          <h3>交付索引</h3>
+          <table className={styles.table}><thead><tr><th>交付项</th><th>状态</th><th>说明</th><th>入口</th></tr></thead><tbody>{items.map((item) => <tr key={item.title}><td>{item.title}</td><td>{item.ready ? '已具备' : '待补齐'}</td><td>{item.desc}</td><td>{item.ready ? <Link to={item.route} className={styles.link}>查看</Link> : '—'}</td></tr>)}</tbody></table>
+        </section>
 
-      <section className={styles.section}>
-        <h3>交付索引</h3>
-        <table className={styles.table}><thead><tr><th>交付项</th><th>状态</th><th>说明</th><th>入口</th></tr></thead><tbody>{items.map((item) => <tr key={item.title}><td>{item.title}</td><td>{item.ready ? '已具备' : '待补齐'}</td><td>{item.desc}</td><td>{item.ready ? <Link to={item.route} className={styles.link}>查看</Link> : '—'}</td></tr>)}</tbody></table>
+        <section className={styles.section}>
+          <h3>闭环交付摘要</h3>
+          <div className={styles.grid}>
+            <div><span>待闭环差距</span><strong>{gapRows.length}</strong></div>
+            <div><span>已保存闭环项</span><strong>{gapClosureItems.length}</strong></div>
+            <div><span>高严重度</span><strong>{highRiskCount}</strong></div>
+            <div><span>依赖外部补偿</span><strong>{externalCount}</strong></div>
+          </div>
+          {gapClosureItems.length ? <div className={styles.list}>{gapClosureItems.map((item) => <article key={item.id} className={styles.item}><strong>{getCapabilityDisplay(item.capabilityId).label}</strong><div className={styles.capabilityMeta}><span className={styles.standardTag}>{getCapabilityDisplay(item.capabilityId).frText}</span><span className={styles.standardTag}>{getCapabilityDisplay(item.capabilityId).srText}</span></div><span>{item.owner || '责任方未填写'}</span><p><strong>补偿措施：</strong>{item.mitigation || '未填写'}</p><p><strong>验收影响：</strong>{item.acceptanceImpact || '未填写'}</p><p><strong>残余风险：</strong>{item.residualRisk || '未填写'}</p></article>)}</div> : <div className={styles.empty}>当前还没有已保存的闭环决策，请先前往差距闭环页完成保存。</div>}
+        </section>
       </section>
-
-      <section className={styles.section}>
-        <h3>闭环交付摘要</h3>
-        <div className={styles.grid}>
-          <div><span>待闭环差距</span><strong>{gapRows.length}</strong></div>
-          <div><span>已保存闭环项</span><strong>{gapClosureItems.length}</strong></div>
-          <div><span>高严重度</span><strong>{highRiskCount}</strong></div>
-          <div><span>依赖外部补偿</span><strong>{externalCount}</strong></div>
-        </div>
-        {gapClosureItems.length ? <div className={styles.list}>{gapClosureItems.map((item) => <article key={item.id} className={styles.item}><strong>{getCapabilityDisplay(item.capabilityId).label}</strong><div className={styles.capabilityMeta}><span className={styles.standardTag}>{getCapabilityDisplay(item.capabilityId).frText}</span><span className={styles.standardTag}>{getCapabilityDisplay(item.capabilityId).srText}</span></div><span>{item.owner || '责任方未填写'}</span><p><strong>补偿措施：</strong>{item.mitigation || '未填写'}</p><p><strong>验收影响：</strong>{item.acceptanceImpact || '未填写'}</p><p><strong>残余风险：</strong>{item.residualRisk || '未填写'}</p></article>)}</div> : <div className={styles.empty}>当前还没有已保存的闭环决策，请先前往差距闭环页完成保存。</div>}
-      </section>
-    </div>
+    </ProjectStageShell>
   );
 }
