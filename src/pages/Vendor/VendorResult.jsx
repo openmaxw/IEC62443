@@ -1,24 +1,32 @@
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/Common';
 import { ProjectStageShell } from '../../components/ProjectFlow';
-import { useVendorPath, useIntegratorPath, useProject } from '../../hooks/useProject';
-import { performMatching } from '../../utils/matchEngine';
+import { useVendorPath } from '../../hooks/useProject';
 import styles from './VendorResult.module.css';
 
+const LABELS = { fulfilled: '满足', partial: '部分满足', missing: '不满足', external: '需外部补偿', na: '不适用' };
+
 export function VendorResult() {
-  const { actions } = useProject();
-  const { capabilities } = useVendorPath();
-  const { plan } = useIntegratorPath();
-  if (!capabilities?.length) return <ProjectStageShell stageNumber="03" title="能力结果" outputLabel="能力结果"><div className={styles.empty}><Link to="/vendor"><Button variant="primary">去能力</Button></Link></div></ProjectStageShell>;
-  const latest = capabilities[capabilities.length - 1];
-  const match = plan ? performMatching(plan, [latest]) : null;
-  const top = match?.results?.[0] || null;
-  if (match) actions.setMatchResults(match);
+  const { projectMeta, capabilities } = useVendorPath();
+  const latest = capabilities?.[capabilities.length - 1];
+
+  if (!latest) {
+    return <ProjectStageShell stageNumber="03" title="能力结果" projectName={projectMeta?.projectName} outputLabel="设备声明摘要"><div className={styles.empty}><Link to="/vendor"><Button variant="primary">去声明能力</Button></Link></div></ProjectStageShell>;
+  }
+
+  const claims = latest.capabilityClaims || [];
+  const groups = {
+    fulfilled: claims.filter((item) => item.satisfaction === 'fulfilled'),
+    partial: claims.filter((item) => item.satisfaction === 'partial'),
+    missing: claims.filter((item) => item.satisfaction === 'missing'),
+    external: claims.filter((item) => item.satisfaction === 'external')
+  };
+
   return (
-    <ProjectStageShell stageNumber="03" title="能力结果" projectName={latest.productMeta?.productName} outputLabel="结论 / 依据 / 边界">
-      <div className={styles.resultBar}><strong>结论</strong><span>SL-{latest.productMeta?.securityLevel}</span><span>匹配度 {top?.overallScore ?? 0}% · {top?.recommendations.label || '待匹配'}</span><Link to="/selection"><Button variant="primary" size="small">查看差距</Button></Link></div>
-      <table className={styles.table}><thead><tr><th>能力项</th><th>满足</th><th>证据</th></tr></thead><tbody>{latest.capabilityClaims.slice(0, 12).map((claim) => <tr key={claim.capabilityId}><td>{claim.capabilityId}</td><td>{claim.satisfaction}</td><td>{claim.evidenceType}</td></tr>)}</tbody></table>
-      <div className={styles.note}>{latest.dependencies || '无统一依赖说明。'} / {latest.limitations || '无已知限制说明。'}</div>
+    <ProjectStageShell stageNumber="03" title="能力结果" projectName={projectMeta?.projectName} outputLabel="设备声明摘要" guidance={{ summary: '本页只保留设备商声明本身，不重复承担差距分析和补偿措施闭环。', role: '设备商 / 集成商', usage: '确认声明后进入差距分析。' }}>
+      <div className={styles.hero}><div><span className={styles.eyebrow}>设备声明摘要</span><h2>{latest.productMeta?.productName || '未命名产品'}</h2><p>{latest.productMeta?.deploymentScope || '未填写部署范围'} / SL-{latest.productMeta?.securityLevel || 2}</p></div><Link to="/selection"><Button variant="primary" size="small">进入差距分析</Button></Link></div>
+      <section className={styles.section}><h3>项目要求满足度概览</h3><div className={styles.summaryGrid}><div><span>满足</span><strong>{groups.fulfilled.length}</strong></div><div><span>部分满足</span><strong>{groups.partial.length}</strong></div><div><span>不满足</span><strong>{groups.missing.length}</strong></div><div><span>需外部补偿</span><strong>{groups.external.length}</strong></div></div></section>
+      <section className={styles.section}><h3>声明限制与依赖</h3><div className={styles.summaryGrid}><div><span>统一依赖</span><strong>{latest.dependencies || '未填写'}</strong></div><div><span>统一限制</span><strong>{latest.limitations || '未填写'}</strong></div></div></section>
     </ProjectStageShell>
   );
 }

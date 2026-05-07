@@ -62,7 +62,7 @@ export function createIntegratorDeliverables({ projectMeta, riskProfile, plan })
       { id: 'conduits', title: 'Conduit 与边界控制建议', items: (plan?.boundaryControls || []).map((item, index) => ({ id: `${item.conduitId}-${index}`, title: item.conduitId, summary: item.measure })) },
       { id: 'flows', title: '通信矩阵', items: plan?.communicationMatrix?.complete ? (plan.communicationMatrix.rows || []).map((item) => ({ id: item.id, title: `${item.sourceName} → ${item.targetName}`, summary: `${item.protocol} / ${item.direction === 'uni' ? '单向' : '双向'} / ${item.businessReason}` })) : [{ id: 'missing-flow', title: '通信矩阵未完整生成', summary: '需先补齐源/目的/协议/方向/业务理由。' }] },
       { id: 'rules', title: '系统规则建议', items: (plan?.systemRules || []).map((item, index) => ({ id: `rule-${index}`, title: `规则 ${index + 1}`, summary: item })) },
-      { id: 'requirements', title: '设备能力需求矩阵', items: (plan?.capabilityRequirements || []).map((item) => ({ id: `${item.capabilityId}-${item.controlObjective}`, title: item.capabilityId, summary: `${item.controlObjective} / ${item.sourceFR.join('、')} / SL${item.targetSL}` })) }
+      { id: 'requirements', title: '设备能力需求矩阵', items: (plan?.capabilityRequirements || []).map((item) => ({ id: `${item.capabilityId}-${item.controlObjective}`, title: getCapabilityDisplay(item.capabilityId).label, summary: `${getCapabilityDisplay(item.capabilityId).frText} / ${getCapabilityDisplay(item.capabilityId).srText} / ${item.controlObjective} / ${item.sourceFR.join('、')} / SL${item.targetSL}` })) }
     ],
     disclaimer: createDisclaimerPayload(),
     traceability: riskProfile?.explanations || []
@@ -83,7 +83,7 @@ export function createVendorDeliverables({ capabilities = [], matchResults }) {
     },
     sections: [
       { id: 'product', title: '产品基本信息', items: latest ? [{ id: 'meta', title: latest.productMeta.productName, summary: `${latest.productMeta.productType || '未分类'} / SL${latest.productMeta.securityLevel} / ${latest.productMeta.useCases || '未填写适用场景'}` }] : [] },
-      { id: 'claims', title: '能力声明', items: (latest?.capabilityClaims || []).map((item) => ({ id: item.capabilityId, title: item.capabilityId, summary: `${MATCH_STATUSES[item.satisfaction]?.label || item.satisfaction} / 证据：${item.evidenceType || '无'} / 依赖：${item.dependency || '无'}` })) },
+      { id: 'claims', title: '能力声明', items: (latest?.capabilityClaims || []).map((item) => ({ id: item.capabilityId, title: getCapabilityDisplay(item.capabilityId).label, summary: `${getCapabilityDisplay(item.capabilityId).frText} / ${getCapabilityDisplay(item.capabilityId).srText} / ${MATCH_STATUSES[item.satisfaction]?.label || item.satisfaction} / 证据：${item.evidenceType || '无'} / 依赖：${item.dependency || '无'}` })) },
       { id: 'dependencies', title: '前置依赖与限制', items: [{ id: 'deps', title: '统一依赖', summary: latest?.dependencies || '无统一依赖说明' }, { id: 'limits', title: '已知边界', summary: latest?.limitations || '无已知不适配边界说明' }] },
       { id: 'match', title: '项目匹配摘要', items: primary ? [
         { id: 'native', title: '原生满足', summary: String(primary.statusBreakdown.native || 0) },

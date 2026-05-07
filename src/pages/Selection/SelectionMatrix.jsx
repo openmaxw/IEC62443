@@ -1,84 +1,44 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Button, Badge } from '../../components/Common';
-import { useVendorPath, useIntegratorPath } from '../../hooks/useProject';
-import { performMatching } from '../../utils/matchEngine';
+import { Button } from '../../components/Common';
+import { ProjectStageShell } from '../../components/ProjectFlow';
+import { getCapabilityDisplay } from '../../data/capabilities';
+import { useIntegratorPath, useProject, useVendorPath } from '../../hooks/useProject';
 import styles from './SelectionMatrix.module.css';
 
+function buildSelectionResults(plan, latestCapability) {
+  const requirements = plan?.capabilityRequirements || [];
+  const claimMap = new Map((latestCapability?.capabilityClaims || []).map((item) => [item.capabilityId, item]));
+  const rows = requirements.map((requirement) => {
+    const claim = claimMap.get(requirement.capabilityId);
+    const status = claim?.satisfaction || 'missing';
+    const severity = status === 'missing' ? 'high' : status === 'external' ? 'medium' : status === 'partial' ? 'medium' : 'low';
+    return { id: requirement.id, capabilityId: requirement.capabilityId, controlObjective: requirement.controlObjective, status, evidenceType: claim?.evidenceType || '未填写', gapNote: status === 'missing' ? '当前未形成可接受实现路径。' : status === 'external' ? '需通过外围系统或边界控制补足。' : status === 'partial' ? '需配置或补充条件后满足。' : '当前可满足项目要求。', severity, owner: status === 'external' ? '集成商/业主' : status === 'missing' ? '设备商/集成商' : '设备商' };
+  });
+  return { rows, summary: { high: rows.filter((item) => item.severity === 'high').length, medium: rows.filter((item) => item.severity === 'medium').length, low: rows.filter((item) => item.severity === 'low').length } };
+}
+
+const STATUS_LABELS = { fulfilled: '满足', partial: '部分满足', missing: '不满足', external: '需外部补偿', na: '不适用' };
+
 export function SelectionMatrix() {
-  const { capabilities, matchResults } = useVendorPath();
+  const { state, actions } = useProject();
   const { plan } = useIntegratorPath();
+  const { capabilities } = useVendorPath();
+  const latestCapability = capabilities?.[capabilities.length - 1];
+  const selection = useMemo(() => buildSelectionResults(plan, latestCapability), [plan, latestCapability]);
+  const handleSave = () => { actions.setMatchResults({ results: selection.rows, summary: selection.summary }); };
 
-  const result = matchResults || (plan && capabilities?.length ? performMatching(plan, capabilities) : null);
-  const primary = result?.results?.[0];
-
-  if (!plan || !capabilities?.length) {
-    return (
-      <div className={styles.page}>
-        <section className={styles.guidanceSection}>
-          <p>本页用于查看能力匹配结果、差距重点与补偿方向，作为三方共同判断的参考页面。</p>
-          <div className={styles.guidanceMeta}>
-            <span><strong>填写角色：</strong>业主 / 集成商 / 设备商</span>
-            <span><strong>使用方式：</strong>先完成设计与能力声明，再返回本页查看差距结果</span>
-          </div>
-        </section>
-        <Card className={styles.empty} title="暂无匹配结果" subtitle="请先完成集成设计和设备能力声明。">
-          <div className={styles.actions}>
-            <Link to="/integrator"><Button variant="secondary" size="large">上一步</Button></Link>
-            <Link to="/vendor"><Button variant="primary" size="large">下一步</Button></Link>
-          </div>
-        </Card>
-      </div>
-    );
+  if (!plan || !latestCapability) {
+    return <ProjectStageShell stageNumber="04" title="差距分析" projectName={state.projectMeta?.projectName} outputLabel="要求与能力差距分析"><div className={styles.empty}><Link to="/vendor"><Button variant="primary">先完成设备能力声明</Button></Link></div></ProjectStageShell>;
   }
 
   return (
-    <div className={styles.page}>
-      <section className={styles.guidanceSection}>
-        <p>本页用于查看能力匹配结果、差距重点与补偿方向，作为三方共同判断的参考页面。</p>
-        <div className={styles.guidanceMeta}>
-          <span><strong>填写角色：</strong>业主 / 集成商 / 设备商</span>
-          <span><strong>使用方式：</strong>结合匹配结果识别差距重点，支持方案比较与选型判断</span>
-        </div>
+    <ProjectStageShell stageNumber="04" title="差距分析" projectName={state.projectMeta?.projectName} outputLabel="差距识别结果" prevAction={{ to: '/vendor/result', label: '上一步' }} guidance={{ summary: '本页只识别差距，不展开补偿措施。补偿措施请进入差距闭环页面。', role: '集成商 / 设备商 / 业主', usage: '先识别高、中严重度差距，再进入闭环页处理。' }}>
+      <section className={styles.page}>
+        <div className={styles.hero}><div><strong>差距概览</strong><p>本页只回答“差距在哪里、严重度多高、责任在谁”。</p></div><div className={styles.summaryChips}><span className={styles.high}>高 {selection.summary.high}</span><span className={styles.medium}>中 {selection.summary.medium}</span><span className={styles.low}>低 {selection.summary.low}</span></div></div>
+        <table className={styles.table}><thead><tr><th>要求项</th><th>控制目标</th><th>状态</th><th>差距说明</th><th>责任归属</th></tr></thead><tbody>{selection.rows.map((row) => <tr key={row.id}><td><strong>{getCapabilityDisplay(row.capabilityId).label}</strong><div className={styles.capabilityMeta}><span className={styles.standardTag}>{getCapabilityDisplay(row.capabilityId).frText}</span><span className={styles.standardTag}>{getCapabilityDisplay(row.capabilityId).srText}</span></div></td><td>{row.controlObjective}</td><td><span className={`${styles.badge} ${styles[row.severity]}`}>{STATUS_LABELS[row.status] || row.status}</span></td><td>{row.gapNote} / 证据：{row.evidenceType}</td><td>{row.owner}</td></tr>)}</tbody></table>
+        <div className={styles.actions}><Button variant="secondary" size="medium" onClick={handleSave}>保存差距识别</Button><Link to="/gap"><Button variant="primary" size="medium">进入差距闭环</Button></Link></div>
       </section>
-
-      <section className={styles.hero}>
-        <div>
-          <Badge variant="primary" size="large">选型匹配中心</Badge>
-          <h1>{primary?.vendorName || '当前候选产品'}</h1>
-          <p>看总体匹配、缺口项和后续补偿措施，而不是只看一个总分。</p>
-        </div>
-        <div className={styles.scoreCard}>
-          <span>总体匹配度</span>
-          <strong>{primary?.overallScore ?? 0}%</strong>
-          <p>{primary?.recommendations?.description || '待匹配'}</p>
-        </div>
-      </section>
-
-      <section className={styles.grid}>
-        <Card title="状态分布" subtitle="五档匹配结果。">
-          <div className={styles.list}>
-            <div className={styles.note}>原生满足：{primary?.statusBreakdown.native || 0}</div>
-            <div className={styles.note}>配置满足：{primary?.statusBreakdown.configured || 0}</div>
-            <div className={styles.note}>依赖外围：{primary?.statusBreakdown.external || 0}</div>
-            <div className={styles.note}>补偿措施：{primary?.statusBreakdown.compensating || 0}</div>
-            <div className={styles.note}>不满足：{primary?.statusBreakdown.missing || 0}</div>
-          </div>
-        </Card>
-        <Card title="差距重点" subtitle="优先看非原生满足项。">
-          <div className={styles.list}>
-            {[...(primary?.partial || []), ...(primary?.external || []), ...(primary?.compensating || []), ...(primary?.missing || [])].slice(0, 10).map((item, index) => (
-              <div key={`${item.capabilityId}-${index}`} className={styles.note}><strong>{item.capabilityId}</strong><span>{item.limitation || item.dependency || '建议进一步核对外围依赖与补偿措施。'}</span></div>
-            ))}
-          </div>
-        </Card>
-      </section>
-
-      <section className={styles.navSection}>
-        <div className={styles.navActions}>
-          <Link to="/vendor"><Button variant="ghost" size="medium">上一步</Button></Link>
-          <span />
-        </div>
-      </section>
-    </div>
+    </ProjectStageShell>
   );
 }

@@ -2,16 +2,17 @@ import { Link, useLocation } from 'react-router-dom';
 import styles from './Header.module.css';
 
 const NAV_ITEMS = [
-  { to: '/project', label: '项目', hint: '基础信息' },
-  { to: '/owner', label: '需求', hint: '业主访谈' },
-  { to: '/integrator', label: '设计', hint: '集成商设计' },
-  { to: '/vendor', label: '能力', hint: '设备商声明' },
-  { to: '/selection', label: '差距', hint: '匹配结果' }
+  { to: '/dashboard', label: '工作台', hint: '项目状态' },
+  { to: '/owner', label: '业主', hint: '需求输入' },
+  { to: '/integrator', label: '集成', hint: '设计工作台' },
+  { to: '/vendor', label: '设备', hint: '能力声明' },
+  { to: '/selection', label: '差距', hint: '匹配分析' },
+  { to: '/gap', label: '闭环', hint: '补偿措施' },
+  { to: '/report', label: '交付', hint: '成果汇总' }
 ];
 
 const SUPPORT_ITEMS = [
-  { to: '/translation-center', label: '翻译' },
-  { to: '/report', label: '交付' },
+  { to: '/translation-center', label: '追溯链' },
   { to: '/learning', label: '学习' }
 ];
 
@@ -30,7 +31,7 @@ export function Header() {
           </div>
           <div className={styles.brandText}>
             <strong>IEC 62443 协同工作台</strong>
-            <span>让业主 / 集成商 / 设备商在同一项目语境下协同推进</span>
+            <span>围绕同一项目推进需求、设计、能力、差距、闭环与交付</span>
           </div>
         </Link>
 
@@ -44,6 +45,7 @@ export function Header() {
         </nav>
 
         <div className={styles.supportNav}>
+          <span className={styles.supportLabel}>分析支持</span>
           {SUPPORT_ITEMS.map((item) => (
             <Link key={item.to} to={item.to} className={`${styles.supportLink} ${isActive(item.to) ? styles.activeSupport : ''}`}>{item.label}</Link>
           ))}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/Common';
 import { ProjectStageShell } from '../../components/ProjectFlow';
@@ -139,6 +139,10 @@ function LevelCards({ field, value, onChange }) {
 }
 function resolveLevel(value) { return value === 'low' ? '低' : value === 'medium' ? '中' : value === 'high' ? '高' : '未填写'; }
 
+function FieldHint({ title, hint }) {
+  return <div className={styles.fieldHint}><strong>{title}</strong><span>{hint}</span></div>;
+}
+
 export function OwnerInterview() {
   const navigate = useNavigate();
   const { state, actions } = useProject();
@@ -152,12 +156,17 @@ export function OwnerInterview() {
     maintenanceWindow: '', upgradeWindow: '', remoteOperationsOwnership: 'shared', acceptancePreference: 'security-first', criticalAssets: []
   });
 
+  useEffect(() => {
+    actions.setOwnerDraft(formData);
+  }, [formData]);
+
   const step = STEPS[currentStep];
-  const updateField = (field, value) => setFormData((prev) => { const next = { ...prev, [field]: value }; actions.setOwnerDraft(next); return next; });
-  const toggleAsset = (item) => setFormData((prev) => { const next = { ...prev, criticalAssets: prev.criticalAssets.includes(item) ? prev.criticalAssets.filter((entry) => entry !== item) : [...prev.criticalAssets, item] }; actions.setOwnerDraft(next); return next; });
+  const updateField = (field, value) => setFormData((prev) => ({ ...prev, [field]: value }));
+  const toggleAsset = (item) => setFormData((prev) => ({ ...prev, criticalAssets: prev.criticalAssets.includes(item) ? prev.criticalAssets.filter((entry) => entry !== item) : [...prev.criticalAssets, item] }));
 
   const selectedIndustry = INDUSTRIES.find((item) => item.id === (state.projectMeta?.industry || formData.industry));
   const acceptanceOption = ACCEPTANCE_PREFERENCE_OPTIONS.find((item) => item.value === formData.acceptancePreference);
+  const updateProjectMeta = (field, value) => actions.setProjectMeta({ [field]: value });
   const ownershipOption = REMOTE_OWNERSHIP_OPTIONS.find((item) => item.value === formData.remoteOperationsOwnership);
 
   const handleFinalizeSummary = () => {
@@ -175,7 +184,7 @@ export function OwnerInterview() {
   let content = null;
   switch (step.id) {
     case 'industry':
-      content = <div className={styles.infoTable}><div><span>项目名称</span><strong>{state.projectMeta?.projectName || '未填写'}</strong></div><div><span>行业</span><strong>{selectedIndustry?.name || '未填写'}</strong></div><div><span>业主单位</span><strong>{state.projectMeta?.organizationName || '未填写'}</strong></div><div><span>站点</span><strong>{state.projectMeta?.siteName || '未填写'}</strong></div></div>;
+      content = <div className={styles.stack}><div className={styles.tipPanel}><strong>请结合实际生产场景描述本次需求分析的业务背景。</strong><span>项目基础信息已并入本步骤维护，避免与独立项目页重复填写。</span></div><div className={styles.formGrid}><div><FieldHint title="项目名称" hint="用于标识当前协作对象，可填写项目简称、装置名称或站点名称。" /><input value={state.projectMeta?.projectName || ''} onChange={(event) => updateProjectMeta('projectName', event.target.value)} placeholder="示例：某化工装置 OT 安全改造项目" /></div><div><FieldHint title="行业场景" hint="用于标识当前项目所属行业和典型工艺场景，便于统一上下文。" /><select value={state.projectMeta?.industry || ''} onChange={(event) => updateProjectMeta('industry', event.target.value)}><option value="">请选择行业</option>{INDUSTRIES.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div><div><FieldHint title="业主单位" hint="用于标识本项目的责任主体或需求提出方。" /><input value={state.projectMeta?.organizationName || ''} onChange={(event) => updateProjectMeta('organizationName', event.target.value)} placeholder="示例：某石化有限公司" /></div><div><FieldHint title="工厂/装置/站点" hint="用于描述本次评估或改造对应的具体位置与对象。" /><input value={state.projectMeta?.siteName || ''} onChange={(event) => updateProjectMeta('siteName', event.target.value)} placeholder="示例：乙烯装置 / 三号厂区" /></div><div><FieldHint title="项目类型" hint="用于说明当前是新建、改造、扩建还是评估类项目。" /><select value={state.projectMeta?.scenarioType || ''} onChange={(event) => updateProjectMeta('scenarioType', event.target.value)}><option value="">请选择项目类型</option><option value="new-build">新建</option><option value="retrofit">改造</option><option value="expansion">扩建</option><option value="assessment">评估</option></select></div><div><FieldHint title="项目目标" hint="用于用一句话概括本次工作的核心目标。" /><input value={state.projectMeta?.projectObjective || ''} onChange={(event) => updateProjectMeta('projectObjective', event.target.value)} placeholder="示例：完成控制区分段与远程维护边界加固" /></div></div></div>;
       break;
     case 'impacts':
       content = <table className={styles.matrix}><thead><tr><th>后果项</th><th>选择</th></tr></thead><tbody>{IMPACT_FIELDS.map((field) => <tr key={field.key}><td><div className={styles.fieldInfo}><strong>{field.label}</strong><span>{field.hint}</span></div></td><td><LevelCards field={field} value={formData[field.key]} onChange={(value) => updateField(field.key, value)} /></td></tr>)}</tbody></table>;
@@ -187,7 +196,7 @@ export function OwnerInterview() {
       content = <table className={styles.matrix}><thead><tr><th>基础项</th><th>选择</th></tr></thead><tbody>{MATURITY_FIELDS.map((field) => <tr key={field.key}><td><div className={styles.fieldInfo}><strong>{field.label}</strong><span>{field.hint}</span></div></td><td><LevelCards field={field} value={formData[field.key]} onChange={(value) => updateField(field.key, value)} /></td></tr>)}</tbody></table>;
       break;
     case 'constraints':
-      content = <div className={styles.stack}><div className={styles.formLine}><input value={formData.maintenanceWindow} onChange={(event) => updateField('maintenanceWindow', event.target.value)} placeholder="常规维护窗口" /><input value={formData.upgradeWindow} onChange={(event) => updateField('upgradeWindow', event.target.value)} placeholder="改造窗口" /></div><table className={styles.matrix}><thead><tr><th>约束项</th><th>选择</th></tr></thead><tbody><tr><td><div className={styles.fieldInfo}><strong>责任归属</strong><span>判断远程运维账号、审批、执行和审计主要由哪一方承担。</span></div></td><td><OptionCards value={formData.remoteOperationsOwnership} onChange={(value) => updateField('remoteOperationsOwnership', value)} options={REMOTE_OWNERSHIP_OPTIONS} /></td></tr><tr><td><div className={styles.fieldInfo}><strong>验收偏好</strong><span>判断项目当前更偏向功能上线、安全控制还是运维可操作性的验收侧重点。</span></div></td><td><OptionCards value={formData.acceptancePreference} onChange={(value) => updateField('acceptancePreference', value)} options={ACCEPTANCE_PREFERENCE_OPTIONS} /></td></tr></tbody></table></div>;
+      content = <div className={styles.stack}><div className={styles.entryPanel}><div className={styles.entryPanelHead}><strong>窗口约束</strong><span>这两个字段用于说明项目什么时候可以做日常维护，以及什么时候允许做升级、切换或改造。</span></div><div className={styles.formLine}><div className={styles.inputCard}><FieldHint title="常规维护窗口" hint="用于说明例行维护、账号调整、规则更新等常规动作通常可安排的时间。" /><input value={formData.maintenanceWindow} onChange={(event) => updateField('maintenanceWindow', event.target.value)} placeholder="示例：每周三 14:00-16:00" /></div><div className={styles.inputCard}><FieldHint title="改造窗口" hint="用于说明升级、切换、补丁安装或施工类活动允许执行的时间范围。" /><input value={formData.upgradeWindow} onChange={(event) => updateField('upgradeWindow', event.target.value)} placeholder="示例：月度停车窗口 / 法定检修期" /></div></div></div><table className={styles.matrix}><thead><tr><th>约束项</th><th>选择</th></tr></thead><tbody><tr><td><div className={styles.fieldInfo}><strong>责任归属</strong><span>判断远程运维账号、审批、执行和审计主要由哪一方承担。</span></div></td><td><OptionCards value={formData.remoteOperationsOwnership} onChange={(value) => updateField('remoteOperationsOwnership', value)} options={REMOTE_OWNERSHIP_OPTIONS} /></td></tr><tr><td><div className={styles.fieldInfo}><strong>验收偏好</strong><span>判断项目当前更偏向功能上线、安全控制还是运维可操作性的验收侧重点。</span></div></td><td><OptionCards value={formData.acceptancePreference} onChange={(value) => updateField('acceptancePreference', value)} options={ACCEPTANCE_PREFERENCE_OPTIONS} /></td></tr></tbody></table></div>;
       break;
     case 'assets':
       content = <div className={styles.stack}><div className={styles.guideText}>请选择本项目中最关键、最需要优先纳入安全设计与保护范围的对象。</div><div className={styles.assetMatrix}>{ASSETS.map((asset) => <button key={asset.id} type="button" className={`${styles.assetCell} ${formData.criticalAssets.includes(asset.id) ? styles.assetActive : ''}`} onClick={() => toggleAsset(asset.id)}>{asset.name}</button>)}</div></div>;
@@ -197,14 +206,14 @@ export function OwnerInterview() {
         <article className={styles.documentPage}>
           <header className={styles.documentHeader}>
             <span>IEC 62443 需求访谈摘要</span>
-            <h2>{formData.projectName || state.projectMeta?.projectName || '未命名项目'}</h2>
+            <h2>{state.projectMeta?.projectName || formData.projectName || '未命名项目'}</h2>
             <p>本摘要基于业主访谈输入自动整理生成，可用于项目留档、内部确认以及向集成商传递设计输入。</p>
           </header>
 
           <section className={styles.documentSection}>
             <h3>一、项目概况</h3>
             <div className={styles.documentGrid}>
-              <div><span>项目名称</span><strong>{formData.projectName || state.projectMeta?.projectName || '未填写'}</strong></div>
+              <div><span>项目名称</span><strong>{state.projectMeta?.projectName || formData.projectName || '未填写'}</strong></div>
               <div><span>行业场景</span><strong>{selectedIndustry?.name || '未填写'}</strong></div>
               <div><span>业主单位</span><strong>{state.projectMeta?.organizationName || '未填写'}</strong></div>
               <div><span>项目站点</span><strong>{state.projectMeta?.siteName || '未填写'}</strong></div>
@@ -280,7 +289,7 @@ export function OwnerInterview() {
       <div className={styles.stepTabs}>{STEPS.map((item, index) => <button key={item.id} type="button" className={`${styles.stepTab} ${index === currentStep ? styles.stepTabActive : ''}`} onClick={() => setCurrentStep(index)}>{String(index + 1).padStart(2, '0')} {item.title}</button>)}</div>
       <div className={`${styles.panel} ${isSummaryStep ? styles.documentPanel : ''}`}>{content}</div>
       <div className={styles.actions}>
-        {currentStep === 0 ? <Link to="/project"><Button variant="ghost" size="medium">上一步</Button></Link> : <Button variant="ghost" size="medium" onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 0))}>上一步</Button>}
+        {currentStep === 0 ? <Link to="/dashboard"><Button variant="ghost" size="medium">返回工作台</Button></Link> : <Button variant="ghost" size="medium" onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 0))}>上一步</Button>}
         {isSummaryStep ? <div className={styles.summaryActions}><Button variant="secondary" size="medium" onClick={handleExport}>保存/导出</Button><Button variant="primary" size="medium" onClick={handleFinalizeSummary}>进入设计</Button></div> : <Button variant="primary" size="medium" onClick={() => setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1))}>下一步</Button>}
       </div>
     </ProjectStageShell>

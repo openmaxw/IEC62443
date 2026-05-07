@@ -1,6 +1,13 @@
-import { Card, Badge } from '../../components/Common';
+import { Link } from 'react-router-dom';
+import { Card, Badge, Button } from '../../components/Common';
 import { FR_CATEGORIES, SECURITY_LEVELS } from '../../data/rules';
 import styles from './LearningMode.module.css';
+
+const ENTRY_POINTS = [
+  { title: '看不懂 Zone / Conduit？', desc: '适合在集成设计阶段快速补概念。', to: '/integrator' },
+  { title: '看不懂 FR / SL？', desc: '适合理解风险翻译和要求分配。', to: '/translation-center' },
+  { title: '看不懂差距闭环？', desc: '适合在差距分析和补偿措施阶段查看。', to: '/gap' }
+];
 
 export function LearningMode() {
   return (
@@ -8,10 +15,22 @@ export function LearningMode() {
       <section className={styles.hero}>
         <div>
           <Badge variant="info" size="large">学习模式</Badge>
-          <h1>只保留最该知道的 IEC 62443 关键词。</h1>
-          <p>目标不是背标准条文，而是快速理解项目里最常出现的概念。</p>
+          <h1>只保留项目里最常碰到的 IEC 62443 关键词。</h1>
+          <p>它是主流程的辅助解释层，不替代项目工作流本身。</p>
         </div>
       </section>
+
+      <Card title="从主流程进入学习" subtitle="哪里不清楚，就从哪里补概念。">
+        <div className={styles.entryGrid}>
+          {ENTRY_POINTS.map((item) => (
+            <div key={item.title} className={styles.note}>
+              <strong>{item.title}</strong>
+              <span>{item.desc}</span>
+              <Link to={item.to}><Button variant="secondary" size="small">返回对应阶段</Button></Link>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       <Card title="FR 七大类" subtitle="这是系统翻译时最常用的专业语言。">
         <div className={styles.grid}>

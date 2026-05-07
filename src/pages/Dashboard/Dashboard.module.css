@@ -1,105 +1,199 @@
 .page {
-  width: min(1480px, calc(100vw - 32px));
-  margin: 0 auto;
-  padding: 28px 0 42px;
+  padding: 32px;
   display: grid;
-  gap: 20px;
+  gap: 24px;
 }
 
 .hero {
   display: flex;
-  align-items: end;
   justify-content: space-between;
-  gap: 18px;
-  flex-wrap: wrap;
-  padding: 24px 28px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  background: linear-gradient(135deg, rgba(255, 138, 42, 0.1), rgba(255,255,255,0.02));
+  gap: 28px;
+  padding: 28px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(255, 138, 42, 0.16), rgba(88, 183, 255, 0.14));
+  border: 1px solid rgba(170, 184, 195, 0.2);
+  box-shadow: var(--shadow-md);
 }
 
 .hero h1 {
-  margin: 10px 0;
+  margin: 12px 0 10px;
 }
 
-.heroActions {
+.hero p,
+.progressText,
+.empty {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.heroAction {
+  min-width: 260px;
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
   gap: 12px;
+}
+
+.progressValue {
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.progressSection {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stageItem {
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,.02);
+  display: grid;
+  gap: 8px;
+}
+
+.stageItem span {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.stageItem strong {
+  font-size: 14px;
+  color: var(--color-warning);
+}
+
+.stageDone {
+  background: var(--color-success-soft);
+  border-color: rgba(66, 211, 146, 0.32);
+}
+
+.stageDone strong {
+  color: var(--color-success);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.nextActionCard {
+  display: grid;
+  gap: 10px;
+}
+
+.nextActionCard strong {
+  font-size: 16px;
+  color: var(--color-text);
+}
+
+.nextActionCard span {
+  color: var(--color-text-secondary);
+  line-height: 1.7;
+}
+
+.inlineActions {
+  display: flex;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
-.metrics {
+.listBlock {
+  display: grid;
+  gap: 10px;
+}
+
+.linkRow {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(246, 195, 91, 0.22);
+  background: var(--color-warning-soft);
+  color: #ffe4a8;
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.linkRow:hover {
+  transform: translateY(-1px);
+  border-color: rgba(246, 195, 91, 0.4);
+}
+
+.cardGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
-.metricLabel {
-  display: block;
-  color: var(--color-text-muted);
-  font-size: 12px;
-  margin-bottom: 10px;
-}
-
-.metrics strong {
-  font-size: 24px;
-}
-
-.grid {
+.statusCard {
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,.02);
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 18px;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
 }
 
-.list {
-  display: grid;
+.statusCard p {
+  line-height: 1.7;
+}
+
+.statusHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
 }
 
-.row,
-.note {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  align-items: center;
-  padding: 14px 16px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: rgba(255,255,255,0.03);
+.statusHead strong {
+  font-size: 16px;
 }
 
-.row p,
-.note {
-  font-size: 14px;
+.ready,
+.pending {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
-.rowActions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.ready {
+  color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.pending {
+  color: var(--color-warning);
+  background: var(--color-warning-soft);
 }
 
 @media (max-width: 1100px) {
-  .metrics,
+  .progressSection,
+  .cardGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .hero,
   .grid {
     grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .heroAction {
+    min-width: 0;
   }
 }
 
 @media (max-width: 768px) {
-  .page {
-    width: min(100vw - 24px, 1480px);
-    padding-top: 12px;
-  }
-
-  .hero,
-  .row,
-  .note {
-    padding: 18px;
-  }
-
-  .row {
-    flex-direction: column;
-    align-items: flex-start;
+  .page,
+  .cardGrid,
+  .progressSection {
+    grid-template-columns: 1fr;
   }
 }

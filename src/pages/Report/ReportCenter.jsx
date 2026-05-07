@@ -1,32 +1,48 @@
+import { Link } from 'react-router-dom';
 import { useOwnerPath, useIntegratorPath, useVendorPath, useProject } from '../../hooks/useProject';
+import { getCapabilityDisplay } from '../../data/capabilities';
 import styles from './ReportCenter.module.css';
 
 export function ReportCenter() {
   const { state } = useProject();
   const { riskProfile } = useOwnerPath();
   const { plan } = useIntegratorPath();
-  const { capabilities, matchResults } = useVendorPath();
+  const { capabilities, matchResults, gapClosureItems } = useVendorPath();
+  const latestCapability = capabilities?.[capabilities.length - 1];
   const meta = state.projectMeta || {};
+  const gapRows = matchResults?.results?.filter((item) => item.status === 'missing' || item.status === 'external' || item.status === 'partial') || [];
+  const gapClosureReady = gapRows.length === 0 || gapClosureItems.length >= gapRows.length;
+  const highRiskCount = gapClosureItems.filter((item) => item.severity === 'high').length;
+  const externalCount = gapClosureItems.filter((item) => item.status === 'external').length;
 
   const items = [
-    { title: '业主需求摘要', ready: Boolean(riskProfile), desc: '风险关注、FR 重点、验收关注。' },
-    { title: '系统规划草案', ready: Boolean(plan), desc: 'Zone / Conduit / 通信矩阵 / 能力需求。' },
-    { title: '设备能力说明', ready: Boolean(capabilities?.length), desc: '能力、证据、依赖与适用边界。' },
-    { title: '选型匹配结论', ready: Boolean(matchResults?.results?.length), desc: '匹配度、缺口项、补偿措施。' }
+    { title: '业主交接物', ready: Boolean(riskProfile), desc: '查看业主输入摘要与设计输入。', route: '/owner/result' },
+    { title: '集成设计结果', ready: Boolean(plan), desc: '查看 Zone / Conduit、通信设计与能力需求。', route: '/integrator/result' },
+    { title: '设备声明结果', ready: Boolean(latestCapability), desc: '查看设备能力声明摘要。', route: '/vendor/result' },
+    { title: '差距识别', ready: Boolean(matchResults?.results?.length), desc: '查看差距项、严重度与责任归属。', route: '/selection' },
+    { title: '差距闭环', ready: gapClosureReady, desc: gapRows.length ? '查看已保存的项目级补偿措施、责任方、验收影响与残余风险。' : '当前没有待闭环差距项。', route: '/gap' },
+    { title: '需求追溯链', ready: Boolean(riskProfile && plan), desc: '查看从业务输入到能力/差距的追溯。', route: '/translation-center' }
   ];
 
   return (
     <div className={styles.page}>
-      <div className={styles.headerRow}>
-        <strong>{meta.projectName || '交付中心'}</strong>
-        <span>{[meta.organizationName, meta.siteName, meta.industry, meta.scenarioType].filter(Boolean).join(' / ')}</span>
-      </div>
-      <table className={styles.table}>
-        <thead><tr><th>交付项</th><th>状态</th><th>说明</th></tr></thead>
-        <tbody>
-          {items.map((item) => <tr key={item.title}><td>{item.title}</td><td>{item.ready ? '已具备' : '待补齐'}</td><td>{item.desc}</td></tr>)}
-        </tbody>
-      </table>
+      <div className={styles.headerRow}><strong>{meta.projectName || '交付中心'}</strong><span>{[meta.organizationName, meta.siteName, meta.industry, meta.scenarioType].filter(Boolean).join(' / ')}</span></div>
+
+      <section className={styles.section}>
+        <h3>交付索引</h3>
+        <table className={styles.table}><thead><tr><th>交付项</th><th>状态</th><th>说明</th><th>入口</th></tr></thead><tbody>{items.map((item) => <tr key={item.title}><td>{item.title}</td><td>{item.ready ? '已具备' : '待补齐'}</td><td>{item.desc}</td><td>{item.ready ? <Link to={item.route} className={styles.link}>查看</Link> : '—'}</td></tr>)}</tbody></table>
+      </section>
+
+      <section className={styles.section}>
+        <h3>闭环交付摘要</h3>
+        <div className={styles.grid}>
+          <div><span>待闭环差距</span><strong>{gapRows.length}</strong></div>
+          <div><span>已保存闭环项</span><strong>{gapClosureItems.length}</strong></div>
+          <div><span>高严重度</span><strong>{highRiskCount}</strong></div>
+          <div><span>依赖外部补偿</span><strong>{externalCount}</strong></div>
+        </div>
+        {gapClosureItems.length ? <div className={styles.list}>{gapClosureItems.map((item) => <article key={item.id} className={styles.item}><strong>{getCapabilityDisplay(item.capabilityId).label}</strong><div className={styles.capabilityMeta}><span className={styles.standardTag}>{getCapabilityDisplay(item.capabilityId).frText}</span><span className={styles.standardTag}>{getCapabilityDisplay(item.capabilityId).srText}</span></div><span>{item.owner || '责任方未填写'}</span><p><strong>补偿措施：</strong>{item.mitigation || '未填写'}</p><p><strong>验收影响：</strong>{item.acceptanceImpact || '未填写'}</p><p><strong>残余风险：</strong>{item.residualRisk || '未填写'}</p></article>)}</div> : <div className={styles.empty}>当前还没有已保存的闭环决策，请先前往差距闭环页完成保存。</div>}
+      </section>
     </div>
   );
 }
