@@ -4,8 +4,9 @@ export function Footer() {
   return (
     <footer className={styles.footer}>
       <div className={styles.shell}>
-        <p className={styles.title}>IEC 62443 方法研究与协同流程探索项目</p>
-        <p className={styles.meta}>仅供学习交流与方案研究参考 · 如需交流合作，请联系作者 <a className={styles.link} href="mailto:max.wang@moxa.com">max.wang@moxa.com</a> · © Max Wang</p>
+        <p className={styles.title}>IEC 62443 工业网络安全方法研究与协同设计平台</p>
+        <p className={styles.meta}>本平台内容仅供学习交流与方案研究参考，未经授权不得复制、抄袭、转载、传播或用于商业用途。</p>
+        <p className={styles.meta}>交流合作请<a className={styles.link} href="mailto:max.wang@moxa.com">联系作者</a> · © Max Wang</p>
       </div>
     </footer>
   );
