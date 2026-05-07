@@ -19,6 +19,12 @@ import { GapCenter } from './pages/Gap/GapCenter';
 import './index.css';
 
 const basename = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.replace(/\/$/, '');
+const redirectPath = new URLSearchParams(window.location.search).get('redirect');
+
+if (redirectPath) {
+  const normalized = redirectPath.startsWith('/') ? redirectPath.slice(1) : redirectPath;
+  window.history.replaceState(null, '', `${basename}/${normalized}`.replace(/\/+/g, '/'));
+}
 
 export default function App() {
   return (
