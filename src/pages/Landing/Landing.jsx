@@ -55,7 +55,7 @@ export function Landing() {
         <div className={styles.heroBadge}>IEC 62443 项目工作台</div>
         <h1>让 IEC 62443 项目从需求到交付更可追溯。</h1>
         <p className={styles.lead}>
-          统一项目输入，沉淀设计依据、能力声明与闭环交付，适合演示类似 12 英寸晶圆厂制造场景的 OT 安全协同流程。
+          统一项目输入，沉淀设计依据、能力声明与闭环交付。
         </p>
         <div className={styles.actions}>
           <Link to="/dashboard"><Button variant="primary" size="medium">进入工作台</Button></Link>
