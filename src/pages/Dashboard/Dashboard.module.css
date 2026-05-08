@@ -3,7 +3,7 @@
   margin: 0 auto;
   padding: 8px 0 18px;
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .hero {
@@ -19,7 +19,7 @@
 
 .hero h1 {
   margin: 4px 0 6px;
-  font-size: clamp(24px, 3vw, 34px);
+  font-size: clamp(18px, 1.8vw, 24px);
 }
 
 .hero p,
@@ -27,16 +27,12 @@
 .empty {
   margin: 0;
   color: var(--color-text-secondary);
+  white-space: nowrap;
 }
 
-.heroAction {
-  min-width: 220px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 8px;
-}
+.heroAction { min-width: 220px; display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
+
+.progressInline { display: flex; align-items: baseline; gap: 10px; white-space: nowrap; }
 
 .progressValue {
   font-size: 30px;
@@ -45,44 +41,11 @@
   line-height: 1;
 }
 
-.progressSection {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.stageItem {
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: rgba(255,255,255,.02);
-  display: grid;
-  gap: 6px;
-}
-
-.stageItem span {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-}
-
-.stageItem strong {
-  font-size: var(--font-size-md);
-  color: var(--color-warning);
-}
-
-.stageDone {
-  background: var(--color-success-soft);
-  border-color: rgba(66, 211, 146, 0.32);
-}
-
-.stageDone strong {
-  color: var(--color-success);
-}
 
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .nextActionCard {
@@ -145,6 +108,51 @@
   line-height: var(--line-height-relaxed);
 }
 
+.substepBlock {
+  display: grid;
+  gap: 8px;
+}
+
+.substepSummary {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.substepList {
+  display: grid;
+  gap: 6px;
+}
+
+.substepItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,.02);
+}
+
+.substepItem span {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  min-width: 42px;
+}
+
+.substepItem strong {
+  font-size: var(--font-size-sm);
+}
+
+.substepDone {
+  border-color: rgba(68,209,123,.25);
+  background: rgba(68,209,123,.08);
+}
+
+.substepTodo {
+  border-color: rgba(246, 195, 91, 0.18);
+  background: rgba(246, 195, 91, 0.06);
+}
+
 .statusHead {
   display: flex;
   align-items: center;
@@ -188,9 +196,7 @@
     display: grid;
   }
 
-  .heroAction {
-    min-width: 0;
-  }
+  .heroAction { min-width: 220px; display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
 }
 
 @media (max-width: 768px) {

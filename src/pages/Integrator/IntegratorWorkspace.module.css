@@ -1,23 +1,45 @@
 .workspace, .noteList { display: grid; gap: 10px; }
+.stepTabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.stepTab { min-height: 30px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--color-border); background: rgba(255,255,255,.03); color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+.stepTabActive { border-color: rgba(255,138,42,.5); background: rgba(255,138,42,.18); color: #ffd6b8; box-shadow: inset 0 0 0 1px rgba(255,138,42,.25); }
+.panel { border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: rgba(255,255,255,.02); padding: 12px; box-shadow: var(--shadow-sm); }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .block { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: rgba(255,255,255,.02); padding: 12px; display: grid; gap: 10px; }
 .blockTitle { font-size: var(--font-size-sm); font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em; }
-.blockHint { color: var(--color-text-secondary); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); }
+.blockHint { color: rgba(195, 204, 214, 0.78); font-style: italic;  color: rgba(195, 204, 214, 0.78); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); }
 .contextGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.contextGrid div { padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: rgba(255,255,255,.03); }
+.contextGrid div { padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: rgba(255,255,255,.025); }
 .contextGrid span { display: block; color: var(--color-text-muted); font-size: var(--font-size-xs); margin-bottom: 4px; }
 .fullText { min-height: 80px; }
+.block input,
+.block select,
+.block textarea {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,.03);
+  color: var(--color-text);
+  padding: 10px 12px;
+  font: inherit;
+}
+.block input::placeholder,
+.block textarea::placeholder { color: var(--color-text-muted); }
+.block select option,
+.block select optgroup {
+  background: #101820;
+  color: var(--color-text);
+}
 .optionGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.optionCell { padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: rgba(255,255,255,.03); display: grid; gap: 4px; text-align: left; }
+.optionCell { padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: rgba(255,255,255,.025); display: grid; gap: 4px; text-align: left; }
 .optionCell strong { color: var(--color-text); font-size: var(--font-size-md); }
-.optionCell span { color: var(--color-text-secondary); font-size: var(--font-size-sm); line-height: var(--line-height-normal); }
+.optionCell span { color: rgba(195, 204, 214, 0.78); font-size: var(--font-size-sm); line-height: var(--line-height-normal); }
 .optionCellActive { border-color: rgba(255,138,42,.45); background: rgba(255,138,42,.08); }
 .formStack { display: grid; gap: 8px; }
 .inlineForm { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .table { border: 1px solid var(--color-border); }
 .table th, .table td { border-bottom: 1px solid var(--color-border); }
 .emptyCell { color: var(--color-text-muted); }
-.note { padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: rgba(255,255,255,.03); font-size: var(--font-size-sm); color: var(--color-text-secondary); display: grid; gap: 4px; }
+.note { padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: rgba(255,255,255,.025); font-size: var(--font-size-sm); color: rgba(195, 204, 214, 0.78); display: grid; gap: 4px; }
 .note strong { color: var(--color-text); font-size: var(--font-size-md); }
 .note p { margin: 0; }
 .footerBar { display: flex; justify-content: flex-end; }

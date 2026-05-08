@@ -6,7 +6,7 @@ import styles from './LearningMode.module.css';
 const ENTRY_POINTS = [
   { title: '看不懂 Zone / Conduit？', desc: '适合在集成设计阶段快速补概念。', to: '/integrator' },
   { title: '看不懂 FR / SL？', desc: '适合理解风险翻译和要求分配。', to: '/translation-center' },
-  { title: '看不懂差距闭环？', desc: '适合在差距分析和补偿措施阶段查看。', to: '/gap' }
+  { title: '看不懂闭环？', desc: '适合在匹配结果和补偿措施阶段查看。', to: '/selection' }
 ];
 
 export function LearningMode() {
@@ -20,7 +20,7 @@ export function LearningMode() {
         </div>
       </section>
 
-      <Card title="从主流程进入学习" subtitle="哪里不清楚，就从哪里补概念。">
+      <Card title="从主流程进入学习">
         <div className={styles.entryGrid}>
           {ENTRY_POINTS.map((item) => (
             <div key={item.title} className={styles.note}>
@@ -32,7 +32,7 @@ export function LearningMode() {
         </div>
       </Card>
 
-      <Card title="FR 七大类" subtitle="这是系统翻译时最常用的专业语言。">
+      <Card title="FR 七大类">
         <div className={styles.grid}>
           {Object.entries(FR_CATEGORIES).map(([code, item]) => (
             <div key={code} className={styles.note}><strong>{code}</strong><span>{item.name}</span><p>{item.description}</p></div>
@@ -40,7 +40,7 @@ export function LearningMode() {
         </div>
       </Card>
 
-      <Card title="SL 1-4" subtitle="不是越高越好，而是与后果和场景匹配。">
+      <Card title="SL 1-4">
         <div className={styles.grid}>
           {Object.entries(SECURITY_LEVELS).map(([key, item]) => (
             <div key={key} className={styles.note}><strong>{key}</strong><span>{item.name}</span><p>{item.target}</p></div>

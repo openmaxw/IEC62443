@@ -46,7 +46,7 @@ function buildMatchRows(assessment, plan, communicationMatrix) {
     rows.push({
       id: 'critical-boundary',
       ownerNeed,
-      designResponse: `当前设计形成 ${plan.zones.length} 个 Zone，并梳理 ${plan.communicationFlows.length} 条关键通信流，用于控制关键资产暴露面并约束跨区通信。`,
+      designResponse: `当前设计形成 ${plan.zones.length} 个 Zone，并梳理 ${plan.communicationFlows.length} 条关键通信流。`,
       matchLevel: strongConcern ? (plan.zones.length > 0 && plan.communicationFlows.length > 0 ? 'high' : 'partial') : 'partial'
     });
   }
@@ -56,7 +56,7 @@ function buildMatchRows(assessment, plan, communicationMatrix) {
       id: 'critical-assets',
       ownerNeed: `关键对象：${assessment.criticalAssets.slice(0, 4).map((item) => ASSET_LABELS[item] || item).join('、')}`,
       designResponse: plan.assets.length
-        ? `设计中已录入 ${plan.assets.length} 个关键资产/对象，并补充归组原因，用于后续能力核对。`
+        ? `已录入 ${plan.assets.length} 个关键资产/对象，并补充归组原因。`
         : '当前尚未形成明确资产清单，建议先将关键对象映射到设计资产表。',
       matchLevel: plan.assets.length ? 'high' : 'todo'
     });
@@ -101,7 +101,7 @@ export function IntegratorResult() {
         <div>
           <span className={styles.eyebrow}>设计结论</span>
           <h2>推荐目标 SL-{plan.targetSL}</h2>
-          <p>本页展示业主需求、设计依据、Zone/Conduit 规划和组件能力要求之间的对应关系。</p>
+          <p></p>
         </div>
         <div className={styles.summaryChips}>
           <span className={styles.chip}>Zone {plan.zones.length}</span>

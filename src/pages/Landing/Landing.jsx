@@ -16,8 +16,8 @@ const FLOW_STEPS = [
     desc: '围绕项目要求声明产品能力、证据、依赖条件和适用边界。'
   },
   {
-    title: '差距闭环',
-    desc: '识别差距、责任归属和补偿路径，沉淀为可追溯的交付结果。'
+    title: '闭环',
+    desc: '确认匹配结果、责任归属和补偿路径，沉淀为可追溯的交付结果。'
   }
 ];
 
@@ -25,25 +25,25 @@ const ROLE_BENEFITS = [
   {
     title: '业主',
     points: [
-      '整理业务目标、风险关注与验收重点。',
-      '输出可交接的需求与项目边界输入。',
-      '为设计、采购和验收建立统一依据。'
+      '明确需求与验收重点。',
+      '输出项目边界与风险关注。',
+      '形成可交接的输入依据。'
     ]
   },
   {
     title: '集成商',
     points: [
-      '基于统一输入完成系统分区与通信设计。',
-      '形成边界控制建议与能力需求矩阵。',
-      '明确设计依据、风险保留与交付边界。'
+      '完成分区与通信设计。',
+      '形成控制要求与设计依据。',
+      '明确实施与交付边界。'
     ]
   },
   {
     title: '设备商',
     points: [
-      '按项目要求声明产品能力、证据与限制。',
-      '参与需求匹配、差距识别和责任划分。',
-      '为选型决策和闭环措施提供依据。'
+      '声明产品能力与证据。',
+      '说明依赖条件与限制。',
+      '支撑制造边界设备能力对齐与闭环处置。'
     ]
   }
 ];
@@ -55,24 +55,22 @@ export function Landing() {
         <div className={styles.heroBadge}>IEC 62443 项目工作台</div>
         <h1>让 IEC 62443 项目从需求到交付更可追溯。</h1>
         <p className={styles.lead}>
-          面向业主、集成商与设备商的项目工作台。统一整理输入，形成设计依据和能力要求，完成差距识别与闭环交付。
+          统一项目输入，沉淀设计依据、能力声明与闭环交付，适合演示类似 12 英寸晶圆厂制造场景的 OT 安全协同流程。
         </p>
         <div className={styles.actions}>
           <Link to="/dashboard"><Button variant="primary" size="medium">进入工作台</Button></Link>
-          <Link to="/owner"><Button variant="secondary" size="medium">从项目输入开始</Button></Link>
         </div>
       </section>
 
       <section className={styles.section}>
         <div className={styles.sectionHead}>
-          <strong>主流程</strong>
-          <p>把项目输入、系统设计、能力声明和差距闭环串成一条连续链路。</p>
+          <strong>流程</strong>
         </div>
         <div className={styles.flowGrid}>
           {FLOW_STEPS.map((item) => (
             <article key={item.title} className={styles.flowCard}>
               <strong>{item.title}</strong>
-              <p>{item.desc}</p>
+              <p className={styles.flowItem}>{item.desc}</p>
             </article>
           ))}
         </div>
@@ -80,8 +78,7 @@ export function Landing() {
 
       <section className={styles.section}>
         <div className={styles.sectionHead}>
-          <strong>角色价值</strong>
-          <p>不同角色在同一项目语境下协作，但输出都进入统一的交付与追溯链。</p>
+          <strong>价值</strong>
         </div>
         <div className={styles.valueList}>
           {ROLE_BENEFITS.map((role) => (
@@ -89,7 +86,7 @@ export function Landing() {
               <strong>{role.title}</strong>
               <div className={styles.pointList}>
                 {role.points.map((point) => (
-                  <p key={point}>{point}</p>
+                  <p key={point} className={styles.pointItem}>{point}</p>
                 ))}
               </div>
             </article>

@@ -9,7 +9,7 @@ const STAGE_LABELS = {
   owner: '业主输入',
   integrator: '集成设计',
   vendor: '设备声明',
-  selection: '差距分析',
+  selection: '闭环',
   report: '交付汇总'
 };
 
@@ -27,7 +27,7 @@ export function Dashboard() {
   };
 
   const handleLoadDemo = () => {
-    if (window.confirm('将加载一套完整演示数据，用于快速检查各页面功能。是否继续？')) {
+    if (window.confirm('将加载“台湾某大型半导体企业－新竹 12 英寸晶圆厂 + MOXA EDR-G9010”演示项目，用于快速检查各页面功能。是否继续？')) {
       actions.loadDemoProject();
     }
   };
@@ -38,28 +38,32 @@ export function Dashboard() {
       title: '业主输入',
       ready: progress.stageStatus.owner,
       detail: assessment ? `已形成风险与业务输入摘要${riskProfile ? '，可交接给集成商' : ''}` : '待完成项目场景、后果、约束输入',
-      route: progress.stageStatus.owner ? '/owner/result' : '/owner'
+      route: progress.stageStatus.owner ? '/owner/result' : '/owner',
+      substeps: progress.substeps.owner
     },
     {
       id: 'integrator',
       title: '集成设计',
       ready: progress.stageStatus.integrator,
       detail: plan ? `已形成 ${plan.zones?.length || 0} 个 zone、${plan.communicationFlows?.length || 0} 条通信流` : '待完成 Zone / Conduit 与通信设计',
-      route: progress.stageStatus.integrator ? '/integrator/result' : '/integrator'
+      route: progress.stageStatus.integrator ? '/integrator/result' : '/integrator',
+      substeps: progress.substeps.integrator
     },
     {
       id: 'vendor',
       title: '设备声明',
       ready: progress.stageStatus.vendor,
       detail: capabilities.length ? `已录入 ${capabilities.length} 份能力声明` : '待录入产品能力、边界与证据',
-      route: progress.stageStatus.vendor ? '/vendor/result' : '/vendor'
+      route: progress.stageStatus.vendor ? '/vendor/result' : '/vendor',
+      substeps: progress.substeps.vendor
     },
     {
       id: 'selection',
-      title: '差距分析',
+      title: '闭环',
       ready: progress.stageStatus.selection,
-      detail: matchResults?.results?.length ? `已生成 ${matchResults.results.length} 条匹配分析结果` : '待完成要求-能力差距分析',
-      route: '/selection'
+      detail: matchResults?.results?.length ? `已生成 ${matchResults.results.length} 条闭环输入结果` : '待完成要求-能力匹配与闭环处理',
+      route: '/selection',
+      substeps: progress.substeps.selection
     }
   ];
 
@@ -70,11 +74,9 @@ export function Dashboard() {
       projectName={projectMeta.projectName}
       outputLabel={`总进度 ${progress.completed} / ${progress.total}`}
       guidance={{
-        summary: '工作台用于查看当前项目进度、关键缺口和下一步动作，作为各阶段的统一入口。',
-        role: '项目经理 / 业主 / 集成商 / 设备商',
-        usage: '优先补齐缺失输入，再按阶段进入对应页面继续完善。'
+        summary: '工作台用于查看当前项目进度、关键缺口和下一步动作。'
       }}
-      toolbar={<><Button variant="secondary" size="small" onClick={handleLoadDemo}>加载演示项目</Button><Button variant="ghost" size="small" onClick={handleReset}>重置项目</Button></>}
+      toolbar={<><Button variant="secondary" size="small" onClick={handleLoadDemo}>加载演示项目</Button><Button variant="secondary" size="small" onClick={handleReset}>重置项目</Button></>}
     >
       <section className={styles.page}>
         <section className={styles.hero}>
@@ -85,23 +87,12 @@ export function Dashboard() {
             </p>
           </div>
           <div className={styles.heroAction}>
-            <div className={styles.progressValue}>{progress.percentage}%</div>
-            <div className={styles.progressText}>已完成 {progress.completed} / {progress.total} 个阶段</div>
             {nextAction ? <Link to={nextAction.route}><Button variant="primary" size="small">下一步：{nextAction.label}</Button></Link> : <Link to="/report"><Button variant="secondary" size="small">查看交付中心</Button></Link>}
           </div>
         </section>
 
-        <section className={styles.progressSection}>
-          {progress.stages.map((stage) => (
-            <div key={stage.id} className={`${styles.stageItem} ${progress.stageStatus[stage.id] ? styles.stageDone : ''}`}>
-              <span>{stage.id === 'project' ? '阶段 00' : stage.id === 'owner' ? '阶段 01' : stage.id === 'integrator' ? '阶段 02' : stage.id === 'vendor' ? '阶段 03' : stage.id === 'selection' ? '阶段 04' : '阶段 06'}</span>
-              <strong>{STAGE_LABELS[stage.id]}</strong>
-            </div>
-          ))}
-        </section>
-
         <section className={styles.grid}>
-          <Card title="下一步建议" subtitle="根据当前项目状态，优先补齐关键输入和阶段输出。">
+          <Card title="下一步建议">
             <div className={styles.nextActionCard}>
               <strong>{nextAction?.label || '当前阶段已基本完成'}</strong>
               <span>{nextAction?.description || '可以转入交付中心查看阶段成果，或回到具体页面继续细化内容。'}</span>
@@ -111,7 +102,7 @@ export function Dashboard() {
             </div>
           </Card>
 
-          <Card title="缺失输入" subtitle="这些信息会直接影响后续设计、能力声明和交付完整度。">
+          <Card title="缺失输入">
             <div className={styles.listBlock}>
               {missingInputs.length ? missingInputs.map((item) => (
                 <Link key={item.id} to={item.route} className={styles.linkRow}>{item.label}</Link>
@@ -128,6 +119,7 @@ export function Dashboard() {
                 <span className={card.ready ? styles.ready : styles.pending}>{card.ready ? '已具备' : '待补齐'}</span>
               </div>
               <p>{card.detail}</p>
+              {card.substeps ? <div className={styles.substepBlock}><div className={styles.substepSummary}>子步骤 {card.substeps.completed} / {card.substeps.total}</div><div className={styles.substepList}>{card.substeps.items.map((item) => <div key={item.id} className={`${styles.substepItem} ${item.completed ? styles.substepDone : styles.substepTodo}`}><span>{item.id}</span><strong>{item.label}</strong></div>)}</div></div> : null}
               <Link to={card.route}><Button variant={card.ready ? 'secondary' : 'primary'} size="small">查看阶段</Button></Link>
             </article>
           ))}

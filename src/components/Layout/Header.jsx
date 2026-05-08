@@ -6,8 +6,7 @@ const NAV_ITEMS = [
   { to: '/owner', label: '业主', hint: '需求输入' },
   { to: '/integrator', label: '集成', hint: '设计工作台' },
   { to: '/vendor', label: '设备', hint: '能力声明' },
-  { to: '/selection', label: '差距', hint: '匹配分析' },
-  { to: '/gap', label: '闭环', hint: '补偿措施' },
+  { to: '/selection', label: '闭环', hint: '匹配与处置' },
   { to: '/report', label: '交付', hint: '成果汇总' }
 ];
 
@@ -31,7 +30,7 @@ export function Header() {
           </div>
           <div className={styles.brandText}>
             <strong>IEC 62443 协同工作台</strong>
-            <span>围绕同一项目推进需求、设计、能力、差距、闭环与交付</span>
+            <span>业主、集成商与设备商共用的需求—设计—能力—闭环协同平台</span>
           </div>
         </Link>
 
@@ -45,7 +44,7 @@ export function Header() {
         </nav>
 
         <div className={styles.supportNav}>
-          <span className={styles.supportLabel}>分析支持</span>
+          
           {SUPPORT_ITEMS.map((item) => (
             <Link key={item.to} to={item.to} className={`${styles.supportLink} ${isActive(item.to) ? styles.activeSupport : ''}`}>{item.label}</Link>
           ))}

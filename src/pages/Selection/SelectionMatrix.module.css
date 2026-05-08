@@ -1,5 +1,8 @@
 .page { width: min(1440px, calc(100vw - 24px)); margin: 0 auto; padding: 8px 0 18px; display: grid; gap: 12px; }
-.hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px 16px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: rgba(255,255,255,.03); }
+.stepTabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.stepTab { min-height: 30px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--color-border); background: rgba(255,255,255,.03); color: var(--color-text-secondary); font-size: var(--font-size-sm); cursor: pointer; }
+.stepTabActive { border-color: rgba(255,138,42,.5); background: rgba(255,138,42,.18); color: #ffd6b8; box-shadow: inset 0 0 0 1px rgba(255,138,42,.25); }
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px 16px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: rgba(255,255,255,.025); }
 .summaryChips { display: flex; gap: 8px; flex-wrap: wrap; }
 .high, .medium, .low { min-height: 28px; padding: 0 10px; display: inline-flex; align-items: center; border-radius: 999px; font-size: var(--font-size-sm); font-weight: 700; }
 .high { color: #ffd6d6; background: rgba(239,68,68,.10); border: 1px solid rgba(239,68,68,.22); }
@@ -7,15 +10,36 @@
 .low { color: #dcffe8; background: rgba(68,209,123,.14); border: 1px solid rgba(68,209,123,.28); }
 .table { width: 100%; border-collapse: collapse; border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
 .table th, .table td { padding: 8px 10px; border-bottom: 1px solid var(--color-border); text-align: left; vertical-align: top; font-size: var(--font-size-sm); }
-.table th { color: var(--color-text-muted); background: rgba(255,255,255,.03); }
+.table th { color: var(--color-text-muted); background: rgba(255,255,255,.025); }
 .table td { background: rgba(255,255,255,.02); }
 .badge { min-height: 26px; padding: 0 10px; display: inline-flex; align-items: center; border-radius: 999px; font-size: var(--font-size-xs); font-weight: 700; }
 .badge.high { color: #ffd6d6; background: rgba(239,68,68,.10); border: 1px solid rgba(239,68,68,.22); }
 .badge.medium { color: #ffe7bf; background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.28); }
 .badge.low { color: #dcffe8; background: rgba(68,209,123,.14); border: 1px solid rgba(68,209,123,.28); }
-.actions { display: flex; justify-content: flex-end; gap: 8px; }
+.actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 .empty { color: var(--color-text-muted); }
 .capabilityMeta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-.standardTag { display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; border-radius: 999px; border: 1px solid rgba(88,183,255,.22); background: rgba(88,183,255,.10); color: #d7ecff; font-size: var(--font-size-xs); font-weight: 700; }
-@media (max-width: 980px) { .hero { grid-template-columns: 1fr; } .actions { flex-direction: column; } }
+.standardTag { display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; border-radius: 999px; border: 1px solid rgba(255,138,42,.22); background: rgba(255,255,255,.022); color: #ffd8bd; font-size: var(--font-size-xs); font-weight: 700; }
+.list { display: grid; gap: 16px; }
+.card { padding: 18px; border-radius: var(--radius-lg); border: 1px solid var(--color-border); background: rgba(255,255,255,.03); display: grid; gap: 14px; }
+.cardHead { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.meta { display: block; margin-top: 6px; color: var(--color-text-secondary); font-size: 12px; }
+.formGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.field { display: grid; gap: 6px; }
+.field span { color: var(--color-text-secondary); }
+.field input,
+.field textarea {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: rgba(255,255,255,.03);
+  color: var(--color-text);
+  padding: 10px 12px;
+  font: inherit;
+}
+.field textarea { resize: vertical; min-height: 88px; }
+.field input::placeholder,
+.field textarea::placeholder { color: var(--color-text-muted); }
+@media (max-width: 980px) { .hero { grid-template-columns: 1fr; } .actions { justify-content: flex-end; flex-wrap: wrap; } }
+@media (max-width: 980px) { .formGrid { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .page { width: min(100vw - 16px, 1440px); } }

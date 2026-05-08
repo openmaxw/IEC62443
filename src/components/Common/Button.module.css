@@ -18,14 +18,14 @@
 }
 .primary:hover:not(.disabled) { transform: translateY(-1px); filter: brightness(1.04); }
 .secondary {
-  color: #f1f7fb;
-  border-color: rgba(88, 183, 255, 0.24);
-  background: linear-gradient(135deg, rgba(88, 183, 255, 0.16), rgba(255, 255, 255, 0.03));
+  color: #fff8f2;
+  border-color: rgba(255, 138, 42, 0.24);
+  background: linear-gradient(135deg, rgba(255, 138, 42, 0.2), rgba(255, 255, 255, 0.03));
 }
 .secondary:hover:not(.disabled) {
   transform: translateY(-1px);
-  border-color: rgba(88, 183, 255, 0.42);
-  box-shadow: 0 6px 16px rgba(88, 183, 255, 0.12);
+  border-color: rgba(255, 138, 42, 0.42);
+  box-shadow: 0 6px 16px rgba(255, 138, 42, 0.14);
 }
 .ghost {
   color: var(--color-text-secondary);

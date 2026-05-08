@@ -28,10 +28,6 @@ export function ProjectStageShell({
       {guidance ? (
         <section className={styles.guidanceRow}>
           <p>{guidance.summary}</p>
-          <div className={styles.guidanceMeta}>
-            <span><strong>填写角色：</strong>{guidance.role}</span>
-            <span><strong>使用方式：</strong>{guidance.usage}</span>
-          </div>
         </section>
       ) : null}
       <section className={styles.statusRow}>
@@ -43,8 +39,8 @@ export function ProjectStageShell({
       {(prevAction || nextAction) ? (
         <section className={styles.navRow}>
           <div className={styles.navActions}>
-            {prevAction ? <Link to={prevAction.to}><Button variant="ghost" size="medium">{prevAction.label}</Button></Link> : <span />}
-            {nextAction ? <Link to={nextAction.to}><Button variant="primary" size="medium">{nextAction.label}</Button></Link> : <span />}
+            {prevAction ? <Link to={prevAction.to}><Button variant="ghost" size="medium">{prevAction.label}</Button></Link> : null}
+            {nextAction ? <Link to={nextAction.to}><Button variant="primary" size="medium">{nextAction.label}</Button></Link> : null}
           </div>
         </section>
       ) : null}
