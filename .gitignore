@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 
 .codex
+AGENTS.md
+docs/
+src/data/demoProject.js
+scripts-contract-test.mjs
