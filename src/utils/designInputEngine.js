@@ -79,12 +79,32 @@ export function buildStructuredWorkspace({ projectMeta, ownerAssessment, riskPro
   const externalConnections = [];
   const constraints = [];
   const reviewItems = [];
+  const normalizedOwnerAssets = ownerAssessment?.keyAssets || ownerAssessment?.assets || (ownerAssessment?.criticalAssets || []).map((item) => ({
+    name: item,
+    label: item,
+    type: item,
+    system: ownerAssessment?.keySystems || '',
+    constraint: ownerAssessment?.continuityRequirements || ''
+  }));
+  const normalizedRemoteConnections = ownerAssessment?.remoteConnections || ownerAssessment?.remoteAccessModes || (ownerAssessment?.remoteAccessNeed ? [{
+    name: ownerAssessment.maintenanceAccessPath || '远程接入',
+    mode: ownerAssessment.remoteAccessNeed,
+    type: 'remote-access',
+    direction: 'inbound',
+    owner: ownerAssessment.remoteOperationsOwnership || 'owner',
+    boundary: ownerAssessment.initialBoundaryNotes || '外部到控制域',
+    status: 'pending'
+  }] : []);
+  const normalizedOwnerConstraints = ownerAssessment?.constraintsList || ownerAssessment?.constraints || [
+    ownerAssessment?.continuityRequirements,
+    ownerAssessment?.complianceNotes,
+    ownerAssessment?.externalConnections
+  ].filter(Boolean).map((item) => ({ title: item, description: item, category: 'owner-constraint', appliesTo: [] }));
 
   const ownerEvidence = createEvidence('interview', projectMeta?.projectName || 'owner-assessment', 'owner', '来自业主调研与访谈');
   pushUniqueById(evidences, ownerEvidence);
 
-  const ownerAssets = ownerAssessment?.keyAssets || ownerAssessment?.assets || [];
-  ownerAssets.forEach((asset, index) => {
+  normalizedOwnerAssets.forEach((asset, index) => {
     const zoneName = asset.zoneName || asset.system || asset.networkZone || `${asset.name || asset}-${inferZoneType(asset.type || '')}区域`;
     const zoneId = `zone-${slugify(zoneName)}`;
     const assetId = `asset-${slugify(asset.name || asset.label || `${index}`)}`;
@@ -118,7 +138,7 @@ export function buildStructuredWorkspace({ projectMeta, ownerAssessment, riskPro
     });
   });
 
-  (ownerAssessment?.remoteConnections || ownerAssessment?.remoteAccessModes || []).forEach((item, index) => {
+  normalizedRemoteConnections.forEach((item, index) => {
     const name = item.name || item.mode || item;
     const id = `ext-${slugify(name)}-${index}`;
     externalConnections.push({
@@ -136,7 +156,7 @@ export function buildStructuredWorkspace({ projectMeta, ownerAssessment, riskPro
     });
   });
 
-  (ownerAssessment?.constraintsList || ownerAssessment?.constraints || []).forEach((item, index) => {
+  normalizedOwnerConstraints.forEach((item, index) => {
     const content = item.name || item.title || item;
     constraints.push({
       id: `constraint-owner-${slugify(content)}-${index}`,

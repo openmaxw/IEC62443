@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../../components/Common';
+import { Button, NotePanel, StatusSummaryPanel, StepTabs, WorkflowNavBar } from '../../components/Common';
 import { ProjectStageShell } from '../../components/ProjectFlow';
 import { useOwnerPath, useProject } from '../../hooks/useProject';
+import { getIntegratorWorkspaceViewModel } from '../../domain/viewModels/workspaceTranslationViewModels';
 import { ZONE_TEMPLATES, CONDUIT_TEMPLATES } from '../../data/zones';
 import { getCapabilityDisplay } from '../../data/capabilities';
 import { buildCapabilityRequirementMatrix, buildCommunicationMatrix, buildSystemRules } from '../../utils/planningEngine';
@@ -20,6 +21,10 @@ const STEPS = [
   { id: 'flows', title: '跨区通信' },
   { id: 'review', title: '设计校核' }
 ];
+
+function isSameObject(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
 
 function groupRequirementRows(rows) {
   const grouped = new Map();
@@ -57,25 +62,36 @@ export function IntegratorWorkspace() {
   const { assessment, riskProfile, projectMeta } = useOwnerPath();
   const { state, actions } = useProject();
   const integratorDraft = state.integratorDesign?.draft;
+  const workspaceViewModel = getIntegratorWorkspaceViewModel({ projectMeta, assessment, riskProfile, draftPlan: integratorDraft });
   const [currentStep, setCurrentStep] = useState(0);
   const [newAsset, setNewAsset] = useState(DEFAULT_ASSET);
   const [newFlow, setNewFlow] = useState(DEFAULT_FLOW);
-  const [plan, setPlan] = useState(integratorDraft || { zones: [], conduits: [], assets: [], communicationFlows: [], targetSL: riskProfile?.targetLevelCandidates?.[0]?.level || 2, requiredFR: riskProfile?.frFocus?.map((item) => item.code) || [], designBasis: '' });
+  const [plan, setPlan] = useState(workspaceViewModel.initialPlan);
   const communicationMatrix = useMemo(() => buildCommunicationMatrix(plan), [plan]);
   const requirementMatrix = useMemo(() => buildCapabilityRequirementMatrix(riskProfile, plan.targetSL, communicationMatrix), [plan.targetSL, riskProfile, communicationMatrix]);
   const systemRules = useMemo(() => buildSystemRules(plan, riskProfile, communicationMatrix), [plan, riskProfile, communicationMatrix]);
   const requirementGroups = useMemo(() => groupRequirementRows(requirementMatrix.rows), [requirementMatrix.rows]);
 
   useEffect(() => {
-    actions.setIntegratorDraft(plan);
-  }, [plan]);
+    if (!isSameObject(state.integratorDesign?.draft, plan)) {
+      actions.setIntegratorDraft(plan);
+    }
+  }, [plan, state.integratorDesign?.draft, actions]);
 
-  if (!assessment || !riskProfile) {
+  if (!workspaceViewModel.hasPrerequisites) {
     return <ProjectStageShell stageNumber="02" title="设计" projectName={state.projectMeta?.projectName} outputLabel="系统规划结果" prevAction={{ to: '/owner', label: '上一步' }} ><div className={styles.empty}>先完成需求阶段。</div></ProjectStageShell>;
   }
 
   const step = STEPS[currentStep];
   const isReviewStep = currentStep === STEPS.length - 1;
+  const completionCount = [
+    plan.designBasis,
+    plan.zones?.length,
+    plan.conduits?.length,
+    plan.assets?.length,
+    plan.communicationFlows?.length,
+    requirementMatrix.rows?.length
+  ].filter(Boolean).length;
 
   const toggleItem = (field, value) => setPlan((prev) => ({
     ...prev,
@@ -96,7 +112,10 @@ export function IntegratorWorkspace() {
 
   const finalizePlan = () => {
     actions.setProjectMeta({ status: 'integrator-completed' });
-    actions.setIntegratorPlan({ ...plan, communicationMatrix, capabilityRequirements: requirementMatrix.rows, systemRules, residualRisks: communicationMatrix.complete ? ['仍需结合现场专家审查与设备能力核对。'] : ['通信流未完整，尚不能形成完整边界控制设计。'], designBasisSummary: { keySystems: assessment.keySystems, externalConnections: assessment.externalConnections, maintenanceAccessPath: assessment.maintenanceAccessPath, initialBoundaryNotes: assessment.initialBoundaryNotes, continuityRequirements: assessment.continuityRequirements, complianceNotes: assessment.complianceNotes, designBasis: plan.designBasis } });
+    const nextPlan = { ...plan, communicationMatrix, capabilityRequirements: requirementMatrix.rows, systemRules, residualRisks: communicationMatrix.complete ? ['仍需结合现场专家审查与设备能力核对。'] : ['通信流未完整，尚不能形成完整边界控制设计。'], designBasisSummary: { keySystems: assessment.keySystems, externalConnections: assessment.externalConnections, maintenanceAccessPath: assessment.maintenanceAccessPath, initialBoundaryNotes: assessment.initialBoundaryNotes, continuityRequirements: assessment.continuityRequirements, complianceNotes: assessment.complianceNotes, designBasis: plan.designBasis } };
+    if (JSON.stringify(state.integratorDesign?.plan) !== JSON.stringify(nextPlan)) {
+      actions.setIntegratorPlan(nextPlan);
+    }
     navigate('/integrator/result');
   };
 
@@ -125,14 +144,15 @@ export function IntegratorWorkspace() {
       title="设计"
       projectName={state.projectMeta?.projectName}
       outputLabel={`步骤 ${currentStep + 1}/${STEPS.length} · ${step.title}`}
+      statusText={isReviewStep ? '设计输入已形成规划结果候选' : '正在完善系统规划输入'}
+      statusPanel={<StatusSummaryPanel label="设计覆盖度" value={`${completionCount} / 6`} note="当前设计结果会影响能力需求、后续设备声明和差距闭环，不应只停留在文本描述层。" pills={[`步骤 ${currentStep + 1}/${STEPS.length}`, isReviewStep ? '可生成设计结果' : '待继续补齐']} />}
+      guidance={{ summary: '请在本页完成分区、通道、资产归组、通信与能力需求等设计信息。' }}
     >
       <section className={styles.workspace}>
-        <div className={styles.stepTabs}>{STEPS.map((item, index) => <button key={item.id} type="button" className={`${styles.stepTab} ${index === currentStep ? styles.stepTabActive : ''}`} onClick={() => setCurrentStep(index)}>{String(index + 1).padStart(2, '0')} {item.title}</button>)}</div>
+        <StepTabs items={STEPS} currentIndex={currentStep} onChange={setCurrentStep} />
         <div className={styles.panel}>{content}</div>
-        <div className={styles.footerBar}>
-          {currentStep === 0 ? <Button variant="ghost" size="medium" onClick={() => navigate('/owner/result')}>返回需求结果</Button> : <Button variant="ghost" size="medium" onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 0))}>上一步</Button>}
-          {isReviewStep ? <Button variant="primary" size="medium" onClick={finalizePlan}>生成设计结果</Button> : <Button variant="primary" size="medium" onClick={() => setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1))}>下一步</Button>}
-        </div>
+        <NotePanel title="设计说明" notes={["请优先补充分区、通道、通信与边界控制等关键信息。", "如部分内容暂未确认，可先记录为待确认，并在输出设计结果前完成核对。"]} />
+        <WorkflowNavBar leftLabel={currentStep === 0 ? '返回需求结果' : '上一步'} rightLabel={isReviewStep ? '生成设计结果' : '下一步'} onLeftClick={currentStep === 0 ? () => navigate('/owner/result') : () => setCurrentStep((prev) => Math.max(prev - 1, 0))} onRightClick={isReviewStep ? finalizePlan : () => setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1))} />
       </section>
     </ProjectStageShell>
   );

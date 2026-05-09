@@ -1,6 +1,9 @@
 import { useReducer, useEffect, useMemo } from 'react';
 import { ProjectContext } from './projectContextInstance';
 import { DEMO_PROJECT_STATE } from '../data/demoProject';
+import { hasOwnerAssessmentContent, normalizeOwnerAssessment } from '../domain/schema/ownerAssessment';
+import { normalizeIntegratorPlan } from '../domain/schema/integratorPlan';
+import { normalizeSelectionResults } from '../domain/schema/selectionResults';
 
 const STORAGE_KEY = 'iec-62443-project-data';
 
@@ -50,31 +53,35 @@ function normalizeProjectMeta(value) {
 
 function normalizeOwnerProfile(value, parsed) {
   const source = ensureObject(value, DEFAULT_OWNER_PROFILE);
+  const legacyAssessment = !source.assessment && !parsed.ownerProfile ? parsed.ownerAssessment : null;
+  const assessmentSource = source.assessment || legacyAssessment || null;
+  const draftSource = source.draft || null;
+
   return {
-    assessment: source.assessment || parsed.ownerAssessment || null,
-    draft: source.draft || null
+    assessment: assessmentSource ? normalizeOwnerAssessment(assessmentSource) : null,
+    draft: hasOwnerAssessmentContent(draftSource) ? normalizeOwnerAssessment(draftSource) : null
   };
 }
 
 function normalizeRiskTranslation(value, parsed) {
   const source = ensureObject(value, DEFAULT_RISK_TRANSLATION);
   return {
-    profile: source.profile || parsed.riskProfile || null
+    profile: source.profile || (!parsed.riskTranslation ? parsed.riskProfile : null) || null
   };
 }
 
 function normalizeIntegratorDesign(value, parsed) {
   const source = ensureObject(value, DEFAULT_INTEGRATOR_DESIGN);
   return {
-    plan: source.plan || parsed.integratorPlan || null,
-    draft: source.draft || null
+    plan: normalizeIntegratorPlan(source.plan || (!parsed.integratorDesign ? parsed.integratorPlan : null) || null),
+    draft: normalizeIntegratorPlan(source.draft || null)
   };
 }
 
 function normalizeVendorCatalog(value, parsed) {
   const source = ensureObject(value, DEFAULT_VENDOR_CATALOG);
   return {
-    capabilities: ensureArray(source.capabilities).length ? ensureArray(source.capabilities) : ensureArray(parsed.vendorCapabilities),
+    capabilities: ensureArray(source.capabilities).length ? ensureArray(source.capabilities) : (!parsed.vendorCatalog ? ensureArray(parsed.vendorCapabilities) : []),
     draft: source.draft || null
   };
 }
@@ -82,14 +89,14 @@ function normalizeVendorCatalog(value, parsed) {
 function normalizeSelectionAnalysis(value, parsed) {
   const source = ensureObject(value, DEFAULT_SELECTION_ANALYSIS);
   return {
-    results: source.results || parsed.matchResults || null
+    results: normalizeSelectionResults(source.results || (!parsed.selectionAnalysis ? parsed.matchResults : null) || null)
   };
 }
 
 function normalizeGapClosure(value, parsed) {
   const source = ensureObject(value, DEFAULT_GAP_CLOSURE);
   return {
-    items: ensureArray(source.items).length ? ensureArray(source.items) : ensureArray(parsed.gapClosureItems)
+    items: ensureArray(source.items).length ? ensureArray(source.items) : (!parsed.gapClosure ? ensureArray(parsed.gapClosureItems) : [])
   };
 }
 
@@ -175,22 +182,27 @@ function projectReducer(state, action) {
     case ActionTypes.SET_OWNER_ASSESSMENT:
       return { ...state, ownerProfile: { ...state.ownerProfile, assessment: action.payload, draft: action.payload } };
     case ActionTypes.SET_OWNER_DRAFT:
+      if (JSON.stringify(state.ownerProfile?.draft) === JSON.stringify(action.payload)) return state;
       return { ...state, ownerProfile: { ...state.ownerProfile, draft: action.payload } };
     case ActionTypes.SET_RISK_PROFILE:
       return { ...state, riskTranslation: { ...state.riskTranslation, profile: action.payload } };
     case ActionTypes.SET_INTEGRATOR_PLAN:
       return { ...state, integratorDesign: { ...state.integratorDesign, plan: action.payload, draft: action.payload } };
     case ActionTypes.SET_INTEGRATOR_DRAFT:
+      if (JSON.stringify(state.integratorDesign?.draft) === JSON.stringify(action.payload)) return state;
       return { ...state, integratorDesign: { ...state.integratorDesign, draft: action.payload } };
     case ActionTypes.ADD_VENDOR_CAPABILITY:
       return { ...state, vendorCatalog: { ...state.vendorCatalog, capabilities: [...ensureArray(state.vendorCatalog?.capabilities), action.payload], draft: action.payload } };
     case ActionTypes.UPDATE_VENDOR_CAPABILITY:
       return { ...state, vendorCatalog: { ...state.vendorCatalog, capabilities: ensureArray(state.vendorCatalog?.capabilities).map((item, index) => (index === action.payload.index ? action.payload.data : item)) } };
     case ActionTypes.SET_VENDOR_DRAFT:
+      if (JSON.stringify(state.vendorCatalog?.draft) === JSON.stringify(action.payload)) return state;
       return { ...state, vendorCatalog: { ...state.vendorCatalog, draft: action.payload } };
     case ActionTypes.SET_MATCH_RESULTS:
+      if (JSON.stringify(state.selectionAnalysis?.results) === JSON.stringify(action.payload)) return state;
       return { ...state, selectionAnalysis: { ...state.selectionAnalysis, results: action.payload } };
     case ActionTypes.SET_GAP_CLOSURE_ITEMS:
+      if (JSON.stringify(state.gapClosure?.items) === JSON.stringify(ensureArray(action.payload))) return state;
       return { ...state, gapClosure: { ...state.gapClosure, items: ensureArray(action.payload) } };
     case ActionTypes.SET_REPORTS:
       return { ...state, deliverables: { ...state.deliverables, reports: ensureArray(action.payload) } };
@@ -205,25 +217,11 @@ function projectReducer(state, action) {
   }
 }
 
-function createLegacyCompatState(state) {
-  const safeState = normalizeState(state);
-  return {
-    ...safeState,
-    projectName: safeState.projectMeta.projectName,
-    ownerAssessment: safeState.ownerProfile.assessment,
-    riskProfile: safeState.riskTranslation.profile,
-    integratorPlan: safeState.integratorDesign.plan,
-    vendorCapabilities: safeState.vendorCatalog.capabilities,
-    matchResults: safeState.selectionAnalysis.results,
-    gapClosureItems: safeState.gapClosure.items
-  };
-}
-
 export function ProjectProvider({ children }) {
   const [state, dispatch] = useReducer(projectReducer, initialState, loadStateFromStorage);
 
   useEffect(() => {
-    saveStateToStorage(createLegacyCompatState(state));
+    saveStateToStorage(normalizeState(state));
   }, [state]);
   const actions = useMemo(() => ({
     setRole: (payload) => dispatch({ type: ActionTypes.SET_ROLE, payload }),

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button, Card } from '../../components/Common';
 import { ProjectStageShell } from '../../components/ProjectFlow';
 import { useOwnerPath, useIntegratorPath, useVendorPath, useProject, useProjectStatus } from '../../hooks/useProject';
+import { getDashboardViewModel } from '../../domain/viewModels/dashboardVendorViewModels';
 import styles from './Dashboard.module.css';
 
 const STAGE_LABELS = {
@@ -14,11 +15,12 @@ const STAGE_LABELS = {
 };
 
 export function Dashboard() {
-  const { state, actions } = useProject();
+  const { actions } = useProject();
   const { projectMeta, assessment, riskProfile } = useOwnerPath();
   const { plan } = useIntegratorPath();
   const { capabilities, matchResults } = useVendorPath();
   const { progress, missingInputs, nextAction } = useProjectStatus();
+  const viewModel = getDashboardViewModel({ projectMeta, assessment, riskProfile, plan, capabilities, matchResults, progress, missingInputs, nextAction });
 
   const handleReset = () => {
     if (window.confirm('初始化后将清空当前项目及后续流程的全部已填写信息，是否继续？')) {
@@ -32,87 +34,70 @@ export function Dashboard() {
     }
   };
 
-  const cards = [
-    {
-      id: 'owner',
-      title: '业主输入',
-      ready: progress.stageStatus.owner,
-      detail: assessment ? `已形成风险与业务输入摘要${riskProfile ? '，可交接给集成商' : ''}` : '待完成项目场景、后果、约束输入',
-      route: progress.stageStatus.owner ? '/owner/result' : '/owner',
-      substeps: progress.substeps.owner
-    },
-    {
-      id: 'integrator',
-      title: '集成设计',
-      ready: progress.stageStatus.integrator,
-      detail: plan ? `已形成 ${plan.zones?.length || 0} 个 zone、${plan.communicationFlows?.length || 0} 条通信流` : '待完成 Zone / Conduit 与通信设计',
-      route: progress.stageStatus.integrator ? '/integrator/result' : '/integrator',
-      substeps: progress.substeps.integrator
-    },
-    {
-      id: 'vendor',
-      title: '设备声明',
-      ready: progress.stageStatus.vendor,
-      detail: capabilities.length ? `已录入 ${capabilities.length} 份能力声明` : '待录入产品能力、边界与证据',
-      route: progress.stageStatus.vendor ? '/vendor/result' : '/vendor',
-      substeps: progress.substeps.vendor
-    },
-    {
-      id: 'selection',
-      title: '闭环',
-      ready: progress.stageStatus.selection,
-      detail: matchResults?.results?.length ? `已生成 ${matchResults.results.length} 条闭环输入结果` : '待完成要求-能力匹配与闭环处理',
-      route: '/selection',
-      substeps: progress.substeps.selection
-    }
-  ];
+  const statusPanel = (
+    <>
+      <div className={styles.statusHighlight}>
+        <span>{viewModel.statusSummary.title}</span>
+        <strong>{viewModel.statusSummary.headline}</strong>
+        <em>{viewModel.statusSummary.detail}</em>
+      </div>
+      <div className={styles.statusTags}>
+        {viewModel.statusSummary.pills.map((item) => <span key={item} className={styles.statusTag}>{item}</span>)}
+      </div>
+    </>
+  );
 
   return (
     <ProjectStageShell
       stageNumber="00"
       title="工作台"
-      projectName={projectMeta.projectName}
-      outputLabel={`总进度 ${progress.completed} / ${progress.total}`}
-      guidance={{
-        summary: '工作台用于查看当前项目进度、关键缺口和下一步动作。'
-      }}
-      toolbar={<><Button variant="secondary" size="small" onClick={handleLoadDemo}>加载演示项目</Button><Button variant="secondary" size="small" onClick={handleReset}>重置项目</Button></>}
+      projectName={viewModel.projectName}
+      outputLabel={`总进度 ${viewModel.progress.completed} / ${viewModel.progress.total}`}
+      statusText={viewModel.nextAction ? '待推进下一阶段' : '当前项目已形成完整阶段结果'}
+      statusPanel={statusPanel}
+      guidance={{ summary: '您可在工作台查看当前项目进度、待补充事项与建议动作。' }}
+      toolbar={<><Button variant="secondary" size="small" onClick={handleLoadDemo}>加载演示项目</Button><Button variant="danger" size="small" onClick={handleReset}>重置项目</Button></>}
     >
       <section className={styles.page}>
         <section className={styles.hero}>
           <div>
-            <h1>{projectMeta.projectName || '当前项目'}</h1>
-            <p>
-              {[projectMeta.organizationName, projectMeta.siteName, projectMeta.industry, projectMeta.scenarioType].filter(Boolean).join(' / ') || '先从业主步骤 01 填写项目场景与基础信息，再按阶段推进 IEC 62443 协同工作流。'}
-            </p>
+            <h1>{viewModel.projectName || '当前项目'}</h1>
+            <p>{viewModel.projectDescription}</p>
+            <div className={styles.heroStats}>{viewModel.overviewStats.map((item) => <div key={item.label} className={styles.heroStat}><span>{item.label}</span><strong>{item.value}</strong></div>)}</div>
           </div>
           <div className={styles.heroAction}>
-            {nextAction ? <Link to={nextAction.route}><Button variant="primary" size="small">下一步：{nextAction.label}</Button></Link> : <Link to="/report"><Button variant="secondary" size="small">查看交付中心</Button></Link>}
+            {viewModel.nextAction ? <Link to={viewModel.nextAction.route}><Button variant="primary" size="small">下一步：{viewModel.nextAction.label}</Button></Link> : <Link to="/report"><Button variant="secondary" size="small">查看交付中心</Button></Link>}
           </div>
         </section>
 
         <section className={styles.grid}>
-          <Card title="下一步建议">
+          <Card title="建议动作">
             <div className={styles.nextActionCard}>
-              <strong>{nextAction?.label || '当前阶段已基本完成'}</strong>
-              <span>{nextAction?.description || '可以转入交付中心查看阶段成果，或回到具体页面继续细化内容。'}</span>
+              <strong>{viewModel.nextAction?.label || '当前阶段已基本完成'}</strong>
+              <span>{viewModel.nextAction?.description || '可以转入交付中心查看阶段成果，或回到具体页面继续细化内容。'}</span>
+              <em className={styles.noteText}>该建议根据当前项目状态生成，便于您优先处理关键步骤。</em>
               <div className={styles.inlineActions}>
-                {nextAction ? <Link to={nextAction.route}><Button variant="primary" size="small">前往处理</Button></Link> : <Link to="/report"><Button variant="secondary" size="small">查看交付中心</Button></Link>}
+                {viewModel.nextAction ? <Link to={viewModel.nextAction.route}><Button variant="primary" size="small">前往处理</Button></Link> : <Link to="/report"><Button variant="secondary" size="small">查看交付中心</Button></Link>}
               </div>
             </div>
           </Card>
 
           <Card title="缺失输入">
             <div className={styles.listBlock}>
-              {missingInputs.length ? missingInputs.map((item) => (
+              {viewModel.missingInputs.length ? viewModel.missingInputs.map((item) => (
                 <Link key={item.id} to={item.route} className={styles.linkRow}>{item.label}</Link>
               )) : <div className={styles.empty}>当前关键输入已基本齐备，可继续完善设计和交付。</div>}
             </div>
           </Card>
         </section>
 
+        <section className={styles.notePanel}>
+          <strong>使用说明</strong>
+          <em>建议优先处理缺失输入较多或系统推荐的阶段；如需快速了解整体流程，可先加载演示项目查看示例。</em>
+        </section>
+
         <section className={styles.cardGrid}>
-          {cards.map((card) => (
+          {viewModel.cards.map((card) => (
             <article key={card.id} className={styles.statusCard}>
               <div className={styles.statusHead}>
                 <strong>{card.title}</strong>

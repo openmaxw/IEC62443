@@ -1,0 +1,7 @@
+.aside { display: grid; gap: 10px; }
+.noteCard { display: grid; gap: 4px; padding: 10px 12px; border: 1px solid rgba(255, 138, 42, 0.26); border-radius: var(--radius-md); background: linear-gradient(135deg, rgba(255, 138, 42, 0.12), rgba(255, 255, 255, 0.03)); }
+.noteCard span { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.noteCard strong { color: var(--color-text); }
+.noteCard em { color: var(--color-text-muted); font-style: italic; line-height: var(--line-height-relaxed); }
+.pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.pill { padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(255, 138, 42, 0.22); background: rgba(255, 138, 42, 0.08); color: #ffd7bb; font-size: var(--font-size-xs); font-weight: 600; }

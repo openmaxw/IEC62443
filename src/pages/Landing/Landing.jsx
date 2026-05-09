@@ -1,49 +1,49 @@
 import { Link } from 'react-router-dom';
-import { Button } from '../../components/Common';
+import { Button, NotePanel, SectionBlock, StatusBadge } from '../../components/Common';
 import styles from './Landing.module.css';
 
 const FLOW_STEPS = [
   {
-    title: '输入整理',
-    desc: '整理业务目标、风险关注、维护方式和验收重点，形成可交接的项目输入。'
+    title: '业务输入',
+    desc: '把项目场景、关键对象、维护方式、验收关注和业务后果整理成可交接输入。'
   },
   {
-    title: '设计翻译',
-    desc: '将输入转化为分区、通信、边界控制和能力需求，形成系统设计依据。'
+    title: '设计响应',
+    desc: '把输入翻译为分区、通信、边界控制和能力需求，形成可核对的系统设计依据。'
   },
   {
-    title: '能力对齐',
-    desc: '围绕项目要求声明产品能力、证据、依赖条件和适用边界。'
+    title: '能力声明',
+    desc: '围绕项目能力需求核对产品声明、证据、依赖条件与适用边界。'
   },
   {
-    title: '闭环',
-    desc: '确认匹配结果、责任归属和补偿路径，沉淀为可追溯的交付结果。'
+    title: '差距闭环',
+    desc: '明确不满足项、补偿措施、责任归属与验收影响，沉淀成可追溯交付结果。'
   }
 ];
 
 const ROLE_BENEFITS = [
   {
-    title: '业主',
+    title: '业主收益',
     points: [
-      '明确需求与验收重点。',
-      '输出项目边界与风险关注。',
-      '形成可交接的输入依据。'
+      '把项目输入、关键对象和验收关注整理成可交接依据。',
+      '更清楚地看到当前还缺什么、下一步该推进什么。',
+      '减少口头沟通和反复确认造成的信息偏差。'
     ]
   },
   {
-    title: '集成商',
+    title: '集成商收益',
     points: [
-      '完成分区与通信设计。',
-      '形成控制要求与设计依据。',
-      '明确实施与交付边界。'
+      '把需求翻译成分区、通信、边界控制和能力需求。',
+      '更容易把设计依据、设备声明和闭环结果串起来。',
+      '减少设计、匹配、交付之间的断点。'
     ]
   },
   {
-    title: '设备商',
+    title: '设备商收益',
     points: [
-      '声明产品能力与证据。',
-      '说明依赖条件与限制。',
-      '支撑制造边界设备能力对齐与闭环处置。'
+      '围绕项目要求整理能力声明、证据、依赖与限制说明。',
+      '更容易说明哪些能力可满足、哪些需要外部补偿。',
+      '减少在项目后期才暴露能力边界的问题。'
     ]
   }
 ];
@@ -52,20 +52,17 @@ export function Landing() {
   return (
     <div className={styles.page}>
       <section className={styles.hero}>
-        <div className={styles.heroBadge}>IEC 62443 项目工作台</div>
-        <h1>让 IEC 62443 项目从需求到交付更可追溯。</h1>
+        <div className={styles.heroBadge}>IEC 62443 协同工作台</div>
+        <h1>让 IEC 62443 项目协同更清楚。</h1>
         <p className={styles.lead}>
-          统一项目输入，沉淀设计依据、能力声明与闭环交付。
+          帮助业主、集成商和设备商在同一套流程里完成输入整理、设计响应、能力核对与闭环交付。
         </p>
         <div className={styles.actions}>
           <Link to="/dashboard"><Button variant="primary" size="medium">进入工作台</Button></Link>
         </div>
       </section>
 
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <strong>流程</strong>
-        </div>
+      <SectionBlock title="主链路">
         <div className={styles.flowGrid}>
           {FLOW_STEPS.map((item) => (
             <article key={item.title} className={styles.flowCard}>
@@ -74,25 +71,23 @@ export function Landing() {
             </article>
           ))}
         </div>
-      </section>
+      </SectionBlock>
 
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <strong>价值</strong>
-        </div>
+      <SectionBlock title="收益">
         <div className={styles.valueList}>
-          {ROLE_BENEFITS.map((role) => (
-            <article key={role.title} className={styles.valueCard}>
-              <strong>{role.title}</strong>
+          {ROLE_BENEFITS.map((section) => (
+            <article key={section.title} className={styles.valueCard}>
+              <strong>{section.title}</strong>
               <div className={styles.pointList}>
-                {role.points.map((point) => (
+                {section.points.map((point) => (
                   <p key={point} className={styles.pointItem}>{point}</p>
                 ))}
               </div>
             </article>
           ))}
         </div>
-      </section>
+      </SectionBlock>
+      <NotePanel title="首页说明" notes={["首页用于说明系统定位、主链路和价值，不承担项目数据录入任务。", "建议从工作台进入正式协同流程，再根据阶段结果回看追溯链与交付汇总。"]} />
     </div>
   );
 }

@@ -30,7 +30,7 @@ export function Header() {
           </div>
           <div className={styles.brandText}>
             <strong>IEC 62443 协同工作台</strong>
-            <span>业主、集成商与设备商共用的需求—设计—能力—闭环协同平台</span>
+            <span>让输入真正走到交付</span>
           </div>
         </Link>
 

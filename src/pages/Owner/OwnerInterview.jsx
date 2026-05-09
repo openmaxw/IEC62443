@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '../../components/Common';
+import { Button, NotePanel, StatusSummaryPanel, StepTabs, WorkflowNavBar } from '../../components/Common';
 import { ProjectStageShell } from '../../components/ProjectFlow';
 import { useProject } from '../../hooks/useProject';
 import { generateRiskProfile } from '../../utils/riskEngine';
@@ -19,6 +19,10 @@ const STEPS = [
   { id: 'assets', title: '关键对象' },
   { id: 'summary', title: '需求汇总' }
 ];
+
+function isSameObject(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
 
 function ImpactRadarChart({ fields, values }) {
   const size = 320;
@@ -144,20 +148,38 @@ export function OwnerInterview() {
   });
 
   useEffect(() => {
-    actions.setOwnerDraft(formData);
-  }, [formData]);
+    if (!isSameObject(state.ownerProfile?.draft, formData)) {
+      actions.setOwnerDraft(formData);
+    }
+  }, [formData, state.ownerProfile?.draft, actions]);
 
   useEffect(() => {
-    if (state.ownerProfile?.draft) {
+    if (state.ownerProfile?.draft && !isSameObject(state.ownerProfile.draft, formData)) {
       setFormData(state.ownerProfile.draft);
       return;
     }
-    if (state.ownerProfile?.assessment) {
+    if (state.ownerProfile?.assessment && !isSameObject(state.ownerProfile.assessment, formData)) {
       setFormData((prev) => ({ ...prev, ...state.ownerProfile.assessment }));
     }
   }, [state.ownerProfile?.draft, state.ownerProfile?.assessment]);
 
   const step = STEPS[currentStep];
+  const completedFields = [
+    formData.projectName || state.projectMeta?.projectName,
+    formData.industry,
+    formData.safetyImpact,
+    formData.environmentalImpact,
+    formData.productionImpact,
+    formData.remoteAccessNeed,
+    formData.thirdPartyAccess,
+    formData.networkSegmentationMaturity,
+    formData.identityMaturity,
+    formData.loggingMaturity,
+    formData.patchMaturity,
+    formData.keySystems,
+    formData.externalConnections
+  ].filter(Boolean).length;
+  const totalFields = 13;
   const updateField = (field, value) => setFormData((prev) => ({ ...prev, [field]: value }));
   const toggleAsset = (item) => setFormData((prev) => ({ ...prev, criticalAssets: prev.criticalAssets.includes(item) ? prev.criticalAssets.filter((entry) => entry !== item) : [...prev.criticalAssets, item] }));
 
@@ -170,9 +192,14 @@ export function OwnerInterview() {
     const projectName = formData.projectName || state.projectMeta?.projectName || `${formData.industry || '工业项目'} IEC 62443 需求访谈`;
     const nextForm = { ...formData, projectName, industry: formData.industry || state.projectMeta?.industry || '' };
     actions.setProjectMeta({ projectName, industry: nextForm.industry, status: 'owner-completed' });
-    actions.setOwnerAssessment(nextForm);
+    if (!isSameObject(state.ownerProfile?.assessment, nextForm)) {
+      actions.setOwnerAssessment(nextForm);
+    }
     actions.setProjectName(projectName);
-    actions.setRiskProfile(generateRiskProfile(nextForm));
+    const nextRiskProfile = generateRiskProfile(nextForm);
+    if (!isSameObject(state.riskTranslation?.profile, nextRiskProfile)) {
+      actions.setRiskProfile(nextRiskProfile);
+    }
     navigate('/integrator');
   };
 
@@ -288,14 +315,16 @@ export function OwnerInterview() {
       title="需求"
       projectName={state.projectMeta?.projectName || formData.projectName}
       outputLabel={`步骤 ${currentStep + 1}/${STEPS.length} · ${step.title}`}
-      
+      statusText={isSummaryStep ? '已形成业主需求汇总，可进入设计阶段' : '正在完善业主输入与风险前置信息'}
+      statusPanel={<StatusSummaryPanel label="输入完成度" value={`${completedFields} / ${totalFields}`} note="请根据项目实际情况补充业务场景、风险关注与关键约束信息，这些内容将作为后续设计工作的依据。" pills={[`步骤 ${currentStep + 1}/${STEPS.length}`, isSummaryStep ? '可进入设计阶段' : '待继续完善']} />}
+      guidance={{ summary: '请在本页完善项目场景、业务后果、暴露面、现状基础与关键约束信息。' }}
     >
-      <div className={styles.stepTabs}>{STEPS.map((item, index) => <button key={item.id} type="button" className={`${styles.stepTab} ${index === currentStep ? styles.stepTabActive : ''}`} onClick={() => setCurrentStep(index)}>{String(index + 1).padStart(2, '0')} {item.title}</button>)}</div>
-      <div className={`${styles.panel} ${isSummaryStep ? styles.documentPanel : ''}`}>{content}</div>
-      <div className={styles.actions}>
-        {currentStep === 0 ? <Link to="/dashboard"><Button variant="ghost" size="medium">返回工作台</Button></Link> : <Button variant="ghost" size="medium" onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 0))}>上一步</Button>}
-        {isSummaryStep ? <Button variant="primary" size="medium" onClick={handleFinalizeSummary}>进入设计</Button> : <Button variant="primary" size="medium" onClick={() => setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1))}>下一步</Button>}
-      </div>
+      <section className={styles.workspace}>
+        <StepTabs items={STEPS} currentIndex={currentStep} onChange={setCurrentStep} />
+        <div className={`${styles.panel} ${isSummaryStep ? styles.documentPanel : ''}`}>{content}</div>
+        <NotePanel title="填写说明" notes={["请优先填写会影响后续系统设计和验收安排的关键信息。", "如部分内容暂时无法确认，可先记录为待确认，并在进入后续阶段前尽快补充。"]} />
+      </section>
+      <WorkflowNavBar leftLabel={currentStep === 0 ? '返回工作台' : '上一步'} rightLabel={isSummaryStep ? '进入设计' : '下一步'} onLeftClick={currentStep === 0 ? () => navigate('/dashboard') : () => setCurrentStep((prev) => Math.max(prev - 1, 0))} onRightClick={isSummaryStep ? handleFinalizeSummary : () => setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1))} />
     </ProjectStageShell>
   );
 }

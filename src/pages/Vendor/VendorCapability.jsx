@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../../components/Common';
+import { Button, NotePanel, StatusSummaryPanel, SummaryStatGrid, StepTabs, WorkflowNavBar } from '../../components/Common';
 import { ProjectStageShell } from '../../components/ProjectFlow';
 import { useIntegratorPath, useProject } from '../../hooks/useProject';
+import { getVendorCapabilityViewModel } from '../../domain/viewModels/workspaceTranslationViewModels';
 import { CAPABILITY_OPTIONS, PRODUCT_TYPES, CAPABILITY_CATEGORIES, getCapabilityDisplay } from '../../data/capabilities';
 import styles from './VendorCapability.module.css';
 
@@ -18,6 +19,10 @@ const STEPS = [
   { id: 'summary', title: '声明汇总' }
 ];
 
+function isSameObject(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 function resolveApplicability(productType, category) {
   if (!productType) return { label: '待选择产品类型', tone: 'neutral' };
   const suggested = PRODUCT_TYPE_HINTS[productType] || [];
@@ -32,7 +37,8 @@ function FieldHint({ text }) {
 export function VendorCapability() {
   const navigate = useNavigate();
   const { state, actions } = useProject();
-  const { plan } = useIntegratorPath();
+  const { projectMeta, plan } = useIntegratorPath();
+  const capabilityViewModel = getVendorCapabilityViewModel({ projectMeta, plan, draft: state.vendorCatalog?.draft, capabilities: state.vendorCatalog?.capabilities });
   const [filter, setFilter] = useState('required');
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState(() => state.vendorCatalog?.draft || { productMeta: { productName: '', productType: '', securityLevel: 2, deploymentScope: '' }, capabilityClaims: [], dependencies: '', limitations: '' });
@@ -44,10 +50,20 @@ export function VendorCapability() {
   const claimedRequiredCount = requirementRows.filter((item) => selectedClaims.has(item.capabilityId)).length;
   const isSummaryStep = currentStep === STEPS.length - 1;
   const step = STEPS[currentStep];
+  const completionCount = [
+    formData.productMeta.productName,
+    formData.productMeta.productType,
+    formData.productMeta.deploymentScope,
+    formData.capabilityClaims.length,
+    formData.dependencies,
+    formData.limitations
+  ].filter(Boolean).length;
 
   useEffect(() => {
-    actions.setVendorDraft(formData);
-  }, [formData]);
+    if (!isSameObject(state.vendorCatalog?.draft, formData)) {
+      actions.setVendorDraft(formData);
+    }
+  }, [formData, state.vendorCatalog?.draft, actions]);
 
   const updateProductMeta = (field, value) => setFormData((prev) => ({ ...prev, productMeta: { ...prev.productMeta, [field]: value } }));
 
@@ -61,7 +77,11 @@ export function VendorCapability() {
   const removeClaim = (capabilityId) => setFormData((prev) => ({ ...prev, capabilityClaims: prev.capabilityClaims.filter((item) => item.capabilityId !== capabilityId) }));
 
   const handleComplete = () => {
-    actions.addVendorCapability({ id: `vendor-${Date.now()}`, ...formData, requirementCoverage: requirementRows.length });
+    const lastCapability = state.vendorCatalog?.capabilities?.[state.vendorCatalog.capabilities.length - 1];
+    const nextCapability = { ...formData, requirementCoverage: requirementRows.length };
+    if (!isSameObject(lastCapability ? { ...lastCapability, id: undefined } : null, nextCapability)) {
+      actions.addVendorCapability({ id: `vendor-${Date.now()}`, ...nextCapability });
+    }
     actions.setProjectMeta({ status: 'vendor-completed' });
     navigate('/vendor/result');
   };
@@ -70,7 +90,7 @@ export function VendorCapability() {
 
   switch (step.id) {
     case 'product':
-      content = <div className={styles.workspace}><div className={styles.topForm}><div className={styles.inputBlock}><label>产品名称</label><input value={formData.productMeta.productName} onChange={(event) => updateProductMeta('productName', event.target.value)} placeholder="MOXA EDR-G9010" /></div><div className={styles.inputBlock}><label>产品类型</label><select value={formData.productMeta.productType} onChange={(event) => updateProductMeta('productType', event.target.value)}><option value="">产品类型</option>{PRODUCT_TYPES.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}</select></div><div className={styles.inputBlock}><label>目标安全等级</label><select value={formData.productMeta.securityLevel} onChange={(event) => updateProductMeta('securityLevel', Number(event.target.value))}>{[1, 2, 3, 4].map((level) => <option key={level} value={level}>SL-{level}</option>)}</select></div><div className={styles.inputBlock}><label>部署范围</label><input value={formData.productMeta.deploymentScope} onChange={(event) => updateProductMeta('deploymentScope', event.target.value)} placeholder="制造区 DMZ 远程维护边界" /></div></div><div className={styles.modeHint}>当前项目共有 {requirementRows.length} 条重点能力要求，建议先填写边界设备基本信息，再逐步完成能力声明与证据补充。</div><div className={styles.productHint}>{selectedProductType ? `当前选择：${selectedProductType.name}` : '请选择产品类型，系统会给出更适用的能力提示。'}</div></div>;
+      content = <div className={styles.workspace}><table className={styles.formTable}><tbody><tr><th>产品名称</th><td><div className={styles.fieldCell}><input value={formData.productMeta.productName} onChange={(event) => updateProductMeta('productName', event.target.value)} placeholder="MOXA EDR-G9010" /><div className={styles.fieldCellHint}>填写用于本项目声明的产品名称。</div></div></td></tr><tr><th>产品类型</th><td><div className={styles.fieldCell}><select value={formData.productMeta.productType} onChange={(event) => updateProductMeta('productType', event.target.value)}><option value="">产品类型</option>{PRODUCT_TYPES.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}</select><div className={styles.fieldCellHint}>产品类型会影响能力提示和适用性判断。</div></div></td></tr><tr><th>目标安全等级</th><td><div className={styles.fieldCell}><select value={formData.productMeta.securityLevel} onChange={(event) => updateProductMeta('securityLevel', Number(event.target.value))}>{[1, 2, 3, 4].map((level) => <option key={level} value={level}>SL-{level}</option>)}</select><div className={styles.fieldCellHint}>用于描述本产品面向当前项目的目标能力等级。</div></div></td></tr><tr><th>部署范围</th><td><div className={styles.fieldCell}><input value={formData.productMeta.deploymentScope} onChange={(event) => updateProductMeta('deploymentScope', event.target.value)} placeholder="制造区 DMZ 远程维护边界" /><div className={styles.fieldCellHint}>填写产品在项目中的典型部署位置或适用边界。</div></div></td></tr></tbody></table><div className={styles.modeHint}>当前项目共有 {requirementRows.length} 条重点能力要求，建议先填写边界设备基本信息，再逐步完成能力声明与证据补充。</div><div className={styles.productHint}>{selectedProductType ? `当前选择：${selectedProductType.name}` : '请选择产品类型，系统会给出更适用的能力提示。'}</div></div>;
       break;
     case 'claims':
       content = <div className={styles.workspace}><div className={styles.toolbarRow}><Button variant={filter === 'required' ? 'primary' : 'secondary'} size="small" onClick={() => setFilter('required')}>项目要求</Button><Button variant={filter === 'all' ? 'primary' : 'secondary'} size="small" onClick={() => setFilter('all')}>产品全量能力</Button></div><table className={styles.table}><thead><tr><th>项目要求</th><th>来源</th><th>适用提示</th><th>满足度</th><th>实现方式</th><th>操作</th></tr></thead><tbody>{visibleCapabilities.length === 0 ? <tr><td colSpan="6">暂无数据</td></tr> : visibleCapabilities.map((capability) => { const claim = selectedClaims.get(capability.id); const applicability = resolveApplicability(formData.productMeta.productType, capability.category); const requirement = requirementRows.find((item) => item.capabilityId === capability.id); return <tr key={capability.id} className={requirementIds.has(capability.id) ? styles.requiredRow : ''}><td><strong>{getCapabilityDisplay(capability.id).label}</strong><div className={styles.capabilityMeta}><span className={styles.standardTag}>{getCapabilityDisplay(capability.id).frText}</span><span className={styles.standardTag}>{getCapabilityDisplay(capability.id).srText}</span></div><div className={styles.metaText}>{getCapabilityDisplay(capability.id).description}</div></td><td>{requirement ? <div><div>{requirement.controlObjective}</div><div className={styles.metaText}>{requirement.implementationHint}</div></div> : '产品补充项'}</td><td><span className={`${styles.appTag} ${applicability.tone === 'fit' ? styles.appTagFit : styles.appTagNeutral}`}>{applicability.label}</span><div className={styles.metaText}>{CAPABILITY_CATEGORIES[capability.category]?.name || capability.category}</div></td><td><select value={claim?.satisfaction || 'fulfilled'} onChange={(event) => updateClaim(capability.id, { satisfaction: event.target.value })}>{SATISFACTION_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></td><td><select value={claim?.implementationType || 'product'} onChange={(event) => updateClaim(capability.id, { implementationType: event.target.value })}><option value="product">由产品实现</option><option value="external">由外围系统实现</option><option value="shared">产品+系统共同实现</option></select></td><td><Button variant="ghost" size="small" onClick={() => removeClaim(capability.id)}>清除</Button></td></tr>; })}</tbody></table></div>;
@@ -82,18 +102,16 @@ export function VendorCapability() {
       content = <div className={styles.workspace}><div className={styles.modeHint}>为已声明能力选择证据类型，便于形成类似 MOXA EDR-G9010 边界设备的可追踪能力声明依据。</div><table className={styles.table}><thead><tr><th>能力项</th><th>满足度</th><th>证据类型</th><th>实现方式</th></tr></thead><tbody>{formData.capabilityClaims.length === 0 ? <tr><td colSpan="4">请先在前面步骤声明能力</td></tr> : formData.capabilityClaims.map((claim) => <tr key={claim.capabilityId}><td><strong>{getCapabilityDisplay(claim.capabilityId).label}</strong></td><td>{SATISFACTION_OPTIONS.find((option) => option.value === claim.satisfaction)?.label || claim.satisfaction}</td><td><select value={claim.evidenceType || '厂家声明'} onChange={(event) => updateClaim(claim.capabilityId, { evidenceType: event.target.value })}>{EVIDENCE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}</select></td><td><select value={claim.implementationType || 'product'} onChange={(event) => updateClaim(claim.capabilityId, { implementationType: event.target.value })}><option value="product">由产品实现</option><option value="external">由外围系统实现</option><option value="shared">产品+系统共同实现</option></select></td></tr>)}</tbody></table></div>;
       break;
     default:
-      content = <div className={styles.page}><div className={styles.summaryGrid}><div><span>产品名称</span><strong>{formData.productMeta.productName || '未填写'}</strong></div><div><span>产品类型</span><strong>{selectedProductType?.name || '未填写'}</strong></div><div><span>目标安全等级</span><strong>SL-{formData.productMeta.securityLevel || 2}</strong></div><div><span>部署范围</span><strong>{formData.productMeta.deploymentScope || '未填写'}</strong></div><div><span>项目要求覆盖</span><strong>{claimedRequiredCount} / {requirementRows.length}</strong></div><div><span>已声明能力</span><strong>{formData.capabilityClaims.length}</strong></div></div><div className={styles.summaryGrid}><div><span>统一依赖</span><strong>{formData.dependencies || '未填写'}</strong></div><div><span>统一限制</span><strong>{formData.limitations || '未填写'}</strong></div></div><div className={styles.modeHint}>确认上述信息后即可生成设备能力结果页，并进入闭环。</div></div>;
+      content = <div className={styles.page}><SummaryStatGrid columns={3} items={[{ label: '产品名称', value: formData.productMeta.productName || '未填写' }, { label: '产品类型', value: selectedProductType?.name || '未填写' }, { label: '目标安全等级', value: `SL-${formData.productMeta.securityLevel || 2}` }, { label: '部署范围', value: formData.productMeta.deploymentScope || '未填写' }, { label: '项目要求覆盖', value: `${claimedRequiredCount} / ${requirementRows.length}` }, { label: '已声明能力', value: formData.capabilityClaims.length }]} /><SummaryStatGrid columns={2} compact items={[{ label: '统一依赖', value: formData.dependencies || '未填写' }, { label: '统一限制', value: formData.limitations || '未填写' }]} /><div className={styles.modeHint}>确认上述信息后即可生成设备能力结果页，并进入闭环。</div></div>;
   }
 
   return (
-    <ProjectStageShell stageNumber="03" title="能力" projectName={state.projectMeta?.projectName} outputLabel={`步骤 ${currentStep + 1}/${STEPS.length} · ${step.title}`} prevAction={{ to: '/integrator/result', label: '上一步' }}>
+    <ProjectStageShell stageNumber="03" title="能力" projectName={capabilityViewModel.projectName} outputLabel={`步骤 ${currentStep + 1}/${STEPS.length} · ${step.title}`} statusText={isSummaryStep ? '能力声明已可生成结果页' : '正在完善产品声明与证据边界'} statusPanel={<StatusSummaryPanel label="声明覆盖度" value={`${completionCount} / 6`} note="请结合项目要求填写产品能力、适用边界、依赖条件和证据情况。" pills={[`步骤 ${currentStep + 1}/${STEPS.length}`, `覆盖项目要求 ${claimedRequiredCount}/${requirementRows.length || 0}`]} />} guidance={{ summary: '请在本页补充产品能力、边界说明、依赖条件和证据信息。' }}>
       <section className={styles.workspace}>
-        <div className={styles.stepTabs}>{STEPS.map((item, index) => <button key={item.id} type="button" className={`${styles.stepTab} ${index === currentStep ? styles.stepTabActive : ''}`} onClick={() => setCurrentStep(index)}>{String(index + 1).padStart(2, '0')} {item.title}</button>)}</div>
+        <StepTabs items={STEPS} currentIndex={currentStep} onChange={setCurrentStep} />
         <div className={styles.panel}>{content}</div>
-        <div className={styles.navBar}>
-          {currentStep === 0 ? <Button variant="ghost" size="medium" onClick={() => navigate('/integrator/result')}>返回设计结果</Button> : <Button variant="ghost" size="medium" onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 0))}>上一步</Button>}
-          {isSummaryStep ? <Button variant="primary" size="medium" onClick={handleComplete}>生成能力结果</Button> : <Button variant="primary" size="medium" onClick={() => setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1))}>下一步</Button>}
-        </div>
+        <NotePanel title="声明说明" notes={["如某项能力依赖系统集成或外部产品共同实现，请在声明中明确说明。", "请尽量补充证据类型和适用边界，便于后续匹配和闭环评估。"]} />
+        <WorkflowNavBar leftLabel={currentStep === 0 ? '返回设计结果' : '上一步'} rightLabel={isSummaryStep ? '生成能力结果' : '下一步'} onLeftClick={currentStep === 0 ? () => navigate('/integrator/result') : () => setCurrentStep((prev) => Math.max(prev - 1, 0))} onRightClick={isSummaryStep ? handleComplete : () => setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1))} />
       </section>
     </ProjectStageShell>
   );

@@ -1,4 +1,4 @@
-import { CONDUIT_TEMPLATES, ZONE_TEMPLATES } from '../data/zones';
+import { CONDUIT_TEMPLATES, ZONE_TEMPLATES } from '../data/zones.js';
 
 function getZoneName(zoneId) {
   return ZONE_TEMPLATES.find((item) => item.id === zoneId)?.name || zoneId;

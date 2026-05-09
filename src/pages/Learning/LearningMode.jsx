@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Card, Badge, Button } from '../../components/Common';
+import { Badge, Button, NotePanel, SectionBlock } from '../../components/Common';
 import { FR_CATEGORIES, SECURITY_LEVELS } from '../../data/rules';
 import styles from './LearningMode.module.css';
 
@@ -20,7 +20,7 @@ export function LearningMode() {
         </div>
       </section>
 
-      <Card title="从主流程进入学习">
+      <SectionBlock title="从主流程进入学习">
         <div className={styles.entryGrid}>
           {ENTRY_POINTS.map((item) => (
             <div key={item.title} className={styles.note}>
@@ -30,23 +30,24 @@ export function LearningMode() {
             </div>
           ))}
         </div>
-      </Card>
+      </SectionBlock>
 
-      <Card title="FR 七大类">
+      <SectionBlock title="FR 七大类">
         <div className={styles.grid}>
           {Object.entries(FR_CATEGORIES).map(([code, item]) => (
             <div key={code} className={styles.note}><strong>{code}</strong><span>{item.name}</span><p>{item.description}</p></div>
           ))}
         </div>
-      </Card>
+      </SectionBlock>
 
-      <Card title="SL 1-4">
+      <SectionBlock title="SL 1-4">
         <div className={styles.grid}>
           {Object.entries(SECURITY_LEVELS).map(([key, item]) => (
             <div key={key} className={styles.note}><strong>{key}</strong><span>{item.name}</span><p>{item.target}</p></div>
           ))}
         </div>
-      </Card>
+      </SectionBlock>
+      <NotePanel title="学习页说明" notes={["学习模式是辅助解释层，不替代主流程页面。", "建议用户从具体阶段遇到问题时回到该页补概念，而不是脱离项目上下文单独阅读。"]} />
     </div>
   );
 }
