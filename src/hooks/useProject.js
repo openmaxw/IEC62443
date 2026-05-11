@@ -89,6 +89,7 @@ function getMissingInputs(state) {
   const plan = state.integratorDesign?.plan;
   const capabilities = ensureArray(state.vendorCatalog?.capabilities);
   const matchResults = state.selectionAnalysis?.results;
+  const reports = ensureArray(state.deliverables?.reports);
   const gapRows = ensureArray(matchResults?.results).filter((item) => item.status === 'missing' || item.status === 'external' || item.status === 'configured' || item.status === 'compensating');
   const gapClosureItems = ensureArray(state.gapClosure?.items);
 
@@ -109,14 +110,23 @@ function getMissingInputs(state) {
   if (!isNonEmptyArray(capabilities)) items.push({ id: 'vendor-capability', label: '录入设备能力声明', route: '/vendor' });
   if (!matchResults) items.push({ id: 'selection-analysis', label: '完成闭环阶段的匹配结果', route: '/selection' });
   if (gapRows.length && gapClosureItems.length < gapRows.length) items.push({ id: 'gap-closure', label: '补全闭环措施并保存', route: '/selection' });
+  if (riskProfile && plan && capabilities.length && matchResults && !reports.length) items.push({ id: 'report-export', label: '在交付中心生成 Markdown 交付摘要', route: '/report' });
 
   return items;
 }
 
 function getNextRecommendedRoute(state) {
+  const missingInputs = getMissingInputs(state);
+  if (missingInputs.length) {
+    return {
+      id: missingInputs[0].id,
+      label: missingInputs[0].label,
+      route: missingInputs[0].route
+    };
+  }
+
   const stageStatus = getStageStatus(state);
-  const nextStage = STAGES.find((stage) => !stageStatus[stage.id]);
-  return nextStage || STAGES[STAGES.length - 1];
+  return STAGES.find((stage) => !stageStatus[stage.id]) || null;
 }
 
 function getProjectProgress(state) {

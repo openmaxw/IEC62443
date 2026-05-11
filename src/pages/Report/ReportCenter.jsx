@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, DataTable, NotePanel, SectionBlock, StatusSummaryPanel, SummaryStatGrid } from '../../components/Common';
 import { ProjectStageShell } from '../../components/ProjectFlow';
-import { useOwnerPath, useIntegratorPath, useVendorPath } from '../../hooks/useProject';
+import { useProject, useOwnerPath, useIntegratorPath, useVendorPath } from '../../hooks/useProject';
 import { getReportCenterViewModel } from '../../domain/viewModels/selectionReportViewModels';
 import { copyMarkdownToClipboard, exportReportAsMarkdown } from '../../utils/reportGenerator';
 import styles from './ReportCenter.module.css';
 
 export function ReportCenter() {
+  const { state, actions } = useProject();
   const { projectMeta, riskProfile } = useOwnerPath();
   const { plan } = useIntegratorPath();
   const { capabilities, matchResults, gapClosureItems } = useVendorPath();
@@ -19,6 +20,16 @@ export function ReportCenter() {
     const result = exportReportAsMarkdown(viewModel.reportPayload);
     setMarkdownPreview(result.markdown);
     setMarkdownFilename(result.filename);
+    actions.setReports([
+      ...(state.deliverables?.reports || []),
+      {
+        id: `markdown-${Date.now()}`,
+        type: 'markdown',
+        title: 'Markdown 交付摘要',
+        filename: result.filename,
+        generatedAt: new Date().toISOString()
+      }
+    ]);
     const copied = await copyMarkdownToClipboard(result.markdown);
     setExportStatus(copied ? `已生成 Markdown，并复制到剪贴板。建议保存为：${result.filename}` : `已生成 Markdown，请从下方文本框复制并保存为：${result.filename}`);
   };
