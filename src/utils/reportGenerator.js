@@ -78,14 +78,22 @@ ${UNIFIED_DISCLAIMER}
 `;
 }
 
+function copyToClipboard(text) {
+  if (navigator.clipboard?.writeText && window.isSecureContext) {
+    navigator.clipboard.writeText(text);
+  }
+}
+
 function downloadText(filename, text, type) {
-  const dataBlob = new Blob([text], { type });
-  const url = URL.createObjectURL(dataBlob);
   const link = document.createElement('a');
-  link.href = url;
   link.download = filename;
+  link.rel = 'noopener';
+  link.href = `data:${type},${encodeURIComponent(text)}`;
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(url);
+  document.body.removeChild(link);
+
+  copyToClipboard(text);
 }
 
 export function exportReportAsMarkdown(report) {
