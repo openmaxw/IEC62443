@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, DataTable, NotePanel, SectionBlock, StatusSummaryPanel, SummaryStatGrid } from '../../components/Common';
 import { ProjectStageShell } from '../../components/ProjectFlow';
 import { useOwnerPath, useIntegratorPath, useVendorPath } from '../../hooks/useProject';
 import { getReportCenterViewModel } from '../../domain/viewModels/selectionReportViewModels';
-import { exportReportAsMarkdown } from '../../utils/reportGenerator';
+import { copyMarkdownToClipboard, exportReportAsMarkdown } from '../../utils/reportGenerator';
 import styles from './ReportCenter.module.css';
 
 export function ReportCenter() {
@@ -11,7 +12,16 @@ export function ReportCenter() {
   const { plan } = useIntegratorPath();
   const { capabilities, matchResults, gapClosureItems } = useVendorPath();
   const viewModel = getReportCenterViewModel({ projectMeta, riskProfile, plan, capabilities, matchResults, gapClosureItems });
-  const handleExportMarkdown = () => exportReportAsMarkdown(viewModel.reportPayload);
+  const [exportStatus, setExportStatus] = useState('');
+  const [markdownPreview, setMarkdownPreview] = useState('');
+  const [markdownFilename, setMarkdownFilename] = useState('');
+  const handleExportMarkdown = async () => {
+    const result = exportReportAsMarkdown(viewModel.reportPayload);
+    setMarkdownPreview(result.markdown);
+    setMarkdownFilename(result.filename);
+    const copied = await copyMarkdownToClipboard(result.markdown);
+    setExportStatus(copied ? `已生成 Markdown，并复制到剪贴板。建议保存为：${result.filename}` : `已生成 Markdown，请从下方文本框复制并保存为：${result.filename}`);
+  };
 
   return (
     <ProjectStageShell
@@ -32,8 +42,10 @@ export function ReportCenter() {
             <strong>{viewModel.gapClosureReady ? '可导出阶段性交付摘要' : '仍需补齐闭环信息'}</strong>
             <p>Markdown 交付摘要会汇总项目、风险、设计、能力声明、差距闭环、IEC 映射和免责声明。</p>
           </div>
-          <Button variant="primary" size="small" onClick={handleExportMarkdown}>导出 Markdown 交付摘要</Button>
+          <div className={styles.exportActions}><Button variant="primary" size="small" onClick={handleExportMarkdown}>生成 Markdown 交付摘要</Button>{exportStatus ? <span>{exportStatus}</span> : null}</div>
         </section>
+
+        {markdownPreview ? <SectionBlock title={`Markdown 内容预览：${markdownFilename}`}><textarea className={styles.markdownPreview} value={markdownPreview} readOnly onFocus={(event) => event.target.select()} /></SectionBlock> : null}
 
         <SectionBlock title="交付项">
           <DataTable><thead><tr><th>交付项</th><th>状态</th><th>说明</th><th>入口</th></tr></thead><tbody>{viewModel.items.map((item) => <tr key={item.title}><td>{item.title}</td><td>{item.ready ? '已具备' : '待补齐'}</td><td>{item.desc}</td><td>{item.ready ? <Link to={item.route} className={styles.link}>查看</Link> : '—'}</td></tr>)}</tbody></DataTable>

@@ -15,7 +15,7 @@ const STEPS = [
   { id: 'review', title: '闭环确认', guidance: '复核闭环信息并保存结果，保存后进入交付中心查看汇总。' }
 ];
 
-const STATUS_LABELS = { fulfilled: '满足', partial: '部分满足', missing: '不满足', external: '需外部补偿', na: '不适用' };
+const STATUS_LABELS = { native: '产品原生满足', fulfilled: '产品原生满足', configured: '配置后满足', partial: '配置后满足', external: '需外部系统共同实现', compensating: '需补偿措施后接受', missing: '当前不满足', na: '不适用' };
 
 function isSameObject(a, b) {
   return JSON.stringify(a) === JSON.stringify(b);
@@ -25,23 +25,24 @@ export function SelectionMatrix({ initialStep = 0 }) {
   const navigate = useNavigate();
   const { state, actions } = useProject();
   const { projectMeta, plan } = useIntegratorPath();
-  const { capabilities, gapClosureItems, matchResults } = useVendorPath();
-  const viewModel = getSelectionViewModel({ projectMeta, plan, capabilities, gapClosureItems, matchResults });
+  const { capabilities, gapClosureItems } = useVendorPath();
+  const viewModel = getSelectionViewModel({ projectMeta, plan, capabilities, gapClosureItems });
   const [currentStep, setCurrentStep] = useState(initialStep);
   const [savedAtLeastOnce, setSavedAtLeastOnce] = useState(false);
+  const [dirtyGapItems, setDirtyGapItems] = useState(false);
   const [gapItems, setGapItems] = useState(viewModel.gapItems);
   const step = STEPS[currentStep];
   const isReviewStep = currentStep === STEPS.length - 1;
 
   useEffect(() => {
-    if (isSameObject(viewModel.gapItems, gapItems)) return undefined;
+    if (dirtyGapItems || isSameObject(viewModel.gapItems, gapItems)) return undefined;
 
     const timer = window.setTimeout(() => {
       setGapItems(viewModel.gapItems);
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, [viewModel.gapItems, gapItems]);
+  }, [viewModel.gapItems, gapItems, dirtyGapItems]);
 
   const handleSaveSelection = () => {
     const nextResults = { results: viewModel.selection.rows, summary: viewModel.selection.summary };
@@ -51,6 +52,7 @@ export function SelectionMatrix({ initialStep = 0 }) {
   };
 
   const updateGapItem = (id, field, value) => {
+    setDirtyGapItems(true);
     setGapItems((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value, saved: false } : item)));
   };
 
@@ -61,6 +63,7 @@ export function SelectionMatrix({ initialStep = 0 }) {
     if (!isSameObject(state.gapClosure?.items, gapItems)) {
       actions.setGapClosureItems(gapItems);
     }
+    setDirtyGapItems(false);
     setSavedAtLeastOnce(true);
     if (targetRoute) navigate(targetRoute);
   };
@@ -68,7 +71,7 @@ export function SelectionMatrix({ initialStep = 0 }) {
   let content;
   switch (step.id) {
     case 'overview':
-      content = <section className={styles.page}><div className={styles.hero}><div><strong>匹配概览</strong><p>请先确认当前设计能力需求与最新设备声明的匹配结果。</p><span className={styles.meta}>{viewModel.latestCapability ? '已识别最新设备能力声明。' : '尚未生成设备能力声明，结果将显示为待满足。'}</span></div><div className={styles.actions}><Button variant="secondary" size="medium" onClick={handleSaveSelection}>保存匹配结果</Button><Button variant="primary" size="medium" onClick={() => setCurrentStep(1)}>查看待闭环项</Button></div></div><table className={styles.table}><thead><tr><th>能力项</th><th>控制目标</th><th>满足情况</th><th>证据类型</th><th>差距说明</th></tr></thead><tbody>{viewModel.selection.rows.length ? viewModel.selection.rows.map((item) => <tr key={item.id}><td>{getCapabilityDisplay(item.capabilityId).label}</td><td>{item.controlObjective}</td><td><StatusBadge tone={item.status === 'missing' ? 'danger' : item.status === 'external' || item.status === 'partial' ? 'warning' : 'success'}>{STATUS_LABELS[item.status] || item.status}</StatusBadge></td><td>{item.evidenceType}</td><td>{item.gapNote}</td></tr>) : <tr><td colSpan="5" className={styles.empty}>当前没有可分析的能力需求，请先返回集成设计与设备声明页面补充输入。</td></tr>}</tbody></table></section>;
+      content = <section className={styles.page}><div className={styles.hero}><div><strong>匹配概览</strong><p>请先确认当前设计能力需求与最新设备声明的匹配结果。</p><span className={styles.meta}>{viewModel.latestCapability ? '已识别最新设备能力声明。' : '尚未生成设备能力声明，结果将显示为待满足。'}</span></div><div className={styles.actions}><Button variant="secondary" size="medium" onClick={handleSaveSelection}>保存匹配结果</Button><Button variant="primary" size="medium" onClick={() => setCurrentStep(1)}>查看待闭环项</Button></div></div><table className={styles.table}><thead><tr><th>能力项</th><th>控制目标</th><th>满足情况</th><th>证据类型</th><th>差距说明</th></tr></thead><tbody>{viewModel.selection.rows.length ? viewModel.selection.rows.map((item) => <tr key={item.id}><td>{getCapabilityDisplay(item.capabilityId).label}</td><td>{item.controlObjective}</td><td><StatusBadge tone={item.status === 'missing' ? 'danger' : item.status === 'external' || item.status === 'configured' || item.status === 'compensating' || item.status === 'partial' ? 'warning' : 'success'}>{STATUS_LABELS[item.status] || item.status}</StatusBadge></td><td>{item.evidenceType}</td><td>{item.gapNote}</td></tr>) : <tr><td colSpan="5" className={styles.empty}>当前没有可分析的能力需求，请先返回集成设计与设备声明页面补充输入。</td></tr>}</tbody></table></section>;
       break;
     case 'gaps':
       content = <section className={styles.page}><table className={styles.table}><thead><tr><th>能力项</th><th>控制目标</th><th>严重度</th><th>差距说明</th><th>责任建议</th></tr></thead><tbody>{gapItems.length ? gapItems.map((item) => <tr key={item.id}><td>{getCapabilityDisplay(item.capabilityId).label}</td><td>{item.controlObjective}</td><td><StatusBadge tone={item.severity === 'high' ? 'danger' : item.severity === 'medium' ? 'warning' : 'success'}>{item.severity}</StatusBadge></td><td>{item.gapNote}</td><td>{item.owner || '未填写'}</td></tr>) : <tr><td colSpan="5" className={styles.empty}>当前没有需要闭环的差距项。</td></tr>}</tbody></table></section>;

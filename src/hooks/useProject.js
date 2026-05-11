@@ -52,10 +52,10 @@ const VENDOR_SUBSTEPS = [
 
 const SELECTION_SUBSTEPS = [
   { id: '04-01', label: '匹配结果总览', done: (state) => Boolean(state.selectionAnalysis?.results?.results?.length) },
-  { id: '04-02', label: '待闭环项', done: (state) => { const rows = ensureArray(state.selectionAnalysis?.results?.results); return rows.some((item) => item.status === 'missing' || item.status === 'external' || item.status === 'partial'); } },
+  { id: '04-02', label: '待闭环项', done: (state) => { const rows = ensureArray(state.selectionAnalysis?.results?.results); return rows.some((item) => item.status === 'missing' || item.status === 'external' || item.status === 'configured' || item.status === 'compensating'); } },
   { id: '04-03', label: '补偿措施', done: (state) => { const items = ensureArray(state.gapClosure?.items); return items.some((item) => isFilled(item.mitigation)); } },
   { id: '04-04', label: '验收与风险', done: (state) => { const items = ensureArray(state.gapClosure?.items); return items.some((item) => isFilled(item.acceptanceImpact) || isFilled(item.residualRisk) || isFilled(item.owner)); } },
-  { id: '04-05', label: '闭环确认', done: (state) => { const rows = ensureArray(state.selectionAnalysis?.results?.results).filter((item) => item.status === 'missing' || item.status === 'external' || item.status === 'partial'); const items = ensureArray(state.gapClosure?.items); return rows.length === 0 || items.length >= rows.length; } }
+  { id: '04-05', label: '闭环确认', done: (state) => { const rows = ensureArray(state.selectionAnalysis?.results?.results).filter((item) => item.status === 'missing' || item.status === 'external' || item.status === 'configured' || item.status === 'compensating'); const items = ensureArray(state.gapClosure?.items); return rows.length === 0 || items.length >= rows.length; } }
 ];
 
 function getSubstepProgress(state, items) {
@@ -89,7 +89,7 @@ function getMissingInputs(state) {
   const plan = state.integratorDesign?.plan;
   const capabilities = ensureArray(state.vendorCatalog?.capabilities);
   const matchResults = state.selectionAnalysis?.results;
-  const gapRows = ensureArray(matchResults?.results).filter((item) => item.status === 'missing' || item.status === 'external' || item.status === 'partial');
+  const gapRows = ensureArray(matchResults?.results).filter((item) => item.status === 'missing' || item.status === 'external' || item.status === 'configured' || item.status === 'compensating');
   const gapClosureItems = ensureArray(state.gapClosure?.items);
 
   if (!isFilled(projectMeta.projectName)) items.push({ id: 'project-name', label: '在业主步骤补充项目名称', route: '/owner' });

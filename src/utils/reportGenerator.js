@@ -3,16 +3,31 @@ import { getCapabilityDisplay } from '../data/capabilities.js';
 
 function safeText(value, fallback = '未填写') {
   if (value === null || value === undefined || value === '') return fallback;
-  if (Array.isArray(value)) return value.length ? value.join('、') : fallback;
+  if (Array.isArray(value)) return value.length ? value.map((item) => safeText(item, fallback)).join('、') : fallback;
+  if (typeof value === 'object') return value.text || value.summary || value.title || value.label || JSON.stringify(value);
   return String(value);
 }
 
-function bulletList(items, fallback = '未形成') {
-  return Array.isArray(items) && items.length ? items.map((item) => `- ${safeText(item)}`).join('\n') : `- ${fallback}`;
+function ownerRequirementText(item) {
+  if (!item || typeof item !== 'object') return safeText(item);
+  return [
+    item.text || item.summary || item.title,
+    item.priority ? `优先级：${item.priority}` : '',
+    item.concernId ? `来源：${item.concernId}` : ''
+  ].filter(Boolean).join('；');
+}
+
+function bulletList(items, fallback = '未形成', mapper = safeText) {
+  return Array.isArray(items) && items.length ? items.map((item) => `- ${mapper(item)}`).join('\n') : `- ${fallback}`;
 }
 
 function claimStatusLabel(value) {
   const labels = { native: '产品原生满足', fulfilled: '产品原生满足', configured: '配置后满足', partial: '配置后满足', external: '需外部系统共同实现', compensating: '需补偿措施后接受', missing: '当前不满足', na: '不适用' };
+  return labels[value] || value || '未填写';
+}
+
+function implementationTypeLabel(value) {
+  const labels = { product: '产品内置实现', external: '外部系统实现', shared: '产品+系统共同实现' };
   return labels[value] || value || '未填写';
 }
 
@@ -47,7 +62,7 @@ export function buildReportMarkdown(report = {}) {
 - FR 重点：${safeText((riskProfile.frFocus || []).map((item) => item.code))}
 
 ### 业主要求
-${bulletList(riskProfile.ownerRequirements)}
+${bulletList(riskProfile.ownerRequirements, '未形成', ownerRequirementText)}
 
 ### 验收关注
 ${bulletList(riskProfile.acceptanceFocus)}
@@ -68,7 +83,7 @@ ${table(plan.capabilityRequirements || [], ['能力要求', '控制目标', '目
 - 产品类型：${safeText(latestCapability.productMeta?.productType)}
 - 部署范围：${safeText(latestCapability.productMeta?.deploymentScope)}
 
-${table(latestCapability.capabilityClaims || [], ['能力要求', '满足度', '证据类型', '实现方式'], (item) => [getCapabilityDisplay(item.capabilityId).label, claimStatusLabel(item.satisfaction), item.evidenceType, item.implementationType])}
+${table(latestCapability.capabilityClaims || [], ['能力要求', '满足度', '证据类型', '实现方式'], (item) => [getCapabilityDisplay(item.capabilityId).label, claimStatusLabel(item.satisfaction), item.evidenceType, implementationTypeLabel(item.implementationType)])}
 
 ## 5. 差距闭环
 
@@ -84,30 +99,25 @@ ${UNIFIED_DISCLAIMER}
 `;
 }
 
-function copyToClipboard(text) {
-  if (navigator.clipboard?.writeText && window.isSecureContext) {
-    navigator.clipboard.writeText(text);
+export async function copyMarkdownToClipboard(markdown) {
+  if (!navigator.clipboard?.writeText) return false;
+  try {
+    await navigator.clipboard.writeText(markdown);
+    return true;
+  } catch {
+    return false;
   }
-}
-
-function downloadText(filename, text, type) {
-  const link = document.createElement('a');
-  link.download = filename;
-  link.rel = 'noopener';
-  link.href = `data:${type},${encodeURIComponent(text)}`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-
-  copyToClipboard(text);
 }
 
 export function exportReportAsMarkdown(report) {
   const projectName = report?.projectMeta?.projectName || 'iec-62443-deliverable';
   const filename = `${projectName.replace(/[\\/:*?"<>|\s]+/g, '-')}-${Date.now()}.md`;
-  downloadText(filename, buildReportMarkdown(report), 'text/markdown;charset=utf-8');
+  const markdown = buildReportMarkdown(report);
+  return { ok: true, mode: 'inline', filename, markdown };
 }
 
 export function exportReportAsJSON(report) {
-  downloadText(`${report.type || report.audience || 'deliverable'}-${Date.now()}.json`, JSON.stringify(report, null, 2), 'application/json');
+  const filename = `${report.type || report.audience || 'deliverable'}-${Date.now()}.json`;
+  const json = JSON.stringify(report, null, 2);
+  return { ok: true, mode: 'inline', filename, json };
 }

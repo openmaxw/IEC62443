@@ -2,6 +2,27 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function normalizeClaimStatus(value, implementationType) {
+  if (value === 'fulfilled') return implementationType === 'external' || implementationType === 'shared' ? 'external' : 'native';
+  if (value === 'partial') return 'configured';
+  if (value === 'native' && (implementationType === 'external' || implementationType === 'shared')) return 'external';
+  return value || 'missing';
+}
+
+function claimStatusLabel(status) {
+  const labels = { native: '产品原生满足', configured: '配置后满足', external: '需外部系统共同实现', compensating: '需补偿措施后接受', missing: '当前不满足', na: '不适用' };
+  return labels[status] || status || '未填写';
+}
+
+function implementationTypeLabel(value) {
+  const labels = { product: '产品内置实现', external: '外部系统实现', shared: '产品+系统共同实现' };
+  return labels[value] || value || '未填写';
+}
+
+function needsClosure(status) {
+  return status === 'configured' || status === 'external' || status === 'compensating' || status === 'missing';
+}
+
 function normalizeSubsteps(value) {
   return {
     completed: value?.completed || 0,
@@ -13,19 +34,30 @@ function normalizeSubsteps(value) {
 export function getVendorResultViewModel({ projectMeta, capabilities }) {
   const latest = asArray(capabilities)[asArray(capabilities).length - 1] || null;
   const claims = asArray(latest?.capabilityClaims);
-  const normalizeStatus = (value) => value === 'fulfilled' ? 'native' : value === 'partial' ? 'configured' : value;
+  const claimRows = claims.map((item) => {
+    const status = normalizeClaimStatus(item.satisfaction, item.implementationType);
+    return {
+      ...item,
+      status,
+      statusLabel: claimStatusLabel(status),
+      implementationTypeLabel: implementationTypeLabel(item.implementationType),
+      closureRequired: needsClosure(status)
+    };
+  });
   const groups = {
-    fulfilled: claims.filter((item) => normalizeStatus(item.satisfaction) === 'native'),
-    partial: claims.filter((item) => normalizeStatus(item.satisfaction) === 'configured' || normalizeStatus(item.satisfaction) === 'compensating'),
-    missing: claims.filter((item) => normalizeStatus(item.satisfaction) === 'missing'),
-    external: claims.filter((item) => normalizeStatus(item.satisfaction) === 'external')
+    fulfilled: claimRows.filter((item) => item.status === 'native'),
+    partial: claimRows.filter((item) => item.status === 'configured' || item.status === 'compensating'),
+    missing: claimRows.filter((item) => item.status === 'missing'),
+    external: claimRows.filter((item) => item.status === 'external')
   };
 
   return {
     hasCapability: Boolean(latest),
     projectName: projectMeta?.projectName || '',
     latest,
-    claims,
+    claims: claimRows,
+    boundaryRows: claimRows.filter((item) => item.claimScope || item.dependencyNote || item.limitationNote),
+    closureRows: claimRows.filter((item) => item.closureRequired),
     groups,
     summary: {
       total: claims.length,

@@ -6,7 +6,7 @@ function asArray(value) {
 
 export function getTranslationCenterViewModel({ projectMeta, assessment, riskProfile, plan, capabilities, matchResults }) {
   const latestCapability = asArray(capabilities)[asArray(capabilities).length - 1] || null;
-  const gapItems = asArray(matchResults?.results).filter((item) => item.status === 'missing' || item.status === 'external' || item.status === 'partial').slice(0, 6);
+  const gapItems = asArray(matchResults?.results).filter((item) => item.status === 'missing' || item.status === 'external' || item.status === 'configured' || item.status === 'compensating').slice(0, 6);
 
   return {
     projectName: projectMeta?.projectName || '',

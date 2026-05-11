@@ -5,22 +5,46 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
-function normalizeStatus(value) {
-  if (value === 'fulfilled') return 'native';
+const LEGACY_CAPABILITY_ID_MAP = {
+  'identity-authentication': 'auth-password',
+  'identity-session-control': 'auth-session',
+  'identity-rbac': 'access-rbac',
+  'boundary-firewall': 'access-policy',
+  'boundary-allowlist': 'access-whitelist',
+  'boundary-remote-access-gateway': 'access-privilege',
+  'integrity-signed-update': 'integrity-firmware',
+  'integrity-config-protection': 'integrity-crypto',
+  'confidentiality-encryption': 'encryption-tls',
+  'confidentiality-key-management': 'encryption-key',
+  'monitoring-security-log': 'logging-event',
+  'monitoring-alerting': 'logging-alarm',
+  'monitoring-audit-export': 'audit-report',
+  'resilience-backup-restore': 'integrity-crc',
+  'resilience-redundancy': 'audit-compliance'
+};
+
+export function normalizeSelectionCapabilityId(capabilityId) {
+  return LEGACY_CAPABILITY_ID_MAP[capabilityId] || capabilityId;
+}
+
+export function normalizeSelectionStatus(value, implementationType) {
+  if (value === 'fulfilled') return implementationType === 'external' || implementationType === 'shared' ? 'external' : 'native';
   if (value === 'partial') return 'configured';
+  if (value === 'native' && (implementationType === 'external' || implementationType === 'shared')) return 'external';
   return value || 'missing';
 }
 
 function buildSelectionResults(plan, latestCapability) {
   const requirements = asArray(plan?.capabilityRequirements);
-  const claimMap = new Map(asArray(latestCapability?.capabilityClaims).map((item) => [item.capabilityId, item]));
+  const claimMap = new Map(asArray(latestCapability?.capabilityClaims).map((item) => [normalizeSelectionCapabilityId(item.capabilityId), item]));
   const rows = requirements.map((requirement) => {
-    const claim = claimMap.get(requirement.capabilityId);
-    const status = normalizeStatus(claim?.satisfaction);
+    const capabilityId = normalizeSelectionCapabilityId(requirement.capabilityId);
+    const claim = claimMap.get(capabilityId);
+    const status = normalizeSelectionStatus(claim?.satisfaction, claim?.implementationType);
     const severity = status === 'missing' ? 'high' : status === 'external' || status === 'compensating' || status === 'configured' ? 'medium' : 'low';
     return {
       id: requirement.id,
-      capabilityId: requirement.capabilityId,
+      capabilityId,
       controlObjective: requirement.controlObjective,
       status,
       evidenceType: claim?.evidenceType || '未填写',
@@ -62,9 +86,9 @@ function buildGapItems(selectionRows, savedItems = []) {
   });
 }
 
-export function getSelectionViewModel({ projectMeta, plan, capabilities, gapClosureItems, matchResults }) {
+export function getSelectionViewModel({ projectMeta, plan, capabilities, gapClosureItems }) {
   const latestCapability = asArray(capabilities)[asArray(capabilities).length - 1] || null;
-  const selection = matchResults?.results?.length ? { rows: asArray(matchResults.results), summary: matchResults.summary || { high: 0, medium: 0, low: 0 } } : buildSelectionResults(plan, latestCapability);
+  const selection = buildSelectionResults(plan, latestCapability);
   const gapItems = buildGapItems(selection.rows, gapClosureItems);
   const closedCount = gapItems.filter((item) => item.mitigation || item.owner || item.acceptanceImpact || item.residualRisk).length;
 
@@ -85,7 +109,8 @@ export function getSelectionViewModel({ projectMeta, plan, capabilities, gapClos
 
 export function getReportCenterViewModel({ projectMeta, riskProfile, plan, capabilities, matchResults, gapClosureItems }) {
   const latestCapability = asArray(capabilities)[asArray(capabilities).length - 1] || null;
-  const gapRows = asArray(matchResults?.results).filter((item) => item.status === 'missing' || item.status === 'external' || item.status === 'configured' || item.status === 'compensating');
+  const liveSelection = buildSelectionResults(plan, latestCapability);
+  const gapRows = liveSelection.rows.filter((item) => item.status === 'missing' || item.status === 'external' || item.status === 'configured' || item.status === 'compensating');
   const gapClosureReady = gapRows.length === 0 || asArray(gapClosureItems).length >= gapRows.length;
   const highRiskCount = asArray(gapClosureItems).filter((item) => item.severity === 'high').length;
   const externalCount = asArray(gapClosureItems).filter((item) => item.status === 'external').length;
@@ -97,7 +122,7 @@ export function getReportCenterViewModel({ projectMeta, riskProfile, plan, capab
     { title: '业主交接物', ready: Boolean(riskProfile), desc: '查看业主输入摘要与设计输入。', route: '/owner/result?review=1' },
     { title: '集成设计结果', ready: Boolean(plan), desc: '查看 Zone / Conduit、通信设计与能力需求。', route: '/integrator/result?review=1' },
     { title: '设备声明结果', ready: Boolean(latestCapability), desc: '查看设备能力声明摘要。', route: '/vendor/result?review=1' },
-    { title: '闭环', ready: Boolean(asArray(matchResults?.results).length) && gapClosureReady, desc: gapRows.length ? '查看差距项、补偿措施、责任方、验收影响与残余风险。' : '当前没有待闭环差距项。', route: '/selection' },
+    { title: '闭环', ready: Boolean(asArray(matchResults?.results).length || liveSelection.rows.length) && gapClosureReady, desc: gapRows.length ? '查看差距项、补偿措施、责任方、验收影响与残余风险。' : '当前没有待闭环差距项。', route: '/selection' },
     { title: '需求追溯链', ready: Boolean(riskProfile && plan), desc: '查看从业务输入到能力/差距的追溯。', route: '/translation-center' }
   ];
 
