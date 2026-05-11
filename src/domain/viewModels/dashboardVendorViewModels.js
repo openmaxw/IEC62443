@@ -13,11 +13,12 @@ function normalizeSubsteps(value) {
 export function getVendorResultViewModel({ projectMeta, capabilities }) {
   const latest = asArray(capabilities)[asArray(capabilities).length - 1] || null;
   const claims = asArray(latest?.capabilityClaims);
+  const normalizeStatus = (value) => value === 'fulfilled' ? 'native' : value === 'partial' ? 'configured' : value;
   const groups = {
-    fulfilled: claims.filter((item) => item.satisfaction === 'fulfilled'),
-    partial: claims.filter((item) => item.satisfaction === 'partial'),
-    missing: claims.filter((item) => item.satisfaction === 'missing'),
-    external: claims.filter((item) => item.satisfaction === 'external')
+    fulfilled: claims.filter((item) => normalizeStatus(item.satisfaction) === 'native'),
+    partial: claims.filter((item) => normalizeStatus(item.satisfaction) === 'configured' || normalizeStatus(item.satisfaction) === 'compensating'),
+    missing: claims.filter((item) => normalizeStatus(item.satisfaction) === 'missing'),
+    external: claims.filter((item) => normalizeStatus(item.satisfaction) === 'external')
   };
 
   return {
@@ -60,7 +61,7 @@ export function getDashboardViewModel({ projectMeta, assessment, riskProfile, pl
     },
     {
       id: 'vendor',
-      title: '设备声明',
+      title: '设备能力声明',
       ready: progress.stageStatus.vendor,
       detail: asArray(capabilities).length ? `已录入 ${asArray(capabilities).length} 份能力声明` : '待录入产品能力、边界与证据',
       route: progress.stageStatus.vendor ? '/vendor/result' : '/vendor',

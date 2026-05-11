@@ -1,4 +1,5 @@
 import { UNIFIED_DISCLAIMER } from '../data/disclaimer.js';
+import { getCapabilityDisplay } from '../data/capabilities.js';
 
 function safeText(value, fallback = '未填写') {
   if (value === null || value === undefined || value === '') return fallback;
@@ -8,6 +9,11 @@ function safeText(value, fallback = '未填写') {
 
 function bulletList(items, fallback = '未形成') {
   return Array.isArray(items) && items.length ? items.map((item) => `- ${safeText(item)}`).join('\n') : `- ${fallback}`;
+}
+
+function claimStatusLabel(value) {
+  const labels = { native: '产品原生满足', fulfilled: '产品原生满足', configured: '配置后满足', partial: '配置后满足', external: '需外部系统共同实现', compensating: '需补偿措施后接受', missing: '当前不满足', na: '不适用' };
+  return labels[value] || value || '未填写';
 }
 
 function table(rows, headers, mapper) {
@@ -54,7 +60,7 @@ ${bulletList(riskProfile.acceptanceFocus)}
 - 设计依据：${safeText(plan.designBasis)}
 
 ### 能力需求
-${table(plan.capabilityRequirements || [], ['能力项', '控制目标', '目标 SL', '实现提示'], (item) => [item.capabilityId, item.controlObjective, item.targetSL ? `SL-${item.targetSL}` : '未填写', item.implementationHint])}
+${table(plan.capabilityRequirements || [], ['能力要求', '控制目标', '目标 SL', '实现提示'], (item) => [getCapabilityDisplay(item.capabilityId).label, item.controlObjective, item.targetSL ? `SL-${item.targetSL}` : '未填写', item.implementationHint])}
 
 ## 4. 设备能力声明
 
@@ -62,15 +68,15 @@ ${table(plan.capabilityRequirements || [], ['能力项', '控制目标', '目标
 - 产品类型：${safeText(latestCapability.productMeta?.productType)}
 - 部署范围：${safeText(latestCapability.productMeta?.deploymentScope)}
 
-${table(latestCapability.capabilityClaims || [], ['能力项', '满足度', '证据类型', '实现方式'], (item) => [item.capabilityId, item.satisfaction, item.evidenceType, item.implementationType])}
+${table(latestCapability.capabilityClaims || [], ['能力要求', '满足度', '证据类型', '实现方式'], (item) => [getCapabilityDisplay(item.capabilityId).label, claimStatusLabel(item.satisfaction), item.evidenceType, item.implementationType])}
 
 ## 5. 差距闭环
 
-${table(gapClosureItems, ['能力项', '责任方', '补偿措施', '验收影响', '残余风险'], (item) => [item.capabilityId, item.owner, item.mitigation, item.acceptanceImpact, item.residualRisk])}
+${table(gapClosureItems, ['能力要求', '责任方', '补偿措施', '验收影响', '残余风险'], (item) => [getCapabilityDisplay(item.capabilityId).label, item.owner, item.mitigation, item.acceptanceImpact, item.residualRisk])}
 
 ## 6. IEC 62443 映射依据
 
-${table(mappingRows, ['能力项', 'Part', 'FR', 'SR', '条款摘要', '系统解释', '当前限制'], (item) => [item.display?.label || item.requirement?.capabilityId, item.mapping?.part, item.mapping?.fr, item.mapping?.sr, item.mapping?.requirementSummary, item.mapping?.systemInterpretation, item.mapping?.limitation])}
+${table(mappingRows, ['能力要求', 'Part', 'FR', 'SR', '条款摘要', '系统解释', '当前限制'], (item) => [item.display?.label || getCapabilityDisplay(item.requirement?.capabilityId).label, item.mapping?.part, item.mapping?.fr, item.mapping?.sr, item.mapping?.requirementSummary, item.mapping?.systemInterpretation, item.mapping?.limitation])}
 
 ## 7. 免责声明
 

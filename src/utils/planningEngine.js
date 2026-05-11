@@ -1,4 +1,5 @@
 import { CONDUIT_TEMPLATES, ZONE_TEMPLATES } from '../data/zones.js';
+import { CONTROL_OBJECTIVES } from '../data/rules.js';
 
 function getZoneName(zoneId) {
   return ZONE_TEMPLATES.find((item) => item.id === zoneId)?.name || zoneId;
@@ -45,7 +46,9 @@ export function buildCommunicationMatrix(plan) {
 }
 
 export function buildCapabilityRequirementMatrix(riskProfile, targetSL, communicationMatrix) {
-  const explanations = riskProfile?.explanations || [];
+  const explanations = (riskProfile?.explanations || []).length
+    ? riskProfile.explanations
+    : buildFallbackExplanations(riskProfile);
   const rows = [];
   const seen = new Set();
 
@@ -77,6 +80,23 @@ export function buildCapabilityRequirementMatrix(riskProfile, targetSL, communic
     complete: communicationMatrix.complete,
     rows
   };
+}
+
+function buildFallbackExplanations(riskProfile) {
+  const frFocus = riskProfile?.frFocus || [];
+  const focusedFrCodes = new Set(frFocus.map((item) => item.code));
+  const objectives = (riskProfile?.controlObjectives || []).length
+    ? riskProfile.controlObjectives
+    : Object.values(CONTROL_OBJECTIVES).filter((objective) => objective.fr.some((frCode) => focusedFrCodes.has(frCode)));
+
+  return objectives.map((objective) => ({
+    controlObjective: objective.title,
+    inputConditions: [],
+    riskConcerns: (riskProfile?.riskConcernSummary || []).map((item) => item.title),
+    fr: objective.matchedFR || objective.fr || [],
+    systemControls: [objective.title],
+    capabilityNeeds: objective.capabilities || []
+  }));
 }
 
 export function buildBoundaryControls(plan) {

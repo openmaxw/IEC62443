@@ -85,13 +85,32 @@ export const CAPABILITY_OPTIONS = {
   ]
 };
 
+
+const LEGACY_CAPABILITY_DISPLAY = {
+  'identity-authentication': { label: '身份鉴别能力', controlObjective: '身份与会话控制', description: '用于确认用户、设备或维护会话身份。', fr: 'FR1', sr: ['SR1.1'] },
+  'identity-session-control': { label: '会话控制能力', controlObjective: '身份与会话控制', description: '用于限制远程维护会话建立、保持和超时。', fr: 'FR1', sr: ['SR1.6'] },
+  'identity-rbac': { label: '角色权限控制能力', controlObjective: '身份与会话控制', description: '用于按角色限制操作权限和职责边界。', fr: 'FR2', sr: ['SR2.1'] },
+  'boundary-firewall': { label: '边界防护能力', controlObjective: '区域边界与通信约束', description: '用于在区域边界执行访问控制和通信限制。', fr: 'FR5', sr: ['SR5.1'] },
+  'boundary-allowlist': { label: '通信白名单能力', controlObjective: '区域边界与通信约束', description: '用于限制允许的源、目的、协议和访问路径。', fr: 'FR5', sr: ['SR5.2'] },
+  'boundary-remote-access-gateway': { label: '远程接入网关能力', controlObjective: '区域边界与通信约束', description: '用于将远程维护接入收敛到受控入口。', fr: 'FR5', sr: ['SR5.1'] },
+  'integrity-signed-update': { label: '签名更新校验能力', controlObjective: '配置与系统完整性保护', description: '用于验证软件、固件或更新包来源和完整性。', fr: 'FR3', sr: ['SR3.4'] },
+  'integrity-config-protection': { label: '配置完整性保护能力', controlObjective: '配置与系统完整性保护', description: '用于保护关键配置不被未授权篡改。', fr: 'FR3', sr: ['SR3.1'] },
+  'confidentiality-encryption': { label: '通信与数据加密能力', controlObjective: '敏感数据保护', description: '用于保护传输或存储数据的机密性。', fr: 'FR4', sr: ['SR4.1'] },
+  'confidentiality-key-management': { label: '密钥管理能力', controlObjective: '敏感数据保护', description: '用于管理密钥生成、分发、轮换和保护。', fr: 'FR4', sr: ['SR4.3'] },
+  'monitoring-security-log': { label: '安全日志记录能力', controlObjective: '日志、审计与告警', description: '用于记录登录、配置变更和安全事件。', fr: 'FR6', sr: ['SR6.1'] },
+  'monitoring-alerting': { label: '安全告警能力', controlObjective: '日志、审计与告警', description: '用于发现并提示关键安全事件。', fr: 'FR6', sr: ['SR6.1'] },
+  'monitoring-audit-export': { label: '审计导出能力', controlObjective: '日志、审计与告警', description: '用于导出审计记录或形成验收证据。', fr: 'FR6', sr: ['SR6.2'] },
+  'resilience-backup-restore': { label: '备份恢复能力', controlObjective: '可用性与恢复', description: '用于支撑关键配置、系统或数据恢复。', fr: 'FR7', sr: ['SR7.3'] },
+  'resilience-redundancy': { label: '冗余与连续运行能力', controlObjective: '可用性与恢复', description: '用于降低单点故障对连续运行的影响。', fr: 'FR7', sr: ['SR7.1'] }
+};
+
 const CAPABILITY_LOOKUP = Object.values(CAPABILITY_OPTIONS).flat().reduce((acc, item) => {
   acc[item.id] = item;
   return acc;
 }, {});
 
 export function getCapabilityDefinition(capabilityId) {
-  return CAPABILITY_LOOKUP[capabilityId] || null;
+  return CAPABILITY_LOOKUP[capabilityId] || LEGACY_CAPABILITY_DISPLAY[capabilityId] || null;
 }
 
 export function getCapabilityDisplay(capabilityId) {
@@ -100,11 +119,11 @@ export function getCapabilityDisplay(capabilityId) {
     return {
       id: capabilityId,
       label: capabilityId,
-      controlObjective: '未映射控制目标',
-      description: '未配置展示描述。',
-      frText: 'FR 未映射',
+      controlObjective: '待确认控制目标',
+      description: '该能力要求尚未配置展示描述，请补充能力字典或映射依据。',
+      frText: '标准方向待确认',
       frBadge: '',
-      srText: ''
+      srText: 'SR 细项待确认'
     };
   }
 

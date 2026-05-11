@@ -4,6 +4,15 @@ import { getCapabilityDisplay } from '../../data/capabilities.js';
 import { buildCommunicationMatrix } from '../../utils/planningEngine.js';
 
 const IMPACT_LABEL = { low: '低', medium: '中', high: '高' };
+const PRIORITY_LABEL = { high: '高优先级', medium: '中优先级', baseline: '基础要求', low: '低优先级' };
+const REQUIREMENT_SOURCE_LABEL = {
+  availability: '连续运行与恢复能力',
+  remoteAccess: '远程访问与身份边界',
+  dataProtection: '敏感数据与配置保护',
+  segmentation: '分区分域与受限数据流',
+  monitoring: '可见性与事件响应',
+  'target-level': '目标安全等级建议'
+};
 const ASSET_LABELS = {
   plc: 'PLC',
   scada: 'SCADA',
@@ -86,8 +95,13 @@ export function getOwnerResultViewModel({ projectMeta, assessment, riskProfile }
   const acceptanceOption = ACCEPTANCE_PREFERENCE_OPTIONS.find((item) => item.value === assessment?.acceptancePreference) || null;
   const ownerRequirements = asArray(riskProfile?.ownerRequirements).map((item, index) => (
     typeof item === 'object'
-      ? { id: `${item.concernId || index}-${index}`, text: item.text || '未填写', priority: item.priority || '未分级' }
-      : { id: `owner-requirement-${index}`, text: item, priority: '未分级' }
+      ? {
+          id: `${item.concernId || index}-${index}`,
+          text: item.text || '未填写',
+          priority: PRIORITY_LABEL[item.priority] || item.priority || '未分级',
+          sourceLabel: REQUIREMENT_SOURCE_LABEL[item.concernId] || '设计输入建议'
+        }
+      : { id: `owner-requirement-${index}`, text: item, priority: '未分级', sourceLabel: '设计输入建议' }
   ));
   const acceptanceFocus = asArray(riskProfile?.acceptanceFocus).map((item, index) => ({
     id: `${item?.id || item?.concernId || index}-${index}`,

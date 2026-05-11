@@ -8,7 +8,7 @@ import styles from './Dashboard.module.css';
 
 const ROLE_GUIDES = [
   { role: '业主', focus: '补齐项目背景、关键资产和验收关注。', route: '/owner', action: '填写输入' },
-  { role: '集成商', focus: '查看风险翻译，形成 Zone / Conduit、通信和能力需求。', route: '/integrator', action: '进入设计' },
+  { role: '集成商', focus: '查看风险翻译，形成 Zone / Conduit、通信和能力需求。', route: '/integrator', action: '进入集成设计' },
   { role: '设备商', focus: '围绕项目能力需求声明产品能力、证据、依赖和限制。', route: '/vendor', action: '声明能力' },
   { role: '审核者', focus: '复核追溯链、差距闭环、IEC 映射和交付摘要。', route: '/report', action: '看交付' }
 ];
@@ -56,6 +56,7 @@ export function Dashboard() {
       statusPanel={statusPanel}
       guidance={{ summary: '您可在工作台查看当前项目进度、待补充事项与建议动作。' }}
       toolbar={<><Button variant="secondary" size="small" onClick={handleLoadDemo}>加载演示项目</Button><Button variant="danger" size="small" onClick={handleReset}>重置项目</Button></>}
+      hideStatus
     >
       <section className={styles.page}>
         <section className={styles.hero}>

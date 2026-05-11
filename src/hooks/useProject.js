@@ -5,7 +5,7 @@ const STAGES = [
   { id: 'project', label: '项目建立', route: '/owner' },
   { id: 'owner', label: '业主输入', route: '/owner' },
   { id: 'integrator', label: '集成设计', route: '/integrator' },
-  { id: 'vendor', label: '设备声明', route: '/vendor' },
+  { id: 'vendor', label: '设备能力声明', route: '/vendor' },
   { id: 'selection', label: '闭环', route: '/selection' },
   { id: 'report', label: '交付汇总', route: '/report' }
 ];

@@ -24,7 +24,8 @@ export function ReportCenter() {
       prevAction={{ to: '/selection', label: '上一步' }}
       guidance={{ summary: '交付中心用于汇总阶段输出与闭环状态。' }}
     >
-      <section className={styles.page}>
+      {({ statusBar }) => (
+        <section className={styles.page}>
         <section className={styles.deliveryHero}>
           <div>
             <span>当前产出</span>
@@ -46,8 +47,10 @@ export function ReportCenter() {
         <SectionBlock title="IEC 62443 映射依据">
           <DataTable><thead><tr><th>能力项</th><th>Part</th><th>FR / SR</th><th>条款摘要</th><th>系统解释</th><th>当前限制</th></tr></thead><tbody>{viewModel.mappingRows.length ? viewModel.mappingRows.map((item) => <tr key={item.requirement.id || item.requirement.capabilityId}><td>{item.display.label}</td><td>{item.mapping.part}</td><td>{item.mapping.fr} / {item.mapping.sr}</td><td>{item.mapping.requirementSummary}</td><td>{item.mapping.systemInterpretation}</td><td>{item.mapping.limitation}</td></tr>) : <tr><td colSpan="6">当前还没有可展示的能力映射，请先完成集成设计能力需求。</td></tr>}</tbody></DataTable>
         </SectionBlock>
+        {statusBar}
         <NotePanel title="交付说明" notes={["如有内容仍待补充，请返回对应阶段页面完善后再查看交付汇总。"]} />
       </section>
+      )}
     </ProjectStageShell>
   );
 }

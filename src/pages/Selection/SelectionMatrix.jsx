@@ -8,11 +8,11 @@ import { getSelectionViewModel } from '../../domain/viewModels/selectionReportVi
 import styles from './SelectionMatrix.module.css';
 
 const STEPS = [
-  { id: 'overview', title: '匹配结果总览' },
-  { id: 'gaps', title: '待闭环项' },
-  { id: 'mitigation', title: '补偿措施' },
-  { id: 'risk', title: '验收与风险' },
-  { id: 'review', title: '闭环确认' }
+  { id: 'overview', title: '匹配结果总览', guidance: '查看设计能力需求与设备声明的匹配情况，确认哪些能力满足、部分满足或需要外部补偿。' },
+  { id: 'gaps', title: '待闭环项', guidance: '集中查看需要闭环的能力差距、严重度和责任建议，优先处理影响验收的项目。' },
+  { id: 'mitigation', title: '补偿措施', guidance: '为每个差距填写项目级补偿措施、替代控制或实施动作。' },
+  { id: 'risk', title: '验收与风险', guidance: '补充责任方、验收影响和残余风险，明确差距关闭条件。' },
+  { id: 'review', title: '闭环确认', guidance: '复核闭环信息并保存结果，保存后进入交付中心查看汇总。' }
 ];
 
 const STATUS_LABELS = { fulfilled: '满足', partial: '部分满足', missing: '不满足', external: '需外部补偿', na: '不适用' };
@@ -54,7 +54,7 @@ export function SelectionMatrix({ initialStep = 0 }) {
     setGapItems((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value, saved: false } : item)));
   };
 
-  const handleSaveGap = () => {
+  const handleSaveGap = (targetRoute) => {
     if (!isSameObject(state.selectionAnalysis?.results, { results: viewModel.selection.rows, summary: viewModel.selection.summary })) {
       actions.setMatchResults({ results: viewModel.selection.rows, summary: viewModel.selection.summary });
     }
@@ -62,6 +62,7 @@ export function SelectionMatrix({ initialStep = 0 }) {
       actions.setGapClosureItems(gapItems);
     }
     setSavedAtLeastOnce(true);
+    if (targetRoute) navigate(targetRoute);
   };
 
   let content;
@@ -79,17 +80,20 @@ export function SelectionMatrix({ initialStep = 0 }) {
       content = <section className={styles.page}>{gapItems.length ? <table className={styles.formTable}><thead><tr><th>能力项</th><th>责任方</th><th>验收影响</th><th>残余风险</th></tr></thead><tbody>{gapItems.map((item) => <tr key={item.id}><th><div><strong>{getCapabilityDisplay(item.capabilityId).label}</strong><span className={styles.meta}>{item.status} / {item.severity}</span></div></th><td><input value={item.owner || ''} onChange={(event) => updateGapItem(item.id, 'owner', event.target.value)} placeholder="示例：设备商 / 集成商 / 业主" /></td><td><textarea value={item.acceptanceImpact || ''} onChange={(event) => updateGapItem(item.id, 'acceptanceImpact', event.target.value)} rows="2" placeholder="填写是否影响验收、前置条件和确认方式" /></td><td><textarea value={item.residualRisk || ''} onChange={(event) => updateGapItem(item.id, 'residualRisk', event.target.value)} rows="2" placeholder="填写是否登记残余风险及后续跟踪要求" /></td></tr>)}</tbody></table> : <div className={styles.empty}>当前没有需要闭环的差距项。</div>}</section>;
       break;
     default:
-      content = <section className={styles.page}><div className={styles.hero}><div><strong>闭环确认</strong><p>确认匹配结果与闭环信息后保存，再进入交付中心。</p><span className={styles.meta}>{savedAtLeastOnce || gapClosureItems.length ? '已保存部分或全部闭环决策。' : '尚未保存闭环决策。'}</span></div><div className={styles.actions}><Button variant="secondary" size="medium" onClick={handleSaveGap}>保存闭环结果</Button><Button variant="primary" size="medium" onClick={() => navigate('/report')}>进入交付中心</Button></div></div><table className={styles.table}><thead><tr><th>能力项</th><th>补偿措施</th><th>验收影响</th><th>残余风险</th><th>责任方</th></tr></thead><tbody>{gapItems.length ? gapItems.map((item) => <tr key={item.id}><td>{getCapabilityDisplay(item.capabilityId).label}</td><td>{item.mitigation || '未填写'}</td><td>{item.acceptanceImpact || '未填写'}</td><td>{item.residualRisk || '未填写'}</td><td>{item.owner || '未填写'}</td></tr>) : <tr><td colSpan="5" className={styles.empty}>当前没有需要闭环的差距项。</td></tr>}</tbody></table></section>;
+      content = <section className={styles.page}><div className={styles.hero}><div><strong>闭环确认</strong><p>确认匹配结果与闭环信息后生成闭环结果，随后进入交付中心查看汇总。</p><span className={styles.meta}>{savedAtLeastOnce || gapClosureItems.length ? '已保存部分或全部闭环决策。' : '尚未保存闭环决策。'}</span></div></div><table className={styles.table}><thead><tr><th>能力项</th><th>补偿措施</th><th>验收影响</th><th>残余风险</th><th>责任方</th></tr></thead><tbody>{gapItems.length ? gapItems.map((item) => <tr key={item.id}><td>{getCapabilityDisplay(item.capabilityId).label}</td><td>{item.mitigation || '未填写'}</td><td>{item.acceptanceImpact || '未填写'}</td><td>{item.residualRisk || '未填写'}</td><td>{item.owner || '未填写'}</td></tr>) : <tr><td colSpan="5" className={styles.empty}>当前没有需要闭环的差距项。</td></tr>}</tbody></table></section>;
   }
 
   return (
-    <ProjectStageShell stageNumber="04" title="闭环" projectName={viewModel.projectName} outputLabel={`步骤 ${currentStep + 1}/${STEPS.length} · ${step.title}`} statusText={viewModel.statusSummary.headline} guidance={{ summary: '请在本页确认匹配结果、补偿措施、责任归属及验收影响。' }} statusPanel={<StatusSummaryPanel label={viewModel.statusSummary.title} value={viewModel.statusSummary.headline} note={viewModel.statusSummary.detail} pills={viewModel.statusSummary.pills} />}>
-      <section className={styles.page}>
-        <StepTabs items={STEPS} currentIndex={currentStep} onChange={setCurrentStep} />
-        <div>{content}</div>
-        <NotePanel title="闭环说明" notes={["请完整填写补偿措施、责任归属、验收影响与残余风险信息。", "如需补充设备能力声明或设计依据，请返回前序页面更新后再继续闭环处理。"]} />
-        <WorkflowNavBar leftLabel={currentStep === 0 ? '返回设备结果' : '上一步'} rightLabel={isReviewStep ? '进入交付中心' : '下一步'} onLeftClick={currentStep === 0 ? () => navigate('/vendor/result') : () => setCurrentStep((prev) => Math.max(prev - 1, 0))} onRightClick={isReviewStep ? () => navigate('/report') : () => setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1))} />
-      </section>
+    <ProjectStageShell stageNumber="04" title="闭环" projectName={viewModel.projectName} outputLabel={`步骤 ${currentStep + 1}/${STEPS.length} · ${step.title}`} statusText={viewModel.statusSummary.headline} guidance={{ summary: step.guidance }} statusPanel={<StatusSummaryPanel label={viewModel.statusSummary.title} value={viewModel.statusSummary.headline} note={viewModel.statusSummary.detail} pills={viewModel.statusSummary.pills} />}>
+      {({ statusBar }) => (
+        <section className={styles.page}>
+          <StepTabs items={STEPS} currentIndex={currentStep} onChange={setCurrentStep} />
+          <div>{content}</div>
+          {statusBar}
+          <NotePanel title="闭环说明" notes={["请完整填写补偿措施、责任归属、验收影响与残余风险信息。", "如需补充设备能力声明或设计依据，请返回前序页面更新后再继续闭环处理。"]} />
+          <WorkflowNavBar leftLabel={currentStep === 0 ? '返回设备结果' : '上一步'} rightLabel={isReviewStep ? '生成闭环结果' : '下一步'} onLeftClick={currentStep === 0 ? () => navigate('/vendor/result') : () => setCurrentStep((prev) => Math.max(prev - 1, 0))} onRightClick={isReviewStep ? () => handleSaveGap('/report') : () => setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1))} />
+        </section>
+      )}
     </ProjectStageShell>
   );
 }

@@ -4,7 +4,9 @@
 .stepTab:hover { transform: translateY(-1px); border-color: rgba(255,138,42,.28); background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.04)); color: var(--color-text); }
 .stepTabActive { border-color: rgba(255,138,42,.5); background: linear-gradient(180deg, rgba(255,138,42,.22), rgba(255,138,42,.1)); color: #fff1e6; box-shadow: inset 0 0 0 1px rgba(255,138,42,.24), 0 8px 20px rgba(169,79,18,.14); }
 .panel { border: 1px solid var(--color-table-border); border-radius: var(--radius-lg); background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.015)); padding: 12px; box-shadow: none; }
-.modeHint, .productHint { padding: 10px 12px; border: 1px solid rgba(88, 183, 255, 0.18); border-radius: var(--radius-md); background: linear-gradient(180deg, rgba(88,183,255,.08), rgba(255,255,255,.02)); color: rgba(195, 204, 214, 0.8); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); }
+.modeHint, .productHint, .warningHint { padding: 10px 12px; border: 1px solid rgba(88, 183, 255, 0.18); border-radius: var(--radius-md); background: linear-gradient(180deg, rgba(88,183,255,.08), rgba(255,255,255,.02)); color: rgba(195, 204, 214, 0.8); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); }
+.warningHint { display: grid; gap: 4px; border-color: rgba(255, 180, 84, 0.28); background: linear-gradient(180deg, rgba(255, 180, 84, 0.12), rgba(255,255,255,.02)); }
+.warningHint strong { color: var(--color-text); }
 .topForm, .bottomBar, .summaryGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .summaryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .inputBlock { display: grid; gap: 6px; }
@@ -43,6 +45,7 @@
   line-height: var(--line-height-relaxed);
 }
 .toolbarRow, .navBar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; }
+.toolbarActions { display: flex; gap: 8px; flex-wrap: wrap; }
 .table { width: 100%; border-collapse: collapse; border: 1px solid var(--color-table-border); }
 .table th, .table td { padding: 8px 10px; border-bottom: 1px solid var(--color-table-border); text-align: left; vertical-align: top; font-size: var(--font-size-sm); }
 .table th { color: var(--color-text-muted); font-weight: 700; background: rgba(255,255,255,.02); }

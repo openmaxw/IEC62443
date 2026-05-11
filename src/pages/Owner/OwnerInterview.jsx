@@ -11,13 +11,13 @@ import styles from './OwnerInterview.module.css';
 const IMPACT_LEVEL_SCORE = { low: 1, medium: 2, high: 3 };
 
 const STEPS = [
-  { id: 'industry', title: '项目场景' },
-  { id: 'impacts', title: '业务后果' },
-  { id: 'exposure', title: '暴露面' },
-  { id: 'maturity', title: '现状基础' },
-  { id: 'constraints', title: '约束条件' },
-  { id: 'assets', title: '关键对象' },
-  { id: 'summary', title: '需求汇总' }
+  { id: 'industry', title: '项目场景', guidance: '填写项目名称、行业、站点和项目目标，形成后续风险翻译的基础上下文。' },
+  { id: 'impacts', title: '业务后果', guidance: '判断安全、环境、生产、质量、财务和合规后果，帮助系统识别风险关注强度。' },
+  { id: 'exposure', title: '暴露面', guidance: '说明远程运维和第三方接入情况，明确外部访问路径是否需要重点控制。' },
+  { id: 'maturity', title: '现状基础', guidance: '评估当前网络隔离、身份管理、日志审计和补丁维护成熟度，识别需要补强的基础能力。' },
+  { id: 'constraints', title: '约束条件', guidance: '补充维护窗口、改造窗口、远程责任和验收偏好，避免后续设计脱离现场约束。' },
+  { id: 'assets', title: '关键对象', guidance: '选择关键资产并补充系统、连接、边界和连续性要求，形成可交接设计输入。' },
+  { id: 'summary', title: '需求汇总', guidance: '复核业主输入摘要，确认无误后生成风险翻译并交接给集成设计阶段。' }
 ];
 
 function isSameObject(a, b) {
@@ -179,7 +179,7 @@ export function OwnerInterview() {
   const updateProjectMeta = (field, value) => actions.setProjectMeta({ [field]: value });
   const ownershipOption = REMOTE_OWNERSHIP_OPTIONS.find((item) => item.value === formData.remoteOperationsOwnership);
 
-  const handleFinalizeSummary = () => {
+  const handleFinalizeSummary = (targetRoute = '/integrator') => {
     const projectName = formData.projectName || state.projectMeta?.projectName || `${formData.industry || '工业项目'} IEC 62443 需求访谈`;
     const nextForm = { ...formData, projectName, industry: formData.industry || state.projectMeta?.industry || '' };
     actions.setProjectMeta({ projectName, industry: nextForm.industry, status: 'owner-completed' });
@@ -191,7 +191,7 @@ export function OwnerInterview() {
     if (!isSameObject(state.riskTranslation?.profile, nextRiskProfile)) {
       actions.setRiskProfile(nextRiskProfile);
     }
-    navigate('/integrator');
+    navigate(targetRoute);
   };
 
   let content;
@@ -306,16 +306,26 @@ export function OwnerInterview() {
       title="需求"
       projectName={state.projectMeta?.projectName || formData.projectName}
       outputLabel={`步骤 ${currentStep + 1}/${STEPS.length} · ${step.title}`}
-      statusText={isSummaryStep ? '已形成业主需求汇总，可进入设计阶段' : '正在完善业主输入与风险前置信息'}
-      statusPanel={<StatusSummaryPanel label="输入完成度" value={`${completedFields} / ${totalFields}`} note="请根据项目实际情况补充业务场景、风险关注与关键约束信息，这些内容将作为后续设计工作的依据。" pills={[`步骤 ${currentStep + 1}/${STEPS.length}`, isSummaryStep ? '可进入设计阶段' : '待继续完善']} />}
-      guidance={{ summary: '请在本页完善项目场景、业务后果、暴露面、现状基础与关键约束信息。' }}
+      statusText={isSummaryStep ? '已形成业主需求汇总，可生成业主交接物' : '正在完善业主输入与风险前置信息'}
+      statusPanel={<StatusSummaryPanel label="输入完成度" value={`${completedFields} / ${totalFields}`} note="请根据项目实际情况补充业务场景、风险关注与关键约束信息，这些内容将作为后续设计工作的依据。" pills={[`步骤 ${currentStep + 1}/${STEPS.length}`, isSummaryStep ? '可生成业主交接物' : '待继续完善']} />}
+      guidance={{ summary: step.guidance }}
     >
-      <section className={styles.workspace}>
-        <StepTabs items={STEPS} currentIndex={currentStep} onChange={setCurrentStep} />
-        <div className={`${styles.panel} ${isSummaryStep ? styles.documentPanel : ''}`}>{content}</div>
-        <NotePanel title="填写说明" notes={["请优先填写会影响后续系统设计和验收安排的关键信息。", "如部分内容暂时无法确认，可先记录为待确认，并在进入后续阶段前尽快补充。"]} />
-      </section>
-      <WorkflowNavBar leftLabel={currentStep === 0 ? '返回工作台' : '上一步'} rightLabel={isSummaryStep ? '进入设计' : '下一步'} onLeftClick={currentStep === 0 ? () => navigate('/dashboard') : () => setCurrentStep((prev) => Math.max(prev - 1, 0))} onRightClick={isSummaryStep ? handleFinalizeSummary : () => setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1))} />
+      {({ statusBar }) => (
+        <>
+          <section className={styles.workspace}>
+            <StepTabs items={STEPS} currentIndex={currentStep} onChange={setCurrentStep} />
+            <div className={`${styles.panel} ${isSummaryStep ? styles.documentPanel : ''}`}>{content}</div>
+            {statusBar}
+            <NotePanel title="填写说明" notes={["请优先填写会影响后续系统设计和验收安排的关键信息。", "如部分内容暂时无法确认，可先记录为待确认，并在进入后续阶段前尽快补充。"]} />
+          </section>
+          <WorkflowNavBar
+            leftLabel={currentStep === 0 ? '返回工作台' : '上一步'}
+            rightLabel={isSummaryStep ? '生成业主交接物' : '下一步'}
+            onLeftClick={currentStep === 0 ? () => navigate('/dashboard') : () => setCurrentStep((prev) => Math.max(prev - 1, 0))}
+            onRightClick={isSummaryStep ? () => handleFinalizeSummary('/owner/result') : () => setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1))}
+          />
+        </>
+      )}
     </ProjectStageShell>
   );
 }

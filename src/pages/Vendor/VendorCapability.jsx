@@ -5,18 +5,43 @@ import { ProjectStageShell } from '../../components/ProjectFlow';
 import { useIntegratorPath, useProject } from '../../hooks/useProject';
 import { getVendorCapabilityViewModel } from '../../domain/viewModels/workspaceTranslationViewModels';
 import { CAPABILITY_OPTIONS, PRODUCT_TYPES, CAPABILITY_CATEGORIES, getCapabilityDisplay } from '../../data/capabilities';
+import { buildCapabilityRequirementMatrix, buildCommunicationMatrix } from '../../utils/planningEngine';
 import styles from './VendorCapability.module.css';
 
-const EVIDENCE_OPTIONS = ['厂家声明', '测试报告', '第三方评估', '认证材料', '项目案例'];
-const SATISFACTION_OPTIONS = [{ value: 'fulfilled', label: '满足' }, { value: 'partial', label: '部分满足' }, { value: 'missing', label: '不满足' }, { value: 'external', label: '需外部补偿' }, { value: 'na', label: '不适用' }];
+const EVIDENCE_OPTIONS = ['厂商符合性声明', '产品手册/安全功能说明', '测试报告', '第三方认证/评估', '项目配置截图/记录'];
+const SATISFACTION_OPTIONS = [
+  { value: 'native', label: '产品原生满足' },
+  { value: 'configured', label: '配置后满足' },
+  { value: 'external', label: '需外部系统共同实现' },
+  { value: 'compensating', label: '需补偿措施后接受' },
+  { value: 'missing', label: '当前不满足' },
+  { value: 'na', label: '不适用' }
+];
 const FLAT_CAPABILITIES = Object.entries(CAPABILITY_OPTIONS).flatMap(([category, options]) => options.map((option) => ({ ...option, category })));
+const LEGACY_CAPABILITY_ID_MAP = {
+  'identity-authentication': 'auth-password',
+  'identity-session-control': 'auth-session',
+  'identity-rbac': 'access-rbac',
+  'boundary-firewall': 'access-policy',
+  'boundary-allowlist': 'access-whitelist',
+  'boundary-remote-access-gateway': 'access-privilege',
+  'integrity-signed-update': 'integrity-firmware',
+  'integrity-config-protection': 'integrity-crypto',
+  'confidentiality-encryption': 'encryption-tls',
+  'confidentiality-key-management': 'encryption-key',
+  'monitoring-security-log': 'logging-event',
+  'monitoring-alerting': 'logging-alarm',
+  'monitoring-audit-export': 'audit-report',
+  'resilience-backup-restore': 'integrity-crc',
+  'resilience-redundancy': 'audit-compliance'
+};
 const PRODUCT_TYPE_HINTS = { plc: ['auth', 'access', 'integrity'], scada: ['auth', 'access', 'logging', 'audit'], hmi: ['auth', 'access', 'logging'], firewall: ['access', 'encryption', 'logging', 'audit'], switch: ['access', 'logging'], ids: ['logging', 'audit', 'integrity'], endpoint: ['auth', 'access', 'integrity', 'logging', 'audit'], gateway: ['auth', 'access', 'encryption', 'logging'], sensor: ['integrity'], sis: ['auth', 'access', 'integrity', 'logging'] };
 const STEPS = [
-  { id: 'product', title: '产品信息' },
-  { id: 'claims', title: '能力声明' },
-  { id: 'scope', title: '边界与依赖' },
-  { id: 'evidence', title: '证据与限制' },
-  { id: 'summary', title: '声明汇总' }
+  { id: 'product', title: '产品信息', guidance: '填写产品名称、类型、目标安全等级和部署范围，明确本次声明对象。' },
+  { id: 'claims', title: '能力声明', guidance: '按项目能力要求逐项声明产品能力状态：原生满足、配置后满足、需外部系统共同实现、需补偿措施或当前不满足。' },
+  { id: 'scope', title: '边界与依赖', guidance: '补充每项声明的适用范围、前置依赖和限制条件，说明该能力在什么部署边界内才成立。' },
+  { id: 'evidence', title: '证据与限制', guidance: '为每项声明选择证据类型和实现路径，避免把口头承诺误认为可验收证据。' },
+  { id: 'summary', title: '声明汇总', guidance: '复核产品能力、适用边界、依赖条件和证据情况，生成设备能力结果并进入匹配闭环。' }
 ];
 
 function isSameObject(a, b) {
@@ -30,21 +55,46 @@ function resolveApplicability(productType, category) {
   return { label: '可补充评估', tone: 'neutral' };
 }
 
+function normalizeClaimStatus(value) {
+  if (value === 'fulfilled') return 'native';
+  if (value === 'partial') return 'configured';
+  return value || '';
+}
+
 
 export function VendorCapability() {
   const navigate = useNavigate();
   const { state, actions } = useProject();
   const { projectMeta, plan } = useIntegratorPath();
-  const capabilityViewModel = getVendorCapabilityViewModel({ projectMeta, plan, draft: state.vendorCatalog?.draft, capabilities: state.vendorCatalog?.capabilities });
+  const integratorDraft = state.integratorDesign?.draft;
+  const riskProfile = state.riskTranslation?.profile;
+  const effectivePlan = useMemo(() => {
+    if (plan?.capabilityRequirements?.length) return plan;
+    const sourcePlan = plan || integratorDraft;
+    if (!sourcePlan || !riskProfile) return plan;
+
+    const communicationMatrix = sourcePlan.communicationMatrix || buildCommunicationMatrix(sourcePlan);
+    const requirementMatrix = buildCapabilityRequirementMatrix(riskProfile, sourcePlan.targetSL || 2, communicationMatrix);
+    return { ...sourcePlan, communicationMatrix, capabilityRequirements: requirementMatrix.rows };
+  }, [plan, integratorDraft, riskProfile]);
+  const hasGeneratedDesignResult = Boolean(plan?.capabilityRequirements?.length);
+  const capabilityViewModel = getVendorCapabilityViewModel({ projectMeta, plan: effectivePlan, draft: state.vendorCatalog?.draft, capabilities: state.vendorCatalog?.capabilities });
   const [filter, setFilter] = useState('required');
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState(() => state.vendorCatalog?.draft || { productMeta: { productName: '', productType: '', securityLevel: 2, deploymentScope: '' }, capabilityClaims: [], dependencies: '', limitations: '' });
-  const selectedClaims = useMemo(() => new Map(formData.capabilityClaims.map((item) => [item.capabilityId, item])), [formData.capabilityClaims]);
-  const requirementRows = useMemo(() => plan?.capabilityRequirements || [], [plan]);
+  const selectedClaims = useMemo(() => new Map(formData.capabilityClaims.map((item) => [item.capabilityId, { ...item, satisfaction: normalizeClaimStatus(item.satisfaction) }])), [formData.capabilityClaims]);
+  const requirementRows = useMemo(() => (effectivePlan?.capabilityRequirements || []).map((item) => ({
+    ...item,
+    capabilityId: LEGACY_CAPABILITY_ID_MAP[item.capabilityId] || item.capabilityId,
+    originalCapabilityId: item.capabilityId
+  })), [effectivePlan]);
   const requirementIds = useMemo(() => new Set(requirementRows.map((item) => item.capabilityId)), [requirementRows]);
   const visibleCapabilities = useMemo(() => FLAT_CAPABILITIES.filter((item) => filter === 'required' ? requirementIds.has(item.id) : true), [filter, requirementIds]);
   const selectedProductType = PRODUCT_TYPES.find((type) => type.id === formData.productMeta.productType);
-  const claimedRequiredCount = requirementRows.filter((item) => selectedClaims.has(item.capabilityId)).length;
+  const claimedRequiredCount = requirementRows.filter((item) => {
+    const claim = selectedClaims.get(item.capabilityId);
+    return claim && normalizeClaimStatus(claim.satisfaction) !== 'na';
+  }).length;
   const isSummaryStep = currentStep === STEPS.length - 1;
   const step = STEPS[currentStep];
   const completionCount = [
@@ -64,52 +114,83 @@ export function VendorCapability() {
 
   const updateProductMeta = (field, value) => setFormData((prev) => ({ ...prev, productMeta: { ...prev.productMeta, [field]: value } }));
 
-  const updateClaim = (capabilityId, patch) => setFormData((prev) => {
+  const buildDefaultClaim = (capabilityId) => ({ capabilityId, satisfaction: 'native', implementationType: 'product', evidenceType: '厂商符合性声明', claimScope: '', dependencyNote: '', limitationNote: '' });
+
+  const updateClaim = (capabilityId, patch = {}) => setFormData((prev) => {
     const existing = prev.capabilityClaims.find((item) => item.capabilityId === capabilityId);
-    const base = existing || { capabilityId, satisfaction: 'fulfilled', implementationType: 'product', evidenceType: '厂家声明', claimScope: '', dependencyNote: '', limitationNote: '' };
+    const base = existing || buildDefaultClaim(capabilityId);
     const nextClaim = { ...base, ...patch };
     return { ...prev, capabilityClaims: [...prev.capabilityClaims.filter((item) => item.capabilityId !== capabilityId), nextClaim] };
   });
 
+  const ensureRequiredClaims = () => {
+    if (!requirementRows.length) return;
+    setFormData((prev) => {
+      const existingIds = new Set(prev.capabilityClaims.map((item) => item.capabilityId));
+      const missingClaims = requirementRows
+        .filter((item) => !existingIds.has(item.capabilityId))
+        .map((item) => buildDefaultClaim(item.capabilityId));
+      return missingClaims.length ? { ...prev, capabilityClaims: [...prev.capabilityClaims, ...missingClaims] } : prev;
+    });
+  };
+
+  const handleStepChange = (nextStep) => {
+    if (currentStep === 1 && nextStep > 1) ensureRequiredClaims();
+    setCurrentStep(nextStep);
+  };
+
+  const handleNextStep = () => {
+    if (currentStep === 1) ensureRequiredClaims();
+    setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1));
+  };
+
   const removeClaim = (capabilityId) => setFormData((prev) => ({ ...prev, capabilityClaims: prev.capabilityClaims.filter((item) => item.capabilityId !== capabilityId) }));
 
-  const handleComplete = () => {
+  const handleComplete = (targetRoute = '/vendor/result') => {
     const lastCapability = state.vendorCatalog?.capabilities?.[state.vendorCatalog.capabilities.length - 1];
     const nextCapability = { ...formData, requirementCoverage: requirementRows.length };
     if (!isSameObject(lastCapability ? { ...lastCapability, id: undefined } : null, nextCapability)) {
       actions.addVendorCapability({ id: `vendor-${Date.now()}`, ...nextCapability });
     }
     actions.setProjectMeta({ status: 'vendor-completed' });
-    navigate('/vendor/result');
+    navigate(targetRoute);
   };
 
   let content;
 
   switch (step.id) {
     case 'product':
-      content = <div className={styles.workspace}><table className={styles.formTable}><tbody><tr><th>产品名称</th><td><div className={styles.fieldCell}><input value={formData.productMeta.productName} onChange={(event) => updateProductMeta('productName', event.target.value)} placeholder="工业边界安全网关 XG-9000" /><div className={styles.fieldCellHint}>填写用于本项目声明的产品名称。</div></div></td></tr><tr><th>产品类型</th><td><div className={styles.fieldCell}><select value={formData.productMeta.productType} onChange={(event) => updateProductMeta('productType', event.target.value)}><option value="">产品类型</option>{PRODUCT_TYPES.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}</select><div className={styles.fieldCellHint}>产品类型会影响能力提示和适用性判断。</div></div></td></tr><tr><th>目标安全等级</th><td><div className={styles.fieldCell}><select value={formData.productMeta.securityLevel} onChange={(event) => updateProductMeta('securityLevel', Number(event.target.value))}>{[1, 2, 3, 4].map((level) => <option key={level} value={level}>SL-{level}</option>)}</select><div className={styles.fieldCellHint}>用于描述本产品面向当前项目的目标能力等级。</div></div></td></tr><tr><th>部署范围</th><td><div className={styles.fieldCell}><input value={formData.productMeta.deploymentScope} onChange={(event) => updateProductMeta('deploymentScope', event.target.value)} placeholder="制造区 DMZ 远程维护边界" /><div className={styles.fieldCellHint}>填写产品在项目中的典型部署位置或适用边界。</div></div></td></tr></tbody></table><div className={styles.modeHint}>当前项目共有 {requirementRows.length} 条重点能力要求，建议先填写边界设备基本信息，再逐步完成能力声明与证据补充。</div><div className={styles.productHint}>{selectedProductType ? `当前选择：${selectedProductType.name}` : '请选择产品类型，系统会给出更适用的能力提示。'}</div></div>;
+      content = <div className={styles.workspace}><table className={styles.formTable}><tbody><tr><th>产品名称</th><td><div className={styles.fieldCell}><input value={formData.productMeta.productName} onChange={(event) => updateProductMeta('productName', event.target.value)} placeholder="工业边界安全网关 XG-9000" /><div className={styles.fieldCellHint}>填写用于本项目声明的产品名称。</div></div></td></tr><tr><th>产品类型</th><td><div className={styles.fieldCell}><select value={formData.productMeta.productType} onChange={(event) => updateProductMeta('productType', event.target.value)}><option value="">产品类型</option>{PRODUCT_TYPES.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}</select><div className={styles.fieldCellHint}>产品类型会影响能力提示和适用性判断。</div></div></td></tr><tr><th>目标安全等级</th><td><div className={styles.fieldCell}><select value={formData.productMeta.securityLevel} onChange={(event) => updateProductMeta('securityLevel', Number(event.target.value))}>{[1, 2, 3, 4].map((level) => <option key={level} value={level}>SL-{level}</option>)}</select><div className={styles.fieldCellHint}>用于描述本产品面向当前项目的目标能力等级。</div></div></td></tr><tr><th>部署范围</th><td><div className={styles.fieldCell}><input value={formData.productMeta.deploymentScope} onChange={(event) => updateProductMeta('deploymentScope', event.target.value)} placeholder="制造区 DMZ 远程维护边界" /><div className={styles.fieldCellHint}>填写产品在项目中的典型部署位置或适用边界。</div></div></td></tr></tbody></table>{!hasGeneratedDesignResult ? <div className={styles.warningHint}>当前设备页尚未读取到已生成的集成设计结果；系统已根据现有业主风险翻译和集成草稿临时推导项目要求。建议返回集成设计最后一步点击“生成设计结果”，从设计结果页进入设备能力声明。</div> : null}<div className={styles.modeHint}>当前项目共有 {requirementRows.length} 条重点能力要求，建议先填写边界设备基本信息，再逐步完成能力声明与证据补充。</div><div className={styles.productHint}>{selectedProductType ? `当前选择：${selectedProductType.name}` : '请选择产品类型，系统会给出更适用的能力提示。'}</div></div>;
       break;
     case 'claims':
-      content = <div className={styles.workspace}><div className={styles.toolbarRow}><Button variant={filter === 'required' ? 'primary' : 'secondary'} size="small" onClick={() => setFilter('required')}>项目要求</Button><Button variant={filter === 'all' ? 'primary' : 'secondary'} size="small" onClick={() => setFilter('all')}>产品全量能力</Button></div><table className={styles.table}><thead><tr><th>项目要求</th><th>来源</th><th>适用提示</th><th>满足度</th><th>实现方式</th><th>操作</th></tr></thead><tbody>{visibleCapabilities.length === 0 ? <tr><td colSpan="6">暂无数据</td></tr> : visibleCapabilities.map((capability) => { const claim = selectedClaims.get(capability.id); const applicability = resolveApplicability(formData.productMeta.productType, capability.category); const requirement = requirementRows.find((item) => item.capabilityId === capability.id); return <tr key={capability.id} className={requirementIds.has(capability.id) ? styles.requiredRow : ''}><td><strong>{getCapabilityDisplay(capability.id).label}</strong><div className={styles.capabilityMeta}><span className={styles.standardTag}>{getCapabilityDisplay(capability.id).frText}</span><span className={styles.standardTag}>{getCapabilityDisplay(capability.id).srText}</span></div><div className={styles.metaText}>{getCapabilityDisplay(capability.id).description}</div></td><td>{requirement ? <div><div>{requirement.controlObjective}</div><div className={styles.metaText}>{requirement.implementationHint}</div></div> : '产品补充项'}</td><td><span className={`${styles.appTag} ${applicability.tone === 'fit' ? styles.appTagFit : styles.appTagNeutral}`}>{applicability.label}</span><div className={styles.metaText}>{CAPABILITY_CATEGORIES[capability.category]?.name || capability.category}</div></td><td><select value={claim?.satisfaction || 'fulfilled'} onChange={(event) => updateClaim(capability.id, { satisfaction: event.target.value })}>{SATISFACTION_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></td><td><select value={claim?.implementationType || 'product'} onChange={(event) => updateClaim(capability.id, { implementationType: event.target.value })}><option value="product">由产品实现</option><option value="external">由外围系统实现</option><option value="shared">产品+系统共同实现</option></select></td><td><Button variant="ghost" size="small" onClick={() => removeClaim(capability.id)}>清除</Button></td></tr>; })}</tbody></table></div>;
+      content = <div className={styles.workspace}><div className={styles.toolbarRow}><div className={styles.toolbarActions}><Button variant={filter === 'required' ? 'primary' : 'secondary'} size="small" onClick={() => setFilter('required')}>项目要求</Button><Button variant={filter === 'all' ? 'primary' : 'secondary'} size="small" onClick={() => setFilter('all')}>产品全量能力</Button></div>{requirementRows.length ? <Button variant="secondary" size="small" onClick={ensureRequiredClaims}>纳入全部项目要求</Button> : null}</div>{requirementRows.length === 0 && filter === 'required' ? <div className={styles.warningHint}><strong>当前没有项目要求。</strong><span>请先完成业主需求汇总，并在集成设计最后一步点击“生成设计结果”；也可以切换到“产品全量能力”先声明产品能力。</span></div> : null}<div className={styles.modeHint}>02 中已纳入声明的能力，会自动进入 03 边界与依赖。未纳入的能力不会出现在后续边界表中。</div><table className={styles.table}><thead><tr><th>项目要求</th><th>来源</th><th>适用提示</th><th>满足度</th><th>实现方式</th><th>操作</th></tr></thead><tbody>{visibleCapabilities.length === 0 ? <tr><td colSpan="6">暂无项目要求，请先生成集成设计结果，或切换到“产品全量能力”。</td></tr> : visibleCapabilities.map((capability) => { const claim = selectedClaims.get(capability.id); const applicability = resolveApplicability(formData.productMeta.productType, capability.category); const requirement = requirementRows.find((item) => item.capabilityId === capability.id); return <tr key={capability.id} className={requirementIds.has(capability.id) ? styles.requiredRow : ''}><td><strong>{getCapabilityDisplay(capability.id).label}</strong><div className={styles.capabilityMeta}><span className={styles.standardTag}>{getCapabilityDisplay(capability.id).frText}</span><span className={styles.standardTag}>{getCapabilityDisplay(capability.id).srText}</span></div><div className={styles.metaText}>{getCapabilityDisplay(capability.id).description}</div></td><td>{requirement ? <div><div>{requirement.controlObjective}</div><div className={styles.metaText}>{requirement.implementationHint}</div></div> : '产品补充项'}</td><td><span className={`${styles.appTag} ${applicability.tone === 'fit' ? styles.appTagFit : styles.appTagNeutral}`}>{applicability.label}</span><div className={styles.metaText}>{CAPABILITY_CATEGORIES[capability.category]?.name || capability.category}</div></td><td><select value={normalizeClaimStatus(claim?.satisfaction)} onChange={(event) => updateClaim(capability.id, { satisfaction: event.target.value || 'native' })}><option value="">未纳入</option>{SATISFACTION_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></td><td><select value={claim?.implementationType || ''} onChange={(event) => updateClaim(capability.id, { implementationType: event.target.value || 'product' })}><option value="">未纳入</option><option value="product">产品内置实现</option><option value="external">外部系统实现</option><option value="shared">产品+系统共同实现</option></select></td><td>{claim ? <Button variant="ghost" size="small" onClick={() => removeClaim(capability.id)}>清除</Button> : <Button variant="secondary" size="small" onClick={() => updateClaim(capability.id)}>纳入</Button>}</td></tr>; })}</tbody></table></div>;
       break;
     case 'scope':
-      content = <div className={styles.workspace}><div className={styles.modeHint}>补充每项能力的适用边界、外部依赖和使用约束，便于后续做闭环与交付说明。</div><table className={styles.table}><thead><tr><th>能力项</th><th>边界范围</th><th>依赖说明</th><th>限制说明</th></tr></thead><tbody>{formData.capabilityClaims.length === 0 ? <tr><td colSpan="4">请先在上一步至少声明一项能力</td></tr> : formData.capabilityClaims.map((claim) => <tr key={claim.capabilityId}><td><strong>{getCapabilityDisplay(claim.capabilityId).label}</strong></td><td><input value={claim.claimScope || ''} onChange={(event) => updateClaim(claim.capabilityId, { claimScope: event.target.value })} placeholder="仅适用于本机管理与远程接入登录" /></td><td><input value={claim.dependencyNote || ''} onChange={(event) => updateClaim(claim.capabilityId, { dependencyNote: event.target.value })} placeholder="需对接集中身份管理或日志平台" /></td><td><input value={claim.limitationNote || ''} onChange={(event) => updateClaim(claim.capabilityId, { limitationNote: event.target.value })} placeholder="细粒度授权需额外模块或特定版本支持" /></td></tr>)}</tbody></table><div className={styles.bottomBar}><div className={styles.inputBlock}><label>统一依赖</label><textarea value={formData.dependencies} onChange={(event) => setFormData((prev) => ({ ...prev, dependencies: event.target.value }))} placeholder="集中身份管理、日志平台、证书体系和边界防护设备" /></div><div className={styles.inputBlock}><label>统一限制</label><textarea value={formData.limitations} onChange={(event) => setFormData((prev) => ({ ...prev, limitations: event.target.value }))} placeholder="部分高级授权能力需授权开启，旧版本不支持完整审计功能" /></div></div></div>;
+      content = <div className={styles.workspace}><div className={styles.modeHint}>补充每项声明成立的适用边界、前置依赖和限制条件。IEC 62443 产品能力不能脱离部署边界、配置条件和证据单独判断。</div><table className={styles.table}><thead><tr><th>能力项</th><th>边界范围</th><th>依赖说明</th><th>限制说明</th></tr></thead><tbody>{formData.capabilityClaims.length === 0 ? <tr><td colSpan="4">请先在上一步至少声明一项能力</td></tr> : formData.capabilityClaims.map((claim) => <tr key={claim.capabilityId}><td><strong>{getCapabilityDisplay(claim.capabilityId).label}</strong></td><td><input value={claim.claimScope || ''} onChange={(event) => updateClaim(claim.capabilityId, { claimScope: event.target.value })} placeholder="示例：仅适用于本机管理、远程接入登录或指定固件版本" /></td><td><input value={claim.dependencyNote || ''} onChange={(event) => updateClaim(claim.capabilityId, { dependencyNote: event.target.value })} placeholder="示例：需对接集中身份管理、日志平台、证书体系或边界网关" /></td><td><input value={claim.limitationNote || ''} onChange={(event) => updateClaim(claim.capabilityId, { limitationNote: event.target.value })} placeholder="示例：细粒度授权需额外模块、授权许可或特定版本支持" /></td></tr>)}</tbody></table><div className={styles.bottomBar}><div className={styles.inputBlock}><label>统一依赖</label><textarea value={formData.dependencies} onChange={(event) => setFormData((prev) => ({ ...prev, dependencies: event.target.value }))} placeholder="集中身份管理、日志平台、证书体系和边界防护设备" /></div><div className={styles.inputBlock}><label>统一限制</label><textarea value={formData.limitations} onChange={(event) => setFormData((prev) => ({ ...prev, limitations: event.target.value }))} placeholder="部分高级授权能力需授权开启，旧版本不支持完整审计功能" /></div></div></div>;
       break;
     case 'evidence':
-      content = <div className={styles.workspace}><div className={styles.modeHint}>为已声明能力选择证据类型，便于形成边界设备的可追踪能力声明依据。</div><table className={styles.table}><thead><tr><th>能力项</th><th>满足度</th><th>证据类型</th><th>实现方式</th></tr></thead><tbody>{formData.capabilityClaims.length === 0 ? <tr><td colSpan="4">请先在前面步骤声明能力</td></tr> : formData.capabilityClaims.map((claim) => <tr key={claim.capabilityId}><td><strong>{getCapabilityDisplay(claim.capabilityId).label}</strong></td><td>{SATISFACTION_OPTIONS.find((option) => option.value === claim.satisfaction)?.label || claim.satisfaction}</td><td><select value={claim.evidenceType || '厂家声明'} onChange={(event) => updateClaim(claim.capabilityId, { evidenceType: event.target.value })}>{EVIDENCE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}</select></td><td><select value={claim.implementationType || 'product'} onChange={(event) => updateClaim(claim.capabilityId, { implementationType: event.target.value })}><option value="product">由产品实现</option><option value="external">由外围系统实现</option><option value="shared">产品+系统共同实现</option></select></td></tr>)}</tbody></table></div>;
+      content = <div className={styles.workspace}><div className={styles.modeHint}>为已声明能力选择证据类型和实现路径。证据越具体，后续匹配和验收闭环越可靠。</div><table className={styles.table}><thead><tr><th>能力项</th><th>满足度</th><th>证据类型</th><th>实现方式</th></tr></thead><tbody>{formData.capabilityClaims.length === 0 ? <tr><td colSpan="4">请先在前面步骤声明能力</td></tr> : formData.capabilityClaims.map((claim) => <tr key={claim.capabilityId}><td><strong>{getCapabilityDisplay(claim.capabilityId).label}</strong></td><td>{SATISFACTION_OPTIONS.find((option) => option.value === normalizeClaimStatus(claim.satisfaction))?.label || claim.satisfaction}</td><td><select value={claim.evidenceType || '厂家声明'} onChange={(event) => updateClaim(claim.capabilityId, { evidenceType: event.target.value })}>{EVIDENCE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}</select></td><td><select value={claim.implementationType || 'product'} onChange={(event) => updateClaim(claim.capabilityId, { implementationType: event.target.value })}><option value="product">产品内置实现</option><option value="external">外部系统实现</option><option value="shared">产品+系统共同实现</option></select></td></tr>)}</tbody></table></div>;
       break;
     default:
       content = <div className={styles.page}><SummaryStatGrid columns={3} items={[{ label: '产品名称', value: formData.productMeta.productName || '未填写' }, { label: '产品类型', value: selectedProductType?.name || '未填写' }, { label: '目标安全等级', value: `SL-${formData.productMeta.securityLevel || 2}` }, { label: '部署范围', value: formData.productMeta.deploymentScope || '未填写' }, { label: '项目要求覆盖', value: `${claimedRequiredCount} / ${requirementRows.length}` }, { label: '已声明能力', value: formData.capabilityClaims.length }]} /><SummaryStatGrid columns={2} compact items={[{ label: '统一依赖', value: formData.dependencies || '未填写' }, { label: '统一限制', value: formData.limitations || '未填写' }]} /><div className={styles.modeHint}>确认上述信息后即可生成设备能力结果页，并进入闭环。</div></div>;
   }
 
   return (
-    <ProjectStageShell stageNumber="03" title="能力" projectName={capabilityViewModel.projectName} outputLabel={`步骤 ${currentStep + 1}/${STEPS.length} · ${step.title}`} statusText={isSummaryStep ? '能力声明已可生成结果页' : '正在完善产品声明与证据边界'} statusPanel={<StatusSummaryPanel label="声明覆盖度" value={`${completionCount} / 6`} note="请结合项目要求填写产品能力、适用边界、依赖条件和证据情况。" pills={[`步骤 ${currentStep + 1}/${STEPS.length}`, `覆盖项目要求 ${claimedRequiredCount}/${requirementRows.length || 0}`]} />} guidance={{ summary: '请在本页补充产品能力、边界说明、依赖条件和证据信息。' }}>
+    <ProjectStageShell stageNumber="03" title="能力" projectName={capabilityViewModel.projectName} outputLabel={`步骤 ${currentStep + 1}/${STEPS.length} · ${step.title}`} statusText={isSummaryStep ? '能力声明已可生成结果页' : '正在完善产品声明与证据边界'} statusPanel={<StatusSummaryPanel label="声明覆盖度" value={`${completionCount} / 6`} note="请结合项目要求填写产品能力、适用边界、依赖条件和证据情况。" pills={[`步骤 ${currentStep + 1}/${STEPS.length}`, `覆盖项目要求 ${claimedRequiredCount}/${requirementRows.length || 0}`]} />} guidance={{ summary: step.guidance }}>
+      {({ statusBar }) => (
       <section className={styles.workspace}>
-        <StepTabs items={STEPS} currentIndex={currentStep} onChange={setCurrentStep} />
+        <StepTabs items={STEPS} currentIndex={currentStep} onChange={handleStepChange} />
         <div className={styles.panel}>{content}</div>
+        {statusBar}
         <NotePanel title="声明说明" notes={["如某项能力依赖系统集成或外部产品共同实现，请在声明中明确说明。", "请尽量补充证据类型和适用边界，便于后续匹配和闭环评估。"]} />
-        <WorkflowNavBar leftLabel={currentStep === 0 ? '返回设计结果' : '上一步'} rightLabel={isSummaryStep ? '生成能力结果' : '下一步'} onLeftClick={currentStep === 0 ? () => navigate('/integrator/result') : () => setCurrentStep((prev) => Math.max(prev - 1, 0))} onRightClick={isSummaryStep ? handleComplete : () => setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1))} />
+        <WorkflowNavBar
+          leftLabel={currentStep === 0 ? '返回设计结果' : '上一步'}
+          rightLabel={isSummaryStep ? '生成能力结果' : '下一步'}
+          onLeftClick={currentStep === 0 ? () => navigate('/integrator/result') : () => setCurrentStep((prev) => Math.max(prev - 1, 0))}
+          onRightClick={isSummaryStep ? () => handleComplete('/vendor/result') : handleNextStep}
+        />
       </section>
+      )}
     </ProjectStageShell>
   );
 }

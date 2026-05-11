@@ -17,6 +17,11 @@
 .summaryGrid span { display: block; color: var(--color-text-muted); font-size: var(--font-size-xs); margin-bottom: 4px; }
 .summaryGrid strong, .card strong { color: #ffe8d6; }
 .list { display: grid; gap: 8px; }
+.item { padding: 10px 12px; border: 1px solid var(--color-table-border); border-radius: var(--radius-md); background: rgba(255,255,255,.018); display: grid; gap: 6px; }
+.itemHead { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+.itemHead strong { color: var(--color-text); }
+.itemHead span { display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; border-radius: 999px; border: 1px solid rgba(255, 138, 42, 0.24); background: rgba(255, 138, 42, 0.1); color: #ffd8bd; font-size: var(--font-size-xs); font-weight: 700; }
+.item p { margin: 0; color: rgba(195, 204, 214, 0.84); line-height: var(--line-height-relaxed); }
 .card span { display: block; margin-top: 4px; color: rgba(195, 204, 214, 0.78); font-size: var(--font-size-sm); }
 .card p { margin: 6px 0 0; color: rgba(195, 204, 214, 0.78); font-style: italic; }
 .empty, .emptyText { color: var(--color-text-muted); }

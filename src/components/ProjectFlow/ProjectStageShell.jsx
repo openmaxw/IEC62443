@@ -13,8 +13,31 @@ export function ProjectStageShell({
   prevAction,
   nextAction,
   guidance,
-  children
+  children,
+  hideStatus = false
 }) {
+  const statusBar = hideStatus ? null : (
+    <section className={styles.statusPanel}>
+      <div className={styles.statusSummary}>
+        <div className={styles.statusItem}>
+          <span>项目</span>
+          <strong>{projectName || '未命名项目'}</strong>
+        </div>
+        <div className={styles.statusItem}>
+          <span>当前输出</span>
+          <strong>{outputLabel}</strong>
+        </div>
+        {statusText ? (
+          <div className={styles.statusItem}>
+            <span>当前状态</span>
+            <strong>{statusText}</strong>
+          </div>
+        ) : null}
+      </div>
+      {statusPanel ? <div className={styles.statusAside}>{statusPanel}</div> : null}
+    </section>
+  );
+
   return (
     <div className={styles.page}>
       <section className={styles.toolbarRow}>
@@ -31,26 +54,8 @@ export function ProjectStageShell({
           <p>{guidance.summary}</p>
         </section>
       ) : null}
-      <section className={styles.statusPanel}>
-        <div className={styles.statusSummary}>
-          <div className={styles.statusItem}>
-            <span>项目</span>
-            <strong>{projectName || '未命名项目'}</strong>
-          </div>
-          <div className={styles.statusItem}>
-            <span>当前输出</span>
-            <strong>{outputLabel}</strong>
-          </div>
-          {statusText ? (
-            <div className={styles.statusItem}>
-              <span>当前状态</span>
-              <strong>{statusText}</strong>
-            </div>
-          ) : null}
-        </div>
-        {statusPanel ? <div className={styles.statusAside}>{statusPanel}</div> : null}
-      </section>
-      <section className={styles.body}>{children}</section>
+      <section className={styles.body}>{typeof children === 'function' ? children({ statusBar }) : children}</section>
+      {typeof children === 'function' ? null : statusBar}
       {(prevAction || nextAction) ? (
         <section className={styles.navRow}>
           <div className={styles.navActions}>

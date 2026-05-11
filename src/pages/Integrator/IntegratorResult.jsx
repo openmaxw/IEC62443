@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Button, DataTable, NotePanel, SectionBlock, StatusSummaryPanel } from '../../components/Common';
 import { ProjectStageShell } from '../../components/ProjectFlow';
 import { useIntegratorPath, useOwnerPath } from '../../hooks/useProject';
@@ -6,6 +6,8 @@ import { getIntegratorResultViewModel, resolveMatchLabel } from '../../domain/vi
 import styles from './IntegratorResult.module.css';
 
 export function IntegratorResult() {
+  const [searchParams] = useSearchParams();
+  const isReviewMode = searchParams.get('review') === '1';
   const integratorPath = useIntegratorPath();
   const { assessment } = useOwnerPath();
   const viewModel = getIntegratorResultViewModel({ ...integratorPath, assessment });
@@ -19,7 +21,9 @@ export function IntegratorResult() {
   }
 
   return (
-    <ProjectStageShell stageNumber="02" title="设计结果" projectName={viewModel.projectName} outputLabel="设计结论与依据" statusText={viewModel.statusSummary.headline} guidance={{ summary: '您可在本页查看系统规划结论、能力需求与需求—设计对应关系。' }} statusPanel={<StatusSummaryPanel label={viewModel.statusSummary.title} value={viewModel.statusSummary.headline} note={viewModel.statusSummary.detail} pills={viewModel.statusSummary.pills} />}>
+    <ProjectStageShell stageNumber="02" title="设计结果" projectName={viewModel.projectName} outputLabel="设计结论与依据" statusText={viewModel.statusSummary.headline} guidance={{ summary: '您可在本页查看系统规划结论、能力需求与需求—设计对应关系。' }} statusPanel={<StatusSummaryPanel label={viewModel.statusSummary.title} value={viewModel.statusSummary.headline} note={viewModel.statusSummary.detail} pills={viewModel.statusSummary.pills} />} prevAction={{ to: isReviewMode ? '/report' : '/integrator', label: isReviewMode ? '返回交付中心' : '返回集成设计' }} nextAction={isReviewMode ? undefined : { to: '/vendor', label: '进入设备能力声明' }}>
+      {({ statusBar }) => (
+      <>
       <div className={styles.hero}>
         <div>
           <span className={styles.kicker}>设计输出</span>
@@ -31,7 +35,6 @@ export function IntegratorResult() {
           <span className={styles.chip}>流 {viewModel.summary.flowCount}</span>
           <span className={styles.chip}>能力 {viewModel.summary.capabilityCount}</span>
         </div>
-        <Link to="/vendor"><Button variant="primary" size="small">进入能力</Button></Link>
       </div>
 
       <SectionBlock title="设计依据摘要">
@@ -46,15 +49,10 @@ export function IntegratorResult() {
       </SectionBlock>
 
       <SectionBlock title="资产归组与 Zone 说明">
-        <div className={styles.noteList}>
-          {viewModel.assets.length ? viewModel.assets.map((asset) => (
-            <div key={asset.id} className={styles.noteCard}>
-              <strong>{asset.name}</strong>
-              <span>{asset.zone} / {asset.role}</span>
-              <p>{asset.groupingReason || '未填写归组原因'}</p>
-            </div>
-          )) : <div className={styles.emptyCell}>暂无资产归组信息。</div>}
-        </div>
+        <DataTable className={styles.compareTable}>
+          <thead><tr><th>资产/对象</th><th>所属 Zone</th><th>角色</th><th>归组原因</th></tr></thead>
+          <tbody>{viewModel.assets.length ? viewModel.assets.map((asset) => <tr key={asset.id}><td>{asset.name}</td><td>{asset.zone}</td><td>{asset.role}</td><td>{asset.groupingReason || '未填写归组原因'}</td></tr>) : <tr><td colSpan="4" className={styles.emptyCell}>暂无资产归组信息。</td></tr>}</tbody>
+        </DataTable>
       </SectionBlock>
 
       <SectionBlock title="通信矩阵与边界控制">
@@ -81,15 +79,10 @@ export function IntegratorResult() {
       </SectionBlock>
 
       <SectionBlock title="组件能力需求清单">
-        <div className={styles.requirementList}>
-          {viewModel.capabilityRequirements.length ? viewModel.capabilityRequirements.map((item) => (
-            <div key={item.id} className={styles.requirementItem}>
-              <strong>{item.display.label}</strong>
-              <div className={styles.capabilityMeta}><span className={styles.standardTag}>{item.display.frText}</span><span className={styles.standardTag}>{item.display.srText}</span></div><span>{item.controlObjective}</span>
-              <p>{item.implementationHint}</p>
-            </div>
-          )) : <div className={styles.emptyCell}>暂无组件能力需求。</div>}
-        </div>
+        <DataTable className={styles.compareTable}>
+          <thead><tr><th>能力要求</th><th>FR / SR</th><th>控制目标</th><th>实现提示</th></tr></thead>
+          <tbody>{viewModel.capabilityRequirements.length ? viewModel.capabilityRequirements.map((item) => <tr key={item.id}><td><strong>{item.display.label}</strong></td><td><div className={styles.capabilityMeta}><span className={styles.standardTag}>{item.display.frText}</span><span className={styles.standardTag}>{item.display.srText}</span></div></td><td>{item.controlObjective}</td><td>{item.implementationHint}</td></tr>) : <tr><td colSpan="4" className={styles.emptyCell}>暂无组件能力需求。</td></tr>}</tbody>
+        </DataTable>
       </SectionBlock>
 
       <SectionBlock title="需求—设计匹配表">
@@ -120,7 +113,10 @@ export function IntegratorResult() {
           </tbody>
         </DataTable>
       </SectionBlock>
+      {statusBar}
       <NotePanel title="结果说明" notes={["如需补充设计依据、通信边界或资产归组信息，请返回集成设计页面完善后再查看本页。"]} />
+      </>
+      )}
     </ProjectStageShell>
   );
 }

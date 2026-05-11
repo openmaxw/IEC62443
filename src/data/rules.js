@@ -282,37 +282,37 @@ export const CONTROL_OBJECTIVES = {
     id: 'identity',
     title: '身份与会话控制',
     fr: ['FR1', 'FR2'],
-    capabilities: ['identity-authentication', 'identity-session-control', 'identity-rbac']
+    capabilities: ['auth-password', 'auth-session', 'access-rbac']
   },
   boundary: {
     id: 'boundary',
     title: '区域边界与通信约束',
     fr: ['FR5', 'FR2'],
-    capabilities: ['boundary-firewall', 'boundary-allowlist', 'boundary-remote-access-gateway']
+    capabilities: ['access-policy', 'access-whitelist', 'access-privilege']
   },
   integrity: {
     id: 'integrity',
     title: '配置与系统完整性保护',
     fr: ['FR3'],
-    capabilities: ['integrity-signed-update', 'integrity-config-protection']
+    capabilities: ['integrity-firmware', 'integrity-crypto']
   },
   confidentiality: {
     id: 'confidentiality',
     title: '敏感数据保护',
     fr: ['FR4'],
-    capabilities: ['confidentiality-encryption', 'confidentiality-key-management']
+    capabilities: ['encryption-tls', 'encryption-key']
   },
   monitoring: {
     id: 'monitoring',
     title: '日志、审计与告警',
     fr: ['FR6'],
-    capabilities: ['monitoring-security-log', 'monitoring-alerting', 'monitoring-audit-export']
+    capabilities: ['logging-event', 'logging-alarm', 'audit-report']
   },
   resilience: {
     id: 'resilience',
     title: '可用性与恢复',
     fr: ['FR7'],
-    capabilities: ['resilience-backup-restore', 'resilience-redundancy']
+    capabilities: ['integrity-crc', 'audit-compliance']
   }
 };
 
