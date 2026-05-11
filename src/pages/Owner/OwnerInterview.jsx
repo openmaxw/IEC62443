@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button, NotePanel, StatusSummaryPanel, StepTabs, WorkflowNavBar } from '../../components/Common';
+import { useNavigate } from 'react-router-dom';
+import { NotePanel, StatusSummaryPanel, StepTabs, WorkflowNavBar } from '../../components/Common';
 import { ProjectStageShell } from '../../components/ProjectFlow';
 import { useProject } from '../../hooks/useProject';
 import { generateRiskProfile } from '../../utils/riskEngine';
@@ -153,15 +153,6 @@ export function OwnerInterview() {
     }
   }, [formData, state.ownerProfile?.draft, actions]);
 
-  useEffect(() => {
-    if (state.ownerProfile?.draft && !isSameObject(state.ownerProfile.draft, formData)) {
-      setFormData(state.ownerProfile.draft);
-      return;
-    }
-    if (state.ownerProfile?.assessment && !isSameObject(state.ownerProfile.assessment, formData)) {
-      setFormData((prev) => ({ ...prev, ...state.ownerProfile.assessment }));
-    }
-  }, [state.ownerProfile?.draft, state.ownerProfile?.assessment]);
 
   const step = STEPS[currentStep];
   const completedFields = [
@@ -203,7 +194,7 @@ export function OwnerInterview() {
     navigate('/integrator');
   };
 
-  let content = null;
+  let content;
   switch (step.id) {
     case 'industry':
       content = <div className={styles.stack}><div className={styles.formGrid}><div><FieldHint title="项目名称" /><input value={state.projectMeta?.projectName || ''} onChange={(event) => updateProjectMeta('projectName', event.target.value)} placeholder="示例：某化工装置 OT 安全分区协同演示" /></div><div><FieldHint title="行业场景" /><select value={state.projectMeta?.industry || ''} onChange={(event) => updateProjectMeta('industry', event.target.value)}><option value="">请选择行业</option>{INDUSTRIES.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div><div><FieldHint title="业主单位" /><input value={state.projectMeta?.organizationName || ''} onChange={(event) => updateProjectMeta('organizationName', event.target.value)} placeholder="示例：某石化有限公司" /></div><div><FieldHint title="工厂/装置/站点" /><input value={state.projectMeta?.siteName || ''} onChange={(event) => updateProjectMeta('siteName', event.target.value)} placeholder="示例：乙烯装置 A 区" /></div><div><FieldHint title="项目类型" /><select value={state.projectMeta?.scenarioType || ''} onChange={(event) => updateProjectMeta('scenarioType', event.target.value)}><option value="">请选择项目类型</option><option value="new-build">新建</option><option value="retrofit">改造</option><option value="expansion">扩建</option><option value="assessment">评估</option></select></div><div><FieldHint title="项目目标" /><input value={state.projectMeta?.projectObjective || ''} onChange={(event) => updateProjectMeta('projectObjective', event.target.value)} placeholder="示例：完成控制区分段与远程维护边界加固" /></div></div></div>;

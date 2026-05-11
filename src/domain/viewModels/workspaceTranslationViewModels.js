@@ -42,11 +42,11 @@ export function getTranslationCenterViewModel({ projectMeta, assessment, riskPro
   };
 }
 
-export function getIntegratorWorkspaceViewModel({ projectMeta, assessment, riskProfile, draftPlan }) {
+export function getIntegratorWorkspaceViewModel({ projectMeta, assessment, riskProfile, plan, draftPlan }) {
   return {
     projectName: projectMeta?.projectName || '',
     hasPrerequisites: Boolean(assessment && riskProfile),
-    initialPlan: draftPlan || {
+    initialPlan: draftPlan || plan || {
       zones: [],
       conduits: [],
       assets: [],

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Button, NotePanel, SectionBlock, StatusBadge } from '../../components/Common';
+import { Button, NotePanel, SectionBlock } from '../../components/Common';
 import styles from './Landing.module.css';
 
 const FLOW_STEPS = [
@@ -48,6 +48,12 @@ const ROLE_BENEFITS = [
   }
 ];
 
+const QUICK_START_STEPS = [
+  { title: '1. 进入工作台', desc: '点击“进入工作台”，如需快速体验可先加载半导体晶圆厂演示项目。' },
+  { title: '2. 按角色查看', desc: '业主看输入与风险翻译，集成商看设计响应，设备商看能力声明。' },
+  { title: '3. 审核交付', desc: '审核者从追溯链和交付中心查看差距闭环、IEC 映射和交付摘要。' }
+];
+
 export function Landing() {
   return (
     <div className={styles.page}>
@@ -70,6 +76,20 @@ export function Landing() {
               <p className={styles.flowItem}>{item.desc}</p>
             </article>
           ))}
+        </div>
+      </SectionBlock>
+
+      <SectionBlock title="3 分钟体验路径">
+        <div className={styles.quickStartGrid}>
+          {QUICK_START_STEPS.map((item) => (
+            <article key={item.title} className={styles.quickStartCard}>
+              <strong>{item.title}</strong>
+              <p>{item.desc}</p>
+            </article>
+          ))}
+        </div>
+        <div className={styles.quickStartAction}>
+          <Link to="/dashboard"><Button variant="secondary" size="small">从工作台加载演示项目</Button></Link>
         </div>
       </SectionBlock>
 

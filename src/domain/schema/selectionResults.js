@@ -1,4 +1,4 @@
-const RESULT_STATUS = new Set(['native', 'configured', 'external', 'compensating', 'missing']);
+const RESULT_STATUS = new Set(['native', 'configured', 'external', 'compensating', 'missing', 'fulfilled', 'partial', 'na']);
 const SEVERITY_LEVELS = new Set(['low', 'medium', 'high']);
 
 function asText(value) {
@@ -43,7 +43,10 @@ function normalizeSummary(value) {
     external: asCount(source.external),
     compensating: asCount(source.compensating),
     missing: asCount(source.missing),
-    overallScore: asCount(source.overallScore)
+    overallScore: asCount(source.overallScore),
+    high: asCount(source.high),
+    medium: asCount(source.medium),
+    low: asCount(source.low)
   };
 }
 
@@ -55,7 +58,10 @@ export const EMPTY_SELECTION_RESULTS = {
     external: 0,
     compensating: 0,
     missing: 0,
-    overallScore: 0
+    overallScore: 0,
+    high: 0,
+    medium: 0,
+    low: 0
   }
 };
 

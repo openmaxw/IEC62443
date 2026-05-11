@@ -265,3 +265,10 @@
     grid-template-columns: 1fr;
   }
 }
+.roleGuideGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.roleGuideCard { display: grid; gap: 8px; padding: 12px 14px; border-radius: var(--radius-lg); border: 1px solid rgba(94,146,183,.24); background: linear-gradient(180deg, rgba(94,146,183,.08), rgba(255,255,255,.02)); }
+.roleGuideCard span { color: var(--color-text-muted); font-size: var(--font-size-xs); font-weight: 700; }
+.roleGuideCard strong { color: var(--color-text); font-size: var(--font-size-sm); line-height: var(--line-height-normal); }
+.roleGuideCard a { width: fit-content; color: #d7ecff; font-size: var(--font-size-xs); font-weight: 700; }
+@media (max-width: 1100px) { .roleGuideGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 768px) { .roleGuideGrid { grid-template-columns: 1fr; } }

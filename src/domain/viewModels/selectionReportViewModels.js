@@ -1,4 +1,5 @@
 import { getCapabilityDisplay } from '../../data/capabilities.js';
+import { getIecMappingByCapability } from '../../data/iec62443Mappings.js';
 
 function asArray(value) {
   return Array.isArray(value) ? value : [];
@@ -80,6 +81,9 @@ export function getReportCenterViewModel({ projectMeta, riskProfile, plan, capab
   const gapClosureReady = gapRows.length === 0 || asArray(gapClosureItems).length >= gapRows.length;
   const highRiskCount = asArray(gapClosureItems).filter((item) => item.severity === 'high').length;
   const externalCount = asArray(gapClosureItems).filter((item) => item.status === 'external').length;
+  const mappingRows = asArray(plan?.capabilityRequirements)
+    .map((item) => ({ requirement: item, display: getCapabilityDisplay(item.capabilityId), mapping: getIecMappingByCapability(item.capabilityId) }))
+    .filter((item) => item.mapping);
 
   const items = [
     { title: '业主交接物', ready: Boolean(riskProfile), desc: '查看业主输入摘要与设计输入。', route: '/owner/result' },
@@ -105,6 +109,15 @@ export function getReportCenterViewModel({ projectMeta, riskProfile, plan, capab
     gapClosureItems: asArray(gapClosureItems).map((item) => ({
       ...item,
       display: getCapabilityDisplay(item.capabilityId)
-    }))
+    })),
+    mappingRows,
+    reportPayload: {
+      projectMeta,
+      riskProfile,
+      plan,
+      latestCapability,
+      gapClosureItems: asArray(gapClosureItems),
+      mappingRows
+    }
   };
 }

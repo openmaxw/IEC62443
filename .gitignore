@@ -26,4 +26,3 @@ dist-ssr
 .codex
 AGENTS.md
 docs/
-scripts-contract-test.mjs

@@ -62,13 +62,19 @@ export function IntegratorWorkspace() {
   const { assessment, riskProfile, projectMeta } = useOwnerPath();
   const { state, actions } = useProject();
   const integratorDraft = state.integratorDesign?.draft;
-  const workspaceViewModel = getIntegratorWorkspaceViewModel({ projectMeta, assessment, riskProfile, draftPlan: integratorDraft });
+  const integratorPlan = state.integratorDesign?.plan;
+  const workspaceViewModel = getIntegratorWorkspaceViewModel({ projectMeta, assessment, riskProfile, plan: integratorPlan, draftPlan: integratorDraft });
   const [currentStep, setCurrentStep] = useState(0);
   const [newAsset, setNewAsset] = useState(DEFAULT_ASSET);
   const [newFlow, setNewFlow] = useState(DEFAULT_FLOW);
   const [plan, setPlan] = useState(workspaceViewModel.initialPlan);
   const communicationMatrix = useMemo(() => buildCommunicationMatrix(plan), [plan]);
-  const requirementMatrix = useMemo(() => buildCapabilityRequirementMatrix(riskProfile, plan.targetSL, communicationMatrix), [plan.targetSL, riskProfile, communicationMatrix]);
+  const requirementMatrix = useMemo(() => {
+    if (Array.isArray(plan.capabilityRequirements) && plan.capabilityRequirements.length) {
+      return { complete: plan.communicationMatrix?.complete ?? communicationMatrix.complete, rows: plan.capabilityRequirements };
+    }
+    return buildCapabilityRequirementMatrix(riskProfile, plan.targetSL, communicationMatrix);
+  }, [plan.capabilityRequirements, plan.communicationMatrix?.complete, plan.targetSL, riskProfile, communicationMatrix]);
   const systemRules = useMemo(() => buildSystemRules(plan, riskProfile, communicationMatrix), [plan, riskProfile, communicationMatrix]);
   const requirementGroups = useMemo(() => groupRequirementRows(requirementMatrix.rows), [requirementMatrix.rows]);
 
@@ -119,7 +125,7 @@ export function IntegratorWorkspace() {
     navigate('/integrator/result');
   };
 
-  let content = null;
+  let content;
 
   switch (step.id) {
     case 'basis':

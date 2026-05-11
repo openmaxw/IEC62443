@@ -57,10 +57,10 @@ function normalizeOwnerProfile(value, parsed) {
   const assessmentSource = source.assessment || legacyAssessment || null;
   const draftSource = source.draft || null;
 
-  return {
-    assessment: assessmentSource ? normalizeOwnerAssessment(assessmentSource) : null,
-    draft: hasOwnerAssessmentContent(draftSource) ? normalizeOwnerAssessment(draftSource) : null
-  };
+  const assessment = assessmentSource ? normalizeOwnerAssessment(assessmentSource) : null;
+  const draft = hasOwnerAssessmentContent(draftSource) ? normalizeOwnerAssessment(draftSource) : assessment;
+
+  return { assessment, draft };
 }
 
 function normalizeRiskTranslation(value, parsed) {
@@ -72,17 +72,18 @@ function normalizeRiskTranslation(value, parsed) {
 
 function normalizeIntegratorDesign(value, parsed) {
   const source = ensureObject(value, DEFAULT_INTEGRATOR_DESIGN);
-  return {
-    plan: normalizeIntegratorPlan(source.plan || (!parsed.integratorDesign ? parsed.integratorPlan : null) || null),
-    draft: normalizeIntegratorPlan(source.draft || null)
-  };
+  const plan = normalizeIntegratorPlan(source.plan || (!parsed.integratorDesign ? parsed.integratorPlan : null) || null);
+  const draft = normalizeIntegratorPlan(source.draft || null) || plan;
+
+  return { plan, draft };
 }
 
 function normalizeVendorCatalog(value, parsed) {
   const source = ensureObject(value, DEFAULT_VENDOR_CATALOG);
+  const capabilities = ensureArray(source.capabilities).length ? ensureArray(source.capabilities) : (!parsed.vendorCatalog ? ensureArray(parsed.vendorCapabilities) : []);
   return {
-    capabilities: ensureArray(source.capabilities).length ? ensureArray(source.capabilities) : (!parsed.vendorCatalog ? ensureArray(parsed.vendorCapabilities) : []),
-    draft: source.draft || null
+    capabilities,
+    draft: source.draft || capabilities[capabilities.length - 1] || null
   };
 }
 

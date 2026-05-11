@@ -2,9 +2,9 @@ export const DEMO_PROJECT_STATE = {
   currentRole: 'owner',
   currentStep: 0,
   projectMeta: {
-    projectName: '台湾某大型半导体企业－新竹 12 英寸晶圆厂 OT 安全协同演示',
-    organizationName: '台湾某大型半导体制造企业',
-    siteName: '新竹 12 英寸晶圆厂',
+    projectName: '某半导体制造企业－12 英寸晶圆厂 OT 安全协同演示',
+    organizationName: '某半导体制造企业',
+    siteName: '12 英寸晶圆厂',
     industry: 'electronics',
     scenarioType: 'retrofit',
     projectObjective: '完成晶圆厂制造区、厂务区与远程维护边界梳理，并验证关键边界设备能力与闭环路径',
@@ -13,7 +13,7 @@ export const DEMO_PROJECT_STATE = {
   },
   ownerProfile: {
     assessment: {
-      projectName: '台湾某大型半导体企业－新竹 12 英寸晶圆厂 OT 安全协同演示',
+      projectName: '某半导体制造企业－12 英寸晶圆厂 OT 安全协同演示',
       industry: 'electronics',
       safetyImpact: 'high',
       environmentalImpact: 'medium',
@@ -82,27 +82,51 @@ export const DEMO_PROJECT_STATE = {
   },
   integratorDesign: {
     plan: {
-      zones: ['control-cell', 'dmz', 'operations'],
-      conduits: ['site-operations', 'remote-support'],
+      zones: ['zone-cell', 'zone-dmz', 'zone-ot'],
+      conduits: ['conduit-opcua', 'conduit-ethernet'],
       assets: [
-        { id: 'asset-1', name: '光刻区工艺设备控制器', zone: 'control-cell', role: 'control', groupingReason: '属于关键制造单元控制边界，需与外部访问严格隔离' },
-        { id: 'asset-2', name: '制造区工程师站', zone: 'operations', role: 'engineering', groupingReason: '承担配方下载与维护任务，不应与控制器处于同一信任区' },
-        { id: 'asset-3', name: 'MOXA EDR-G9010 安全网关', zone: 'dmz', role: 'server', groupingReason: '部署于制造区 DMZ 作为远程维护与边界访问受控入口' }
+        { id: 'asset-1', name: '光刻区工艺设备控制器', zone: 'zone-cell', role: 'control', groupingReason: '属于关键制造单元控制边界，需与外部访问严格隔离' },
+        { id: 'asset-2', name: '制造区工程师站', zone: 'zone-ot', role: 'engineering', groupingReason: '承担配方下载与维护任务，不应与控制器处于同一信任区' },
+        { id: 'asset-3', name: '工业边界安全网关 XG-9000', zone: 'zone-dmz', role: 'server', groupingReason: '部署于制造区 DMZ 作为远程维护与边界访问受控入口' }
       ],
       communicationFlows: [
-        { id: 'flow-1', source: 'operations', target: 'control-cell', protocol: 'OPC UA', direction: '双向', necessity: '制程监控、设备状态读取与受控参数下发', businessReason: '工程师站与监控系统需读取设备状态并下发经审批的维护指令', boundaryControl: '通过工业防火墙、白名单与最小开放策略控制' },
-        { id: 'flow-2', source: 'dmz', target: 'operations', protocol: 'HTTPS', direction: '双向', necessity: '供应商远程维护会话与审计接入', businessReason: '设备商经审批后通过 EDR-G9010 建立受控远程维护连接，并进入维护跳板与工程师站', boundaryControl: 'VPN + NAT + 策略控制 + Syslog 审计 + 会话留痕' }
+        { id: 'flow-1', source: 'zone-ot', target: 'zone-cell', protocol: 'OPC UA', direction: '双向', necessity: '制程监控、设备状态读取与受控参数下发', businessReason: '工程师站与监控系统需读取设备状态并下发经审批的维护指令', boundaryControl: '通过工业防火墙、白名单与最小开放策略控制' },
+        { id: 'flow-2', source: 'zone-dmz', target: 'zone-ot', protocol: 'HTTPS', direction: '双向', necessity: '供应商远程维护会话与审计接入', businessReason: '设备商经审批后通过工业边界安全网关建立受控远程维护连接，并进入维护跳板与工程师站', boundaryControl: 'VPN + NAT + 策略控制 + Syslog 审计 + 会话留痕' }
       ],
       targetSL: 3,
       requiredFR: ['FR1', 'FR2', 'FR5', 'FR6', 'FR7'],
-      designBasis: '按照制造区、制造 DMZ 与企业/远程访问区分层隔离原则设计，优先确保 12 英寸晶圆产线连续性、远程维护可控性与关键边界审计能力。'
+      designBasis: '按照制造区、制造 DMZ 与企业/远程访问区分层隔离原则设计，优先确保 12 英寸晶圆产线连续性、远程维护可控性与关键边界审计能力。',
+      designBasisSummary: {
+        keySystems: 'MES 接口服务器、SCADA/HMI 站、工程师站、历史数据库、厂务监控服务器、远程安全接入网关',
+        externalConnections: '与 MES/ERP 交换生产与设备状态数据；设备供应商经受控远程维护通道接入；厂务与安防系统需与中央监控平台交换事件',
+        maintenanceAccessPath: '厂外 VPN -> 制造区 DMZ 安全网关 -> 维护跳板 -> 工程师站/维护主机',
+        initialBoundaryNotes: '制造执行网、厂务监控网与企业信息网之间已有边界防火墙，但部分维护工作站与生产设备控制网络仍存在跨区直达访问路径',
+        continuityRequirements: '12 英寸晶圆制程须维持高可用连续生产，扩散、蚀刻与光刻关键工站不可因安全切换产生非计划停机',
+        designBasis: '按照制造区、制造 DMZ 与企业/远程访问区分层隔离原则设计，优先确保 12 英寸晶圆产线连续性、远程维护可控性与关键边界审计能力。'
+      },
+      communicationMatrix: {
+        complete: true,
+        missingFields: [],
+        rows: [
+          { id: 'flow-1', source: 'zone-ot', sourceName: '制造运营区', target: 'zone-cell', targetName: '制造控制单元', protocol: 'OPC UA', direction: '双向', businessReason: '工程师站与监控系统需读取设备状态并下发经审批的维护指令', boundaryControl: '通过工业防火墙、白名单与最小开放策略控制', conduit: '现场运营通道' },
+          { id: 'flow-2', source: 'zone-dmz', sourceName: '制造 DMZ', target: 'zone-ot', targetName: '制造运营区', protocol: 'HTTPS', direction: '双向', businessReason: '设备商经审批后通过工业边界安全网关建立受控远程维护连接，并进入维护跳板与工程师站', boundaryControl: 'VPN + NAT + 策略控制 + Syslog 审计 + 会话留痕', conduit: '远程支持通道' }
+        ]
+      },
+      capabilityRequirements: [
+        { id: 'req-1', controlObjective: '远程维护访问控制', capabilityId: 'auth-password', sourceFR: ['FR1'], targetSL: 3, requirementLevel: 'high', implementationHint: '远程维护入口和设备管理账户需具备身份鉴别。', traceability: { inputConditions: ['存在远程维护通道', '设备供应商接入频繁'], riskConcerns: ['远程与第三方维护接入'] } },
+        { id: 'req-2', controlObjective: '远程维护访问控制', capabilityId: 'access-rbac', sourceFR: ['FR2'], targetSL: 3, requirementLevel: 'high', implementationHint: '远程维护账号需按角色授权并限制管理权限。', traceability: { inputConditions: ['存在远程维护通道', '设备供应商接入频繁'], riskConcerns: ['远程与第三方维护接入'] } },
+        { id: 'req-3', controlObjective: '远程维护访问控制', capabilityId: 'logging-event', sourceFR: ['FR6'], targetSL: 3, requirementLevel: 'high', implementationHint: '远程登录、策略变更和安全事件需形成日志记录。', traceability: { inputConditions: ['存在远程维护通道', '设备供应商接入频繁'], riskConcerns: ['远程与第三方维护接入'] } },
+        { id: 'req-4', controlObjective: '边界防护与会话审计', capabilityId: 'access-whitelist', sourceFR: ['FR5'], targetSL: 3, requirementLevel: 'high', implementationHint: '跨区访问需通过白名单和最小开放策略控制。', traceability: { inputConditions: ['关键制造连续性要求高'], riskConcerns: ['晶圆制程连续性与良率影响'] } },
+        { id: 'req-5', controlObjective: '边界防护与会话审计', capabilityId: 'logging-syslog', sourceFR: ['FR6'], targetSL: 3, requirementLevel: 'high', implementationHint: '关键边界日志需上送集中日志平台以便追溯。', traceability: { inputConditions: ['关键制造连续性要求高'], riskConcerns: ['晶圆制程连续性与良率影响'] } },
+        { id: 'req-6', controlObjective: '边界防护与会话审计', capabilityId: 'audit-report', sourceFR: ['FR6'], targetSL: 3, requirementLevel: 'medium', implementationHint: '项目验收阶段需形成可审阅的审计摘要或报表。', traceability: { inputConditions: ['关键制造连续性要求高'], riskConcerns: ['晶圆制程连续性与良率影响'] } }
+      ]
     }
   },
   vendorCatalog: {
     capabilities: [
       {
         id: 'vendor-demo-1',
-        productMeta: { productName: 'MOXA EDR-G9010', productType: 'gateway', securityLevel: 3, deploymentScope: '制造区 DMZ 远程维护边界与安全出口' },
+        productMeta: { productName: '工业边界安全网关 XG-9000', productType: 'gateway', securityLevel: 3, deploymentScope: '制造区 DMZ 远程维护边界与安全出口' },
         capabilityClaims: [
           { capabilityId: 'auth-password', satisfaction: 'fulfilled', implementationType: 'product', evidenceType: '厂家声明', claimScope: '设备本机管理、VPN 维护接入与管理员登录鉴别', dependencyNote: '建议结合企业统一账号与强密码策略', limitationNote: '如需统一身份联动需结合外围系统' },
           { capabilityId: 'access-rbac', satisfaction: 'partial', implementationType: 'shared', evidenceType: '厂家声明', claimScope: '设备管理角色与策略操作分权', dependencyNote: '更细粒度权限建议结合集中管理平台', limitationNote: '单机侧角色粒度有限' },
@@ -117,7 +141,7 @@ export const DEMO_PROJECT_STATE = {
       }
     ],
     draft: {
-      productMeta: { productName: 'MOXA EDR-G9010', productType: 'gateway', securityLevel: 3, deploymentScope: '制造区 DMZ 远程维护边界与安全出口' },
+      productMeta: { productName: '工业边界安全网关 XG-9000', productType: 'gateway', securityLevel: 3, deploymentScope: '制造区 DMZ 远程维护边界与安全出口' },
       capabilityClaims: [
         { capabilityId: 'auth-password', satisfaction: 'fulfilled', implementationType: 'product', evidenceType: '厂家声明', claimScope: '设备本机管理、VPN 维护接入与管理员登录鉴别', dependencyNote: '建议结合企业统一账号与强密码策略', limitationNote: '如需统一身份联动需结合外围系统' },
         { capabilityId: 'access-rbac', satisfaction: 'partial', implementationType: 'shared', evidenceType: '厂家声明', claimScope: '设备管理角色与策略操作分权', dependencyNote: '更细粒度权限建议结合集中管理平台', limitationNote: '单机侧角色粒度有限' },

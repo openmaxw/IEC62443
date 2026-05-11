@@ -34,10 +34,14 @@ export function SelectionMatrix({ initialStep = 0 }) {
   const isReviewStep = currentStep === STEPS.length - 1;
 
   useEffect(() => {
-    if (!isSameObject(viewModel.gapItems, gapItems)) {
+    if (isSameObject(viewModel.gapItems, gapItems)) return undefined;
+
+    const timer = window.setTimeout(() => {
       setGapItems(viewModel.gapItems);
-    }
-  }, [viewModel.gapItems]);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [viewModel.gapItems, gapItems]);
 
   const handleSaveSelection = () => {
     const nextResults = { results: viewModel.selection.rows, summary: viewModel.selection.summary };
@@ -60,7 +64,7 @@ export function SelectionMatrix({ initialStep = 0 }) {
     setSavedAtLeastOnce(true);
   };
 
-  let content = null;
+  let content;
   switch (step.id) {
     case 'overview':
       content = <section className={styles.page}><div className={styles.hero}><div><strong>匹配概览</strong><p>请先确认当前设计能力需求与最新设备声明的匹配结果。</p><span className={styles.meta}>{viewModel.latestCapability ? '已识别最新设备能力声明。' : '尚未生成设备能力声明，结果将显示为待满足。'}</span></div><div className={styles.actions}><Button variant="secondary" size="medium" onClick={handleSaveSelection}>保存匹配结果</Button><Button variant="primary" size="medium" onClick={() => setCurrentStep(1)}>查看待闭环项</Button></div></div><table className={styles.table}><thead><tr><th>能力项</th><th>控制目标</th><th>满足情况</th><th>证据类型</th><th>差距说明</th></tr></thead><tbody>{viewModel.selection.rows.length ? viewModel.selection.rows.map((item) => <tr key={item.id}><td>{getCapabilityDisplay(item.capabilityId).label}</td><td>{item.controlObjective}</td><td><StatusBadge tone={item.status === 'missing' ? 'danger' : item.status === 'external' || item.status === 'partial' ? 'warning' : 'success'}>{STATUS_LABELS[item.status] || item.status}</StatusBadge></td><td>{item.evidenceType}</td><td>{item.gapNote}</td></tr>) : <tr><td colSpan="5" className={styles.empty}>当前没有可分析的能力需求，请先返回集成设计与设备声明页面补充输入。</td></tr>}</tbody></table></section>;

@@ -5,14 +5,13 @@ import { useOwnerPath, useIntegratorPath, useVendorPath, useProject, useProjectS
 import { getDashboardViewModel } from '../../domain/viewModels/dashboardVendorViewModels';
 import styles from './Dashboard.module.css';
 
-const STAGE_LABELS = {
-  project: '项目建立',
-  owner: '业主输入',
-  integrator: '集成设计',
-  vendor: '设备声明',
-  selection: '闭环',
-  report: '交付汇总'
-};
+
+const ROLE_GUIDES = [
+  { role: '业主', focus: '补齐项目背景、关键资产和验收关注。', route: '/owner', action: '填写输入' },
+  { role: '集成商', focus: '查看风险翻译，形成 Zone / Conduit、通信和能力需求。', route: '/integrator', action: '进入设计' },
+  { role: '设备商', focus: '围绕项目能力需求声明产品能力、证据、依赖和限制。', route: '/vendor', action: '声明能力' },
+  { role: '审核者', focus: '复核追溯链、差距闭环、IEC 映射和交付摘要。', route: '/report', action: '看交付' }
+];
 
 export function Dashboard() {
   const { actions } = useProject();
@@ -29,7 +28,7 @@ export function Dashboard() {
   };
 
   const handleLoadDemo = () => {
-    if (window.confirm('将加载“台湾某大型半导体企业－新竹 12 英寸晶圆厂 + MOXA EDR-G9010”演示项目，用于快速检查各页面功能。是否继续？')) {
+    if (window.confirm('将加载“某半导体制造企业－12 英寸晶圆厂 + 工业边界安全网关 XG-9000”演示项目，用于快速检查各页面功能。是否继续？')) {
       actions.loadDemoProject();
     }
   };
@@ -94,6 +93,16 @@ export function Dashboard() {
         <section className={styles.notePanel}>
           <strong>使用说明</strong>
           <em>建议优先处理缺失输入较多或系统推荐的阶段；如需快速了解整体流程，可先加载演示项目查看示例。</em>
+        </section>
+
+        <section className={styles.roleGuideGrid}>
+          {ROLE_GUIDES.map((item) => (
+            <article key={item.role} className={styles.roleGuideCard}>
+              <span>{item.role}</span>
+              <strong>{item.focus}</strong>
+              <Link to={item.route}>{item.action}</Link>
+            </article>
+          ))}
         </section>
 
         <section className={styles.cardGrid}>
