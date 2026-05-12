@@ -12,7 +12,7 @@ const NAV_ITEMS = [
 
 const SUPPORT_ITEMS = [
   { to: '/translation-center', label: '追溯链' },
-  { to: '/learning', label: '使用手册' }
+  { to: '/learning', label: '平台说明' }
 ];
 
 export function Header() {
@@ -29,8 +29,8 @@ export function Header() {
             </svg>
           </div>
           <div className={styles.brandText}>
-            <strong>IEC 62443 需求澄清与响应工作台</strong>
-            <span>将模糊安全诉求转化为标准化项目输入与清晰响应路径</span>
+            <strong>IEC 62443 需求转译与对齐平台</strong>
+            <span>将工业安全诉求转化为可响应、可追溯的项目语言</span>
           </div>
         </Link>
 
