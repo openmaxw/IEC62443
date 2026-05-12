@@ -172,7 +172,7 @@ function buildOwnerRequirements(riskConcerns = [], targetLevels) {
   recommendations.push({
     concernId: 'target-level',
     priority: targetLevels.recommendedMax >= 3 ? 'high' : 'medium',
-    text: `向集成商明确提出“重点区域目标安全等级建议位于 SL${targetLevels.recommendedMin}-SL${targetLevels.recommendedMax} 区间”的设计要求。`
+    text: `向设计响应方明确提出“重点区域目标安全等级建议位于 SL${targetLevels.recommendedMin}-SL${targetLevels.recommendedMax} 区间”的设计要求。`
   });
 
   return recommendations;
@@ -248,7 +248,7 @@ export function generateRiskProfile(assessment = {}) {
     acceptanceFocus,
     explanations,
     summary: {
-      title: `${assessment.projectName || '当前项目'} 风险翻译结果`,
+      title: `${assessment.projectName || '当前项目'} 风险转译结果`,
       description: `系统已根据业务后果、暴露面和现状成熟度生成风险关注画像，建议重点关注 ${riskConcerns.slice(0, 2).map((item) => item.title).join('、') || '基础分段与访问控制'}。`,
       recommendedTarget: `建议重点区域按 SL${targetLevels.recommendedMin}-SL${targetLevels.recommendedMax} 进行目标等级评估。`
     }

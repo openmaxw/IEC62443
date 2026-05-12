@@ -34,6 +34,18 @@ export function normalizeSelectionStatus(value, implementationType) {
   return value || 'missing';
 }
 
+function isGapStatus(status) {
+  return status === 'missing' || status === 'external' || status === 'configured' || status === 'compensating';
+}
+
+function hasSavedClosure(item) {
+  return Boolean(item?.saved && item?.mitigation && item?.owner && item?.acceptanceImpact && item?.residualRisk);
+}
+
+function hasPersistedClosure(item) {
+  return Boolean(item?.mitigation && item?.owner && item?.acceptanceImpact && item?.residualRisk);
+}
+
 function buildSelectionResults(plan, latestCapability) {
   const requirements = asArray(plan?.capabilityRequirements);
   const claimMap = new Map(asArray(latestCapability?.capabilityClaims).map((item) => [normalizeSelectionCapabilityId(item.capabilityId), item]));
@@ -65,7 +77,7 @@ function buildSelectionResults(plan, latestCapability) {
 }
 
 function buildGapItems(selectionRows, savedItems = []) {
-  const rows = asArray(selectionRows).filter((item) => item.status === 'missing' || item.status === 'external' || item.status === 'configured' || item.status === 'compensating');
+  const rows = asArray(selectionRows).filter((item) => isGapStatus(item.status));
   const savedMap = new Map(asArray(savedItems).map((item) => [item.id, item]));
   return rows.map((item) => {
     const saved = savedMap.get(item.id);
@@ -81,7 +93,7 @@ function buildGapItems(selectionRows, savedItems = []) {
       acceptanceImpact: saved?.acceptanceImpact || (item.severity === 'high' ? '高，可能影响验收' : '中，需在验收前确认关闭路径'),
       residualRisk: saved?.residualRisk || (item.severity === 'high' ? '建议纳入残余风险登记' : '建议视补偿措施有效性决定是否登记'),
       owner: saved?.owner || item.owner,
-      saved: Boolean(saved)
+      saved: Boolean(saved && hasPersistedClosure(saved))
     };
   });
 }
@@ -90,7 +102,8 @@ export function getSelectionViewModel({ projectMeta, plan, capabilities, gapClos
   const latestCapability = asArray(capabilities)[asArray(capabilities).length - 1] || null;
   const selection = buildSelectionResults(plan, latestCapability);
   const gapItems = buildGapItems(selection.rows, gapClosureItems);
-  const closedCount = gapItems.filter((item) => item.mitigation || item.owner || item.acceptanceImpact || item.residualRisk).length;
+  const closedCount = gapItems.filter(hasSavedClosure).length;
+  const pendingGapItems = gapItems.filter((item) => !hasSavedClosure(item));
 
   return {
     projectName: projectMeta?.projectName || '',
@@ -99,10 +112,10 @@ export function getSelectionViewModel({ projectMeta, plan, capabilities, gapClos
     gapItems,
     closedCount,
     statusSummary: {
-      title: gapItems.length ? '当前闭环重点' : '当前闭环状态',
-      headline: gapItems.length ? `仍有 ${gapItems.length} 项差距待闭环` : '当前没有待闭环差距项',
-      detail: gapItems.length ? `${gapItems.filter((item) => item.severity === 'high').length} 项为高严重度，请优先补充措施、责任与验收影响。` : '可进入交付中心或继续复核匹配结果。',
-      pills: [`高严重度 ${gapItems.filter((item) => item.severity === 'high').length}`, `已填写 ${closedCount}/${gapItems.length || 0}`]
+      title: pendingGapItems.length ? '当前处置重点' : '当前处置状态',
+      headline: pendingGapItems.length ? `仍有 ${pendingGapItems.length} 项差距待处置` : (gapItems.length ? '差距项已完成处置记录' : '当前没有待处置差距项'),
+      detail: pendingGapItems.length ? `${pendingGapItems.filter((item) => item.severity === 'high').length} 项为高严重度，请优先补充措施、责任与验收影响。` : '可进入交付摘要或继续复核匹配结果。',
+      pills: [`高严重度 ${pendingGapItems.filter((item) => item.severity === 'high').length}`, `已处置 ${closedCount}/${gapItems.length || 0}`]
     }
   };
 }
@@ -110,8 +123,10 @@ export function getSelectionViewModel({ projectMeta, plan, capabilities, gapClos
 export function getReportCenterViewModel({ projectMeta, riskProfile, plan, capabilities, matchResults, gapClosureItems }) {
   const latestCapability = asArray(capabilities)[asArray(capabilities).length - 1] || null;
   const liveSelection = buildSelectionResults(plan, latestCapability);
-  const gapRows = liveSelection.rows.filter((item) => item.status === 'missing' || item.status === 'external' || item.status === 'configured' || item.status === 'compensating');
-  const gapClosureReady = gapRows.length === 0 || asArray(gapClosureItems).length >= gapRows.length;
+  const gapRows = liveSelection.rows.filter((item) => isGapStatus(item.status));
+  const savedClosureMap = new Map(asArray(gapClosureItems).map((item) => [item.id, item]));
+  const pendingGapRows = gapRows.filter((item) => !hasPersistedClosure(savedClosureMap.get(item.id)));
+  const gapClosureReady = pendingGapRows.length === 0;
   const highRiskCount = asArray(gapClosureItems).filter((item) => item.severity === 'high').length;
   const externalCount = asArray(gapClosureItems).filter((item) => item.status === 'external').length;
   const mappingRows = asArray(plan?.capabilityRequirements)
@@ -119,11 +134,11 @@ export function getReportCenterViewModel({ projectMeta, riskProfile, plan, capab
     .filter((item) => item.mapping);
 
   const items = [
-    { title: '业主交接物', ready: Boolean(riskProfile), desc: '查看业主输入摘要与设计输入。', route: '/owner/result?review=1' },
-    { title: '集成设计结果', ready: Boolean(plan), desc: '查看 Zone / Conduit、通信设计与能力需求。', route: '/integrator/result?review=1' },
-    { title: '设备声明结果', ready: Boolean(latestCapability), desc: '查看设备能力声明摘要。', route: '/vendor/result?review=1' },
-    { title: '闭环', ready: Boolean(asArray(matchResults?.results).length || liveSelection.rows.length) && gapClosureReady, desc: gapRows.length ? '查看差距项、补偿措施、责任方、验收影响与残余风险。' : '当前没有待闭环差距项。', route: '/selection' },
-    { title: '需求追溯链', ready: Boolean(riskProfile && plan), desc: '查看从业务输入到能力/差距的追溯。', route: '/translation-center' }
+    { title: '项目输入摘要', ready: Boolean(riskProfile), desc: '查看需求澄清摘要与标准化项目输入。', route: '/owner/result?review=1' },
+    { title: '设计响应摘要', ready: Boolean(plan), desc: '查看 Zone / Conduit、通信响应与能力需求。', route: '/integrator/result?review=1' },
+    { title: '能力声明摘要', ready: Boolean(latestCapability), desc: '查看产品能力声明摘要。', route: '/vendor/result?review=1' },
+    { title: '匹配闭环', ready: Boolean(asArray(matchResults?.results).length || liveSelection.rows.length) && gapClosureReady, desc: gapRows.length ? '查看差距项、补偿措施、责任方、验收影响与残余风险。' : '当前没有待处置差距项。', route: '/selection' },
+    { title: '需求追溯链', ready: Boolean(riskProfile && plan), desc: '查看从项目输入到能力/差距的追溯。', route: '/translation-center' }
   ];
 
   return {
@@ -135,7 +150,7 @@ export function getReportCenterViewModel({ projectMeta, riskProfile, plan, capab
     externalCount,
     statusSummary: {
       title: gapClosureReady ? '交付判断' : '当前交付阻塞',
-      headline: gapClosureReady ? '主要交付项已具备' : `仍有 ${gapRows.length} 项差距影响交付完整度`,
+      headline: gapClosureReady ? '主要交付项已具备' : `仍有 ${pendingGapRows.length} 项差距影响交付完整度`,
       detail: gapClosureReady ? '可集中查看和导出阶段成果。' : '请先完成闭环措施、责任方、验收影响与残余风险补充。',
       pills: [`高严重度 ${highRiskCount}`, `外部补偿 ${externalCount}`]
     },

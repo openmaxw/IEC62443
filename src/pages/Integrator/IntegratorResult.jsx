@@ -14,19 +14,19 @@ export function IntegratorResult() {
 
   if (!viewModel.hasPlan) {
     return (
-      <ProjectStageShell stageNumber="02" title="设计结果" projectName={viewModel.projectName} outputLabel="设计结论与依据">
-        <div className={styles.empty}><Link to="/integrator"><Button variant="primary">前往集成设计</Button></Link></div>
+      <ProjectStageShell stageNumber="02" title="设计响应摘要" projectName={viewModel.projectName} outputLabel="设计响应与依据">
+        <div className={styles.empty}><Link to="/integrator"><Button variant="primary">前往设计响应</Button></Link></div>
       </ProjectStageShell>
     );
   }
 
   return (
-    <ProjectStageShell stageNumber="02" title="设计结果" projectName={viewModel.projectName} outputLabel="设计结论与依据" statusText={viewModel.statusSummary.headline} guidance={{ summary: '您可在本页查看系统规划结论、能力需求与需求—设计对应关系。' }} statusPanel={<StatusSummaryPanel label={viewModel.statusSummary.title} value={viewModel.statusSummary.headline} note={viewModel.statusSummary.detail} pills={viewModel.statusSummary.pills} />} prevAction={{ to: isReviewMode ? '/report' : '/integrator', label: isReviewMode ? '返回交付中心' : '返回集成设计' }} nextAction={isReviewMode ? undefined : { to: '/vendor', label: '进入设备能力声明' }}>
+    <ProjectStageShell stageNumber="02" title="设计响应摘要" projectName={viewModel.projectName} outputLabel="设计响应与依据" statusText={viewModel.statusSummary.headline} guidance={{ summary: '您可在本页查看设计响应结论、能力需求与需求—设计对应关系。' }} statusPanel={<StatusSummaryPanel label={viewModel.statusSummary.title} value={viewModel.statusSummary.headline} note={viewModel.statusSummary.detail} pills={viewModel.statusSummary.pills} />} prevAction={{ to: isReviewMode ? '/report' : '/integrator', label: isReviewMode ? '返回交付摘要' : '返回设计响应' }} nextAction={isReviewMode ? undefined : { to: '/vendor', label: '进入能力声明' }}>
       {({ statusBar }) => (
       <>
       <div className={styles.hero}>
         <div>
-          <span className={styles.kicker}>设计输出</span>
+          <span className={styles.kicker}>设计响应</span>
           <h2>推荐目标 SL-{viewModel.targetSL}</h2>
           <p></p>
         </div>
@@ -89,8 +89,8 @@ export function IntegratorResult() {
         <DataTable className={styles.compareTable}>
           <thead>
             <tr>
-              <th>业主需求</th>
-              <th>集成商对应设计</th>
+              <th>项目输入</th>
+              <th>设计响应</th>
               <th>匹配程度</th>
             </tr>
           </thead>
@@ -114,7 +114,7 @@ export function IntegratorResult() {
         </DataTable>
       </SectionBlock>
       {statusBar}
-      <NotePanel title="结果说明" notes={["如需补充设计依据、通信边界或资产归组信息，请返回集成设计页面完善后再查看本页。"]} />
+      <NotePanel title="设计响应说明" notes={["如需补充设计依据、通信边界或资产归组信息，请返回设计响应页面完善后再查看本页。"]} />
       </>
       )}
     </ProjectStageShell>

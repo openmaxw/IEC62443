@@ -51,7 +51,7 @@ export function createOwnerDeliverables({ assessment, riskProfile }) {
     },
     sections: [
       { id: 'risk-concern-summary', title: '风险关注摘要', items: riskConcernSummary },
-      { id: 'integrator-requirements', title: '对集成商需求摘要', items: integratorRequirements },
+      { id: 'integrator-requirements', title: '设计响应需求摘要', items: integratorRequirements },
       { id: 'procurement-focus', title: '对采购关注点', items: procurementFocus },
       { id: 'acceptance-focus', title: '验收关注点清单', items: acceptanceFocus }
     ],
@@ -75,7 +75,7 @@ export function createIntegratorDeliverables({ projectMeta, riskProfile, plan })
       { id: 'zones', title: 'Zone 划分建议', items: asArray(plan?.zones).map((item) => ({ id: item, title: item, summary: '纳入项目安全设计范围。' })) },
       { id: 'assets', title: '资产归组', items: asArray(plan?.assets).map((item) => ({ id: item.id, title: item.name, summary: `${item.zone || '未分区'} / ${item.role || '未分类'} / ${item.groupingReason || '未填写归组原因'}` })) },
       { id: 'flows', title: '通信矩阵', items: communicationMatrix.complete ? asArray(communicationMatrix.rows).map((item) => ({ id: item.id, title: `${item.sourceName} → ${item.targetName}`, summary: `${item.protocol} / ${item.businessReason}` })) : [{ id: 'missing-flow', title: '通信矩阵未完整生成', summary: '需先补齐源/目的/协议/业务理由。' }] },
-      { id: 'requirements', title: '设备能力需求矩阵', items: asArray(plan?.capabilityRequirements).map((item) => ({ id: `${item.capabilityId}-${item.controlObjective}`, title: getCapabilityDisplay(item.capabilityId).label, summary: `${getCapabilityDisplay(item.capabilityId).frText} / ${getCapabilityDisplay(item.capabilityId).srText} / ${item.controlObjective} / ${asArray(item.sourceFR).join('、')} / SL${item.targetSL ?? '-'}` })) }
+      { id: 'requirements', title: '项目能力需求矩阵', items: asArray(plan?.capabilityRequirements).map((item) => ({ id: `${item.capabilityId}-${item.controlObjective}`, title: getCapabilityDisplay(item.capabilityId).label, summary: `${getCapabilityDisplay(item.capabilityId).frText} / ${getCapabilityDisplay(item.capabilityId).srText} / ${item.controlObjective} / ${asArray(item.sourceFR).join('、')} / SL${item.targetSL ?? '-'}` })) }
     ],
     disclaimer: createDisclaimerPayload(),
     traceability: asArray(riskProfile?.explanations)

@@ -66,8 +66,8 @@ export function getVendorResultViewModel({ projectMeta, capabilities }) {
     },
     statusSummary: {
       title: claims.length ? '当前声明判断' : '当前待补充项',
-      headline: claims.length ? '已具备进入差距分析的设备声明基础' : '尚未形成可用于匹配的有效声明',
-      detail: claims.length ? '建议进入闭环阶段核对项目需求与设备能力满足情况。' : '请先补充产品信息、能力声明、依赖条件与限制说明。',
+      headline: claims.length ? '已具备进入差距分析的能力声明基础' : '尚未形成可用于匹配的有效声明',
+      detail: claims.length ? '建议进入匹配闭环阶段核对项目需求与设备能力满足情况。' : '请先补充产品信息、能力声明、依赖条件与限制说明。',
       pills: [`已声明 ${claims.length}`, `差距 ${groups.partial.length + groups.missing.length + groups.external.length}`]
     }
   };
@@ -77,23 +77,23 @@ export function getDashboardViewModel({ projectMeta, assessment, riskProfile, pl
   const cards = [
     {
       id: 'owner',
-      title: '业主输入',
+      title: '需求澄清',
       ready: progress.stageStatus.owner,
-      detail: assessment ? `已形成风险与业务输入摘要${riskProfile ? '，可交接给集成商' : ''}` : '待完成项目场景、后果、约束输入',
+      detail: assessment ? `已形成风险关注与项目输入摘要${riskProfile ? '，可进入设计响应' : ''}` : '待完成项目场景、业务后果与约束输入',
       route: progress.stageStatus.owner ? '/owner/result' : '/owner',
       substeps: normalizeSubsteps(progress.substeps.owner)
     },
     {
       id: 'integrator',
-      title: '集成设计',
+      title: '设计响应',
       ready: progress.stageStatus.integrator,
-      detail: plan ? `已形成 ${asArray(plan?.zones).length} 个 zone、${asArray(plan?.communicationFlows).length} 条通信流` : '待完成 Zone / Conduit 与通信设计',
+      detail: plan ? `已形成 ${asArray(plan?.zones).length} 个 zone、${asArray(plan?.communicationFlows).length} 条通信流` : '待完成 Zone / Conduit 与通信响应',
       route: progress.stageStatus.integrator ? '/integrator/result' : '/integrator',
       substeps: normalizeSubsteps(progress.substeps.integrator)
     },
     {
       id: 'vendor',
-      title: '设备能力声明',
+      title: '能力声明',
       ready: progress.stageStatus.vendor,
       detail: asArray(capabilities).length ? `已录入 ${asArray(capabilities).length} 份能力声明` : '待录入产品能力、边界与证据',
       route: progress.stageStatus.vendor ? '/vendor/result' : '/vendor',
@@ -101,9 +101,9 @@ export function getDashboardViewModel({ projectMeta, assessment, riskProfile, pl
     },
     {
       id: 'selection',
-      title: '闭环',
+      title: '匹配闭环',
       ready: progress.stageStatus.selection,
-      detail: asArray(matchResults?.results).length ? `已生成 ${asArray(matchResults?.results).length} 条闭环输入结果` : '待完成要求-能力匹配与闭环处理',
+      detail: asArray(matchResults?.results).length ? `已生成 ${asArray(matchResults?.results).length} 条匹配闭环结果` : '待完成要求-能力匹配与差距处置',
       route: '/selection',
       substeps: normalizeSubsteps(progress.substeps.selection)
     }
@@ -111,7 +111,7 @@ export function getDashboardViewModel({ projectMeta, assessment, riskProfile, pl
 
   return {
     projectName: projectMeta?.projectName || '',
-    projectDescription: [projectMeta?.organizationName, projectMeta?.siteName, projectMeta?.industry, projectMeta?.scenarioType].filter(Boolean).join(' / ') || '先从业主步骤 01 填写项目场景与基础信息，再按阶段推进 IEC 62443 协同工作流。',
+    projectDescription: [projectMeta?.organizationName, projectMeta?.siteName, projectMeta?.industry, projectMeta?.scenarioType].filter(Boolean).join(' / ') || '先从需求澄清 01 填写项目场景与基础信息，再按阶段推进 IEC 62443 响应链路。',
     cards,
     missingInputs,
     nextAction,
@@ -119,13 +119,13 @@ export function getDashboardViewModel({ projectMeta, assessment, riskProfile, pl
     statusSummary: {
       title: nextAction ? '当前阻塞' : '当前状态',
       headline: nextAction?.label || '主链关键步骤已基本齐备',
-      detail: nextAction ? '建议优先处理当前推荐动作，再继续推进后续阶段。' : '可以进入交付中心查看成果，或回到具体阶段继续细化。',
+      detail: nextAction ? '建议优先处理当前推荐动作，再继续推进后续阶段。' : '可以进入交付摘要查看成果，或回到具体阶段继续细化。',
       pills: [`缺失输入 ${missingInputs.length}`, `阶段完成 ${progress.completed}/${progress.total}`]
     },
     overviewStats: [
       { label: '已完成阶段', value: `${progress.completed} / ${progress.total}` },
       { label: '待补齐输入', value: missingInputs.length },
-      { label: '当前推荐动作', value: nextAction?.label || '查看交付中心' }
+      { label: '当前推荐动作', value: nextAction?.label || '查看交付摘要' }
     ]
   };
 }

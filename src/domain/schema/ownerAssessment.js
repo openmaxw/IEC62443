@@ -3,8 +3,8 @@ const REMOTE_ACCESS_LEVELS = new Set(['none', 'limited', 'extensive']);
 const THIRD_PARTY_ACCESS_LEVELS = new Set(['none', 'occasional', 'regular']);
 const INTEGRATION_LEVELS = new Set(['low', 'moderate', 'high']);
 const MATURITY_LEVELS = new Set(['low', 'medium', 'high']);
-const REMOTE_OWNERSHIP = new Set(['owner', 'vendor', 'shared']);
-const ACCEPTANCE_PREFERENCE = new Set(['security-first', 'availability-first', 'balanced']);
+const REMOTE_OWNERSHIP = new Set(['owner', 'integrator', 'vendor', 'shared']);
+const ACCEPTANCE_PREFERENCE = new Set(['function-first', 'security-first', 'operations-first']);
 
 function asText(value) {
   return typeof value === 'string' ? value : '';

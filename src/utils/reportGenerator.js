@@ -56,18 +56,18 @@ export function buildReportMarkdown(report = {}) {
 - 行业场景：${safeText(projectMeta.industry)}
 - 项目目标：${safeText(projectMeta.projectObjective)}
 
-## 2. 业主输入与风险关注
+## 2. 项目输入与风险关注
 
 - 目标等级候选：${safeText((riskProfile.targetLevelCandidates || []).map((item) => `SL-${item.level}`))}
 - FR 重点：${safeText((riskProfile.frFocus || []).map((item) => item.code))}
 
-### 业主要求
+### 项目要求
 ${bulletList(riskProfile.ownerRequirements, '未形成', ownerRequirementText)}
 
 ### 验收关注
 ${bulletList(riskProfile.acceptanceFocus)}
 
-## 3. 集成设计响应
+## 3. 设计响应
 
 - 目标 SL：${plan.targetSL ? `SL-${plan.targetSL}` : '未形成'}
 - Zone：${safeText(plan.zones)}
@@ -77,7 +77,7 @@ ${bulletList(riskProfile.acceptanceFocus)}
 ### 能力需求
 ${table(plan.capabilityRequirements || [], ['能力要求', '控制目标', '目标 SL', '实现提示'], (item) => [getCapabilityDisplay(item.capabilityId).label, item.controlObjective, item.targetSL ? `SL-${item.targetSL}` : '未填写', item.implementationHint])}
 
-## 4. 设备能力声明
+## 4. 能力声明
 
 - 产品名称：${safeText(latestCapability.productMeta?.productName)}
 - 产品类型：${safeText(latestCapability.productMeta?.productType)}
@@ -85,7 +85,7 @@ ${table(plan.capabilityRequirements || [], ['能力要求', '控制目标', '目
 
 ${table(latestCapability.capabilityClaims || [], ['能力要求', '满足度', '证据类型', '实现方式'], (item) => [getCapabilityDisplay(item.capabilityId).label, claimStatusLabel(item.satisfaction), item.evidenceType, implementationTypeLabel(item.implementationType)])}
 
-## 5. 差距闭环
+## 5. 匹配差距与闭环
 
 ${table(gapClosureItems, ['能力要求', '责任方', '补偿措施', '验收影响', '残余风险'], (item) => [getCapabilityDisplay(item.capabilityId).label, item.owner, item.mitigation, item.acceptanceImpact, item.residualRisk])}
 

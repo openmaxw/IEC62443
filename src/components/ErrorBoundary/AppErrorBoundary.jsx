@@ -28,9 +28,9 @@ export class AppErrorBoundary extends Component {
           <div className={styles.card}>
             <span className={styles.eyebrow}>系统保护已触发</span>
             <h1>当前页面发生错误，已阻止整页白屏。</h1>
-            <p>你可以返回工作台、刷新页面，或先初始化项目后重试。如果问题持续出现，请保留当前操作路径用于排查。</p>
+            <p>你可以返回项目总览、刷新页面，或先初始化项目后重试。如果问题持续出现，请保留当前操作路径用于排查。</p>
             <div className={styles.actions}>
-              <Link to="/dashboard"><Button variant="primary" size="medium">返回工作台</Button></Link>
+              <Link to="/dashboard"><Button variant="primary" size="medium">返回项目总览</Button></Link>
               <Button variant="secondary" size="medium" onClick={this.handleReload}>刷新页面</Button>
             </div>
             <div className={styles.meta}>

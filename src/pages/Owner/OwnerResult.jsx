@@ -15,11 +15,11 @@ export function OwnerResult() {
   const viewModel = getOwnerResultViewModel(ownerPath);
 
   if (!viewModel.hasAssessment) {
-    return <ProjectStageShell stageNumber="01" title="业主交接物" projectName={viewModel.projectName} outputLabel="待生成" ><div className={styles.emptyState}><strong>还没有业主输入</strong><Link to="/owner"><Button variant="primary" size="medium">前往填写</Button></Link></div></ProjectStageShell>;
+    return <ProjectStageShell stageNumber="01" title="项目输入摘要" projectName={viewModel.projectName} outputLabel="待生成" ><div className={styles.emptyState}><strong>还没有需求澄清输入</strong><Link to="/owner"><Button variant="primary" size="medium">前往需求澄清</Button></Link></div></ProjectStageShell>;
   }
 
   return (
-    <ProjectStageShell stageNumber="01" title="业主交接物" projectName={viewModel.projectName} outputLabel="设计输入" statusText={viewModel.statusSummary.headline} guidance={{ summary: '您可在本页查看业主侧输入整理后的设计依据、重点要求与验收关注事项。' }} statusPanel={<StatusSummaryPanel label={viewModel.statusSummary.title} value={viewModel.statusSummary.headline} note={viewModel.statusSummary.detail} pills={viewModel.statusSummary.pills} />}>
+    <ProjectStageShell stageNumber="01" title="项目输入摘要" projectName={viewModel.projectName} outputLabel="标准化项目输入" statusText={viewModel.statusSummary.headline} guidance={{ summary: '您可在本页查看业主侧输入澄清后的项目边界、重点要求与验收关注事项。' }} statusPanel={<StatusSummaryPanel label={viewModel.statusSummary.title} value={viewModel.statusSummary.headline} note={viewModel.statusSummary.detail} pills={viewModel.statusSummary.pills} />}>
       {({ statusBar }) => (
       <>
       <article className={styles.document}>
@@ -32,8 +32,8 @@ export function OwnerResult() {
       {statusBar}
       <NotePanel title="交接说明" notes={["如需补充项目背景、业务后果或约束条件，请返回需求填写页面更新后再查看本页。"]} />
       <div className={styles.actions}>
-        <Link to={isReviewMode ? '/report' : '/owner'}><Button variant="ghost" size="medium">{isReviewMode ? '返回交付中心' : '返回修改业主输入'}</Button></Link>
-        {isReviewMode ? null : <Link to="/integrator"><Button variant="primary" size="medium">进入集成设计</Button></Link>}
+        <Link to={isReviewMode ? '/report' : '/owner'}><Button variant="ghost" size="medium">{isReviewMode ? '返回交付摘要' : '返回需求澄清'}</Button></Link>
+        {isReviewMode ? null : <Link to="/integrator"><Button variant="primary" size="medium">进入设计响应</Button></Link>}
       </div>
       </>
       )}

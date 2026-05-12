@@ -11,13 +11,13 @@ import styles from './OwnerInterview.module.css';
 const IMPACT_LEVEL_SCORE = { low: 1, medium: 2, high: 3 };
 
 const STEPS = [
-  { id: 'industry', title: '项目场景', guidance: '填写项目名称、行业、站点和项目目标，形成后续风险翻译的基础上下文。' },
+  { id: 'industry', title: '项目场景', guidance: '填写项目名称、行业、站点和项目目标，形成后续风险转译的基础上下文。' },
   { id: 'impacts', title: '业务后果', guidance: '判断安全、环境、生产、质量、财务和合规后果，帮助系统识别风险关注强度。' },
   { id: 'exposure', title: '暴露面', guidance: '说明远程运维和第三方接入情况，明确外部访问路径是否需要重点控制。' },
   { id: 'maturity', title: '现状基础', guidance: '评估当前网络隔离、身份管理、日志审计和补丁维护成熟度，识别需要补强的基础能力。' },
   { id: 'constraints', title: '约束条件', guidance: '补充维护窗口、改造窗口、远程责任和验收偏好，避免后续设计脱离现场约束。' },
-  { id: 'assets', title: '关键对象', guidance: '选择关键资产并补充系统、连接、边界和连续性要求，形成可交接设计输入。' },
-  { id: 'summary', title: '需求汇总', guidance: '复核业主输入摘要，确认无误后生成风险翻译并交接给集成设计阶段。' }
+  { id: 'assets', title: '关键对象', guidance: '选择关键资产并补充系统、连接、边界和连续性要求，形成可交接的标准化项目输入。' },
+  { id: 'summary', title: '需求汇总', guidance: '复核需求澄清摘要，确认无误后生成风险转译并进入设计响应阶段。' }
 ];
 
 function isSameObject(a, b) {
@@ -143,7 +143,7 @@ export function OwnerInterview() {
     safetyImpact: '', environmentalImpact: '', productionImpact: '', qualityImpact: '', financialImpact: '', complianceImpact: '', brandImpact: '',
     remoteAccessNeed: '', thirdPartyAccess: '',
     networkSegmentationMaturity: '', identityMaturity: '', loggingMaturity: '', patchMaturity: '',
-    maintenanceWindow: '', upgradeWindow: '', remoteOperationsOwnership: 'shared', acceptancePreference: 'security-first', criticalAssets: [],
+    maintenanceWindow: '', upgradeWindow: '', remoteOperationsOwnership: '', acceptancePreference: '', criticalAssets: [],
     keySystems: '', externalConnections: '', maintenanceAccessPath: '', initialBoundaryNotes: '', continuityRequirements: '', complianceNotes: ''
   });
 
@@ -155,9 +155,9 @@ export function OwnerInterview() {
 
 
   const step = STEPS[currentStep];
-  const completedFields = [
+  const keyCompletionFields = [
     formData.projectName || state.projectMeta?.projectName,
-    formData.industry,
+    state.projectMeta?.industry || formData.industry,
     formData.safetyImpact,
     formData.environmentalImpact,
     formData.productionImpact,
@@ -169,8 +169,9 @@ export function OwnerInterview() {
     formData.patchMaturity,
     formData.keySystems,
     formData.externalConnections
-  ].filter(Boolean).length;
-  const totalFields = 13;
+  ];
+  const completedFields = keyCompletionFields.filter(Boolean).length;
+  const totalFields = keyCompletionFields.length;
   const updateField = (field, value) => setFormData((prev) => ({ ...prev, [field]: value }));
   const toggleAsset = (item) => setFormData((prev) => ({ ...prev, criticalAssets: prev.criticalAssets.includes(item) ? prev.criticalAssets.filter((entry) => entry !== item) : [...prev.criticalAssets, item] }));
 
@@ -303,11 +304,11 @@ export function OwnerInterview() {
   return (
     <ProjectStageShell
       stageNumber="01"
-      title="需求"
+      title="需求澄清"
       projectName={state.projectMeta?.projectName || formData.projectName}
       outputLabel={`步骤 ${currentStep + 1}/${STEPS.length} · ${step.title}`}
-      statusText={isSummaryStep ? '已形成业主需求汇总，可生成业主交接物' : '正在完善业主输入与风险前置信息'}
-      statusPanel={<StatusSummaryPanel label="输入完成度" value={`${completedFields} / ${totalFields}`} note="请根据项目实际情况补充业务场景、风险关注与关键约束信息，这些内容将作为后续设计工作的依据。" pills={[`步骤 ${currentStep + 1}/${STEPS.length}`, isSummaryStep ? '可生成业主交接物' : '待继续完善']} />}
+      statusText={isSummaryStep ? '已形成标准化项目输入，可生成需求澄清摘要' : '正在澄清项目输入与风险前置信息'}
+      statusPanel={<StatusSummaryPanel label="关键输入完成度" value={`${completedFields} / ${totalFields}`} note="该进度仅统计形成风险转译和设计响应所需的关键输入；窗口、偏好和补充说明会进入摘要，但不计入关键完成度。" pills={[`步骤 ${currentStep + 1}/${STEPS.length}`, isSummaryStep ? '可生成需求澄清摘要' : '待继续完善']} />}
       guidance={{ summary: step.guidance }}
     >
       {({ statusBar }) => (
@@ -319,8 +320,8 @@ export function OwnerInterview() {
             <NotePanel title="填写说明" notes={["请优先填写会影响后续系统设计和验收安排的关键信息。", "如部分内容暂时无法确认，可先记录为待确认，并在进入后续阶段前尽快补充。"]} />
           </section>
           <WorkflowNavBar
-            leftLabel={currentStep === 0 ? '返回工作台' : '上一步'}
-            rightLabel={isSummaryStep ? '生成业主交接物' : '下一步'}
+            leftLabel={currentStep === 0 ? '返回项目总览' : '上一步'}
+            rightLabel={isSummaryStep ? '生成需求澄清摘要' : '下一步'}
             onLeftClick={currentStep === 0 ? () => navigate('/dashboard') : () => setCurrentStep((prev) => Math.max(prev - 1, 0))}
             onRightClick={isSummaryStep ? () => handleFinalizeSummary('/owner/result') : () => setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1))}
           />

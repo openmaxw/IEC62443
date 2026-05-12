@@ -126,8 +126,8 @@ export function getOwnerResultViewModel({ projectMeta, assessment, riskProfile }
     },
     statusSummary: {
       title: ownerRequirements.length ? '当前交接判断' : '当前待补充项',
-      headline: ownerRequirements.length ? '已具备交接给集成设计的基础输入' : '仍需补充可转化为设计的明确输入',
-      detail: ownerRequirements.length ? '建议进入集成设计阶段，继续把业务输入转化为分区、通信与能力需求。' : '请先补齐关键系统、外部连接、连续性要求与验收关注点。',
+      headline: ownerRequirements.length ? '已具备进入设计响应的基础输入' : '仍需补充可转化为设计的明确输入',
+      detail: ownerRequirements.length ? '建议进入设计响应阶段，继续把项目输入转化为分区、通信与能力需求。' : '请先补齐关键系统、外部连接、连续性要求与验收关注点。',
       pills: [`设计输入 ${ownerRequirements.length}`, `验收关注 ${acceptanceFocus.length}`]
     }
   };
@@ -158,8 +158,8 @@ export function getIntegratorResultViewModel({ projectMeta, assessment, plan }) 
     })),
     statusSummary: {
       title: communicationMatrix.complete ? '当前设计判断' : '当前待补充项',
-      headline: communicationMatrix.complete ? '设计结果已可进入设备能力核对' : '通信矩阵仍未完整，暂不建议直接进入后续闭环',
-      detail: communicationMatrix.complete ? '建议继续核对设备声明与项目能力需求之间的满足情况。' : '请优先补齐源区、目标区、协议、业务理由与边界控制建议。',
+      headline: communicationMatrix.complete ? '设计响应已可进入设备能力核对' : '通信矩阵仍未完整，暂不建议直接进入匹配闭环',
+      detail: communicationMatrix.complete ? '建议继续核对能力声明与项目能力需求之间的满足情况。' : '请优先补齐源区、目标区、协议、业务理由与边界控制建议。',
       pills: [`Zone ${plan?.zones?.length || 0}`, `能力需求 ${plan?.capabilityRequirements?.length || 0}`]
     }
   };

@@ -2,17 +2,17 @@ import { Link, useLocation } from 'react-router-dom';
 import styles from './Header.module.css';
 
 const NAV_ITEMS = [
-  { to: '/dashboard', label: '工作台', hint: '项目状态' },
-  { to: '/owner', label: '业主', hint: '需求输入' },
-  { to: '/integrator', label: '集成', hint: '设计工作台' },
-  { to: '/vendor', label: '设备', hint: '能力声明' },
-  { to: '/selection', label: '闭环', hint: '匹配与处置' },
-  { to: '/report', label: '交付', hint: '成果汇总' }
+  { to: '/dashboard', label: '项目总览', hint: '状态与流程' },
+  { to: '/owner', label: '需求澄清', hint: '项目输入' },
+  { to: '/integrator', label: '设计响应', hint: '方案依据' },
+  { to: '/vendor', label: '能力声明', hint: '产品响应' },
+  { to: '/selection', label: '匹配闭环', hint: '差距处置' },
+  { to: '/report', label: '交付摘要', hint: '成果汇总' }
 ];
 
 const SUPPORT_ITEMS = [
   { to: '/translation-center', label: '追溯链' },
-  { to: '/learning', label: '学习' }
+  { to: '/learning', label: '使用手册' }
 ];
 
 export function Header() {
@@ -29,8 +29,8 @@ export function Header() {
             </svg>
           </div>
           <div className={styles.brandText}>
-            <strong>IEC 62443 协同工作台</strong>
-            <span>让输入真正走到交付</span>
+            <strong>IEC 62443 需求澄清与响应工作台</strong>
+            <span>将模糊安全诉求转化为标准化项目输入与清晰响应路径</span>
           </div>
         </Link>
 

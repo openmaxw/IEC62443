@@ -1,4 +1,4 @@
-import { NotePanel, StatusSummaryPanel } from '../../components/Common';
+import { DataTable, NotePanel, StatusBadge, StatusSummaryPanel } from '../../components/Common';
 import { ProjectStageShell } from '../../components/ProjectFlow';
 import { useOwnerPath, useIntegratorPath, useVendorPath } from '../../hooks/useProject';
 import { getTranslationCenterViewModel } from '../../domain/viewModels/workspaceTranslationViewModels';
@@ -7,20 +7,56 @@ import styles from './TranslationCenter.module.css';
 export function TranslationCenter() {
   const { projectMeta, assessment, riskProfile } = useOwnerPath();
   const { plan } = useIntegratorPath();
-  const { capabilities, matchResults } = useVendorPath();
-  const viewModel = getTranslationCenterViewModel({ projectMeta, assessment, riskProfile, plan, capabilities, matchResults });
+  const { capabilities, matchResults, gapClosureItems } = useVendorPath();
+  const viewModel = getTranslationCenterViewModel({ projectMeta, assessment, riskProfile, plan, capabilities, matchResults, gapClosureItems });
 
   return (
-    <ProjectStageShell stageNumber="06" title="翻译中心" projectName={viewModel.projectName} outputLabel="业务输入 → 风险 → 设计 → 能力 / 差距" statusText={viewModel.summary.gapCount ? '当前仍有差距待解释与闭环' : '主链追溯已基本连通'} guidance={{ summary: '您可在本页查看业务输入、风险关注、设计要求与能力差距之间的对应关系。' }} statusPanel={<StatusSummaryPanel label={viewModel.summary.gapCount ? '当前追溯重点' : '当前追溯状态'} value={viewModel.summary.gapCount ? `仍有 ${viewModel.summary.gapCount} 项差距待闭环` : '当前追溯链已具备对齐基础'} note={viewModel.summary.gapCount ? '建议重点核对差距项为何产生、由谁负责、如何闭环。' : '可用于跨角色复核业务输入与设计、能力声明之间的映射关系。'} pills={[`设计需求 ${viewModel.summary.requirementCount}`, `差距项 ${viewModel.summary.gapCount}`]} />}>
+    <ProjectStageShell stageNumber="06" title="项目追溯链" projectName={viewModel.projectName} outputLabel="项目输入 → 风险关注 → 设计响应 → 能力 / 差距" statusText={viewModel.summary.pendingGapCount ? '当前仍有差距待解释与处置' : '项目响应链已基本连通'} guidance={{ summary: '您可在本页查看项目输入、风险关注、设计响应与能力差距之间的对应关系。' }} statusPanel={<StatusSummaryPanel label={viewModel.summary.pendingGapCount ? '当前追溯重点' : '当前追溯状态'} value={viewModel.summary.pendingGapCount ? `仍有 ${viewModel.summary.pendingGapCount} 项差距待处置` : '差距项已完成处置记录'} note={viewModel.summary.pendingGapCount ? '建议重点核对差距项为何产生、由谁负责、如何处置。' : '可用于跨角色复核项目输入、设计响应与能力声明之间的映射关系。'} pills={[`矩阵行 ${viewModel.summary.matrixCount}`, `设计需求 ${viewModel.summary.requirementCount}`, `待处置 ${viewModel.summary.pendingGapCount}`, `差距项 ${viewModel.summary.gapCount}`]} />}>
       {({ statusBar }) => (
       <div className={styles.page}>
-        <div className={styles.headerRow}><strong>{viewModel.projectName || '翻译中心'}</strong><span>{viewModel.projectDescription}</span></div>
-        <section className={styles.traceSection}><h3>一、业主业务输入</h3><div className={styles.cardGrid}><div className={styles.card}><strong>关键资产</strong><p>{viewModel.owner.criticalAssets}</p></div><div className={styles.card}><strong>关键系统/角色</strong><p>{viewModel.owner.keySystems}</p></div><div className={styles.card}><strong>外部连接</strong><p>{viewModel.owner.externalConnections}</p></div><div className={styles.card}><strong>连续性要求</strong><p>{viewModel.owner.continuityRequirements}</p></div></div></section>
-        <section className={styles.traceSection}><h3>二、风险与要求翻译</h3><div className={styles.cardGrid}><div className={styles.card}><strong>风险关注</strong><p>{viewModel.risk.concerns}</p></div><div className={styles.card}><strong>FR 重点</strong><p>{viewModel.risk.frFocus}</p></div><div className={styles.card}><strong>目标等级候选</strong><p>{viewModel.risk.targetLevels}</p></div><div className={styles.card}><strong>业主要求</strong><p>{viewModel.risk.ownerRequirements}</p></div></div></section>
-        <section className={styles.traceSection}><h3>三、集成设计响应</h3><div className={styles.cardGrid}><div className={styles.card}><strong>Zone / Conduit</strong><p>{viewModel.design.zoneConduitSummary}</p></div><div className={styles.card}><strong>通信设计</strong><p>{viewModel.design.communicationSummary}</p></div><div className={styles.card}><strong>设计依据</strong><p>{viewModel.design.designBasis}</p></div><div className={styles.card}><strong>组件能力需求</strong><p>{viewModel.design.capabilityLabels}</p></div></div></section>
-        <section className={styles.traceSection}><h3>四、能力与差距状态</h3><div className={styles.cardGrid}><div className={styles.card}><strong>设备产品</strong><p>{viewModel.capability.productName}</p></div><div className={styles.card}><strong>声明项数</strong><p>{viewModel.capability.claimCount}</p></div><div className={styles.card}><strong>差距项数</strong><p>{viewModel.capability.gapCount}</p></div><div className={styles.card}><strong>待闭环能力项</strong><p>{viewModel.capability.gapLabels}</p></div></div></section>
+        <div className={styles.headerRow}><strong>{viewModel.projectName || '项目追溯链'}</strong><span>{viewModel.projectDescription}</span></div>
+
+        <section className={styles.matrixSection}>
+          <div className={styles.sectionHead}>
+            <div>
+              <h3>追溯矩阵</h3>
+              <p>每一行对应一项设计能力需求，用于查看它如何从项目输入和风险关注一路映射到设计响应、能力声明和差距状态。</p>
+            </div>
+            <span>{viewModel.matrixRows.length ? `${viewModel.matrixRows.length} 条映射` : '暂无映射'}</span>
+          </div>
+          <DataTable className={styles.traceTable}>
+            <thead>
+              <tr>
+                <th>项目输入</th>
+                <th>风险关注</th>
+                <th>设计响应</th>
+                <th>能力需求</th>
+                <th>能力匹配 / 差距</th>
+              </tr>
+            </thead>
+            <tbody>
+              {viewModel.matrixRows.length ? viewModel.matrixRows.map((row) => (
+                <tr key={row.id}>
+                  <td>{row.projectInput}</td>
+                  <td>{row.riskConcern}</td>
+                  <td><strong>{row.designResponse}</strong><span>{row.implementationHint}</span></td>
+                  <td><strong>{row.capabilityNeed}</strong><span>{row.standardRef} · {row.targetSL}</span></td>
+                  <td><StatusBadge tone={row.matchTone}>{row.matchStatus}</StatusBadge><span>证据：{row.evidenceType}</span><span>{row.gapNote}</span></td>
+                </tr>
+              )) : <tr><td colSpan="5" className={styles.empty}>暂无可展示的追溯矩阵，请先完成需求澄清和设计响应。</td></tr>}
+            </tbody>
+          </DataTable>
+        </section>
+
+        <section className={styles.overviewGrid}>
+          <article className={styles.card}><strong>标准化项目输入</strong><p>关键资产：{viewModel.owner.criticalAssets}</p><p>关键系统：{viewModel.owner.keySystems}</p><p>外部连接：{viewModel.owner.externalConnections}</p></article>
+          <article className={styles.card}><strong>风险关注与要求转译</strong><p>风险关注：{viewModel.risk.concerns}</p><p>FR 重点：{viewModel.risk.frFocus}</p><p>目标等级：{viewModel.risk.targetLevels}</p></article>
+          <article className={styles.card}><strong>设计响应概览</strong><p>{viewModel.design.zoneConduitSummary}</p><p>{viewModel.design.communicationSummary}</p><p>{viewModel.design.designBasis}</p></article>
+          <article className={styles.card}><strong>能力与差距状态</strong><p>产品：{viewModel.capability.productName}</p><p>声明项数：{viewModel.capability.claimCount}</p><p>待处置：{viewModel.capability.gapLabels}</p></article>
+        </section>
+
         {statusBar}
-        <NotePanel title="追溯说明" notes={["如需查看详细填写内容或补充信息，请返回对应阶段页面处理。"]} />
+        <NotePanel title="追溯说明" notes={["追溯矩阵用于解释项目输入、风险关注、设计响应、能力需求和差距状态之间的对应关系。", "如需修改某一列内容，请返回对应阶段页面补充输入、设计响应或能力声明。"]} />
       </div>
       )}
     </ProjectStageShell>

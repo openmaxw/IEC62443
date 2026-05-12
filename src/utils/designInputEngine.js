@@ -3,7 +3,7 @@ const DEFAULT_STATUS = 'new';
 const SOURCE_LABELS = {
   owner: '业主陈述',
   vendor: '设备商声明',
-  integrator: '集成商分析',
+  integrator: '设计响应分析',
   system: '系统生成'
 };
 
@@ -194,7 +194,7 @@ export function buildStructuredWorkspace({ projectMeta, ownerAssessment, riskPro
     });
   });
 
-  const integratorEvidence = createEvidence('integrator-analysis', projectMeta?.projectName || 'design-input', 'integrator', '来自集成商设计归并');
+  const integratorEvidence = createEvidence('integrator-analysis', projectMeta?.projectName || 'design-input', 'integrator', '来自设计响应归并');
   pushUniqueById(evidences, integratorEvidence);
 
   (integratorPlan?.communicationFlows || []).forEach((flow, index) => {
@@ -276,7 +276,7 @@ export function buildStructuredWorkspace({ projectMeta, ownerAssessment, riskPro
         title: `待确认区域：${zone.name}`,
         status: zone.status === 'assumed' ? 'pending' : 'new',
         role: zone.sourceRole,
-        reason: missingEvidence ? '缺少来源信息' : '来自集成商草案，待他方确认',
+        reason: missingEvidence ? '缺少来源信息' : '来自设计响应草案，待他方确认',
         focusTags: zone.focusTags || []
       });
     }

@@ -6,6 +6,7 @@ import { useOwnerPath, useProject } from '../../hooks/useProject';
 import { getIntegratorWorkspaceViewModel } from '../../domain/viewModels/workspaceTranslationViewModels';
 import { ZONE_TEMPLATES, CONDUIT_TEMPLATES } from '../../data/zones';
 import { getCapabilityDisplay } from '../../data/capabilities';
+import { FR_CATEGORIES } from '../../data/rules';
 import { buildCapabilityRequirementMatrix, buildCommunicationMatrix, buildSystemRules } from '../../utils/planningEngine';
 import styles from './IntegratorWorkspace.module.css';
 
@@ -19,7 +20,7 @@ const STEPS = [
   { id: 'zones', title: '分区与通道', guidance: '选择适用的 Zone 与 Conduit 类型，建立后续资产归组和跨区通信的结构基础。' },
   { id: 'assets', title: '资产归组', guidance: '把关键资产归入对应 Zone，并说明归组依据，便于后续追溯设计边界。' },
   { id: 'flows', title: '跨区通信', guidance: '补充源区、目标区、协议、业务理由和边界控制，形成可核对通信矩阵。' },
-  { id: 'review', title: '设计校核', guidance: '复核通信完整性、能力需求和系统规则，确认后生成集成设计结果。' }
+  { id: 'review', title: '设计校核', guidance: '复核通信完整性、能力需求和系统规则，确认后生成设计响应摘要。' }
 ];
 
 function isSameObject(a, b) {
@@ -42,7 +43,13 @@ function summarizeTraceability(item) {
   const parts = [];
   if (conditions.length) parts.push(conditions.slice(0, 2).join('、'));
   if (concerns.length) parts.push(concerns.slice(0, 2).join('、'));
-  return parts.length ? parts.join('；') : '来源于风险翻译结果与当前设计输入';
+  return parts.length ? parts.join('；') : '来源于风险转译结果与当前设计响应输入';
+}
+
+function formatFrFocus(codes = []) {
+  return [...new Set(codes)]
+    .sort((left, right) => Number(left.replace('FR', '')) - Number(right.replace('FR', '')))
+    .map((code) => ({ code, ...(FR_CATEGORIES[code] || { name: '未定义功能要求', description: '暂无说明' }) }));
 }
 
 function FieldHint({ text }) {
@@ -85,7 +92,7 @@ export function IntegratorWorkspace() {
   }, [plan, state.integratorDesign?.draft, actions]);
 
   if (!workspaceViewModel.hasPrerequisites) {
-    return <ProjectStageShell stageNumber="02" title="设计" projectName={state.projectMeta?.projectName} outputLabel="系统规划结果" prevAction={{ to: '/owner', label: '上一步' }} ><div className={styles.empty}>先完成需求阶段。</div></ProjectStageShell>;
+    return <ProjectStageShell stageNumber="02" title="设计响应" projectName={state.projectMeta?.projectName} outputLabel="设计响应结果" prevAction={{ to: '/owner', label: '上一步' }} ><div className={styles.empty}>请先完成需求澄清阶段。</div></ProjectStageShell>;
   }
 
   const step = STEPS[currentStep];
@@ -129,7 +136,7 @@ export function IntegratorWorkspace() {
 
   switch (step.id) {
     case 'basis':
-      content = <div className={styles.workspace}><div className={styles.block}><div className={styles.blockTitle}>业主输入摘要</div><div className={styles.contextGrid}><div><span>关键系统/角色</span><strong>{assessment.keySystems || '未填写'}</strong></div><div><span>外部连接方式</span><strong>{assessment.externalConnections || '未填写'}</strong></div><div><span>维护接入方式</span><strong>{assessment.maintenanceAccessPath || '未填写'}</strong></div><div><span>初始网络边界</span><strong>{assessment.initialBoundaryNotes || '未填写'}</strong></div><div><span>工艺连续性要求</span><strong>{assessment.continuityRequirements || '未填写'}</strong></div><div><span>合规补充说明</span><strong>{assessment.complianceNotes || '未填写'}</strong></div><div><span>项目类型</span><strong>{getScenarioTypeLabel(projectMeta?.scenarioType)}</strong></div><div><span>目标 SL</span><strong>SL-{plan.targetSL}</strong></div></div></div><div className={styles.block}><div className={styles.blockTitle}>设计原则说明</div><FieldHint text="用于说明本轮分区、通信与边界设计的总体原则，帮助后续结果页解释为什么这样设计。" /><textarea className={styles.fullText} value={plan.designBasis || ''} onChange={(event) => setPlan((prev) => ({ ...prev, designBasis: event.target.value }))} placeholder="示例：按照关键控制区与远程接入区隔离的原则设计，优先控制远程维护边界与跨区通信。" /></div><div className={styles.grid}><div className={styles.block}><div className={styles.blockTitle}>目标安全等级</div><select value={plan.targetSL} onChange={(event) => setPlan((prev) => ({ ...prev, targetSL: Number(event.target.value) }))}>{[1, 2, 3, 4].map((level) => <option key={level} value={level}>SL-{level}</option>)}</select></div><div className={styles.block}><div className={styles.blockTitle}>功能需求关注点</div><div className={styles.noteList}>{(plan.requiredFR || []).length ? plan.requiredFR.map((code) => <div key={code} className={styles.note}><strong>{code}</strong></div>) : <div className={styles.emptyCell}>暂无 FR 关注项</div>}</div></div></div></div>;
+      content = <div className={styles.workspace}><div className={styles.block}><div className={styles.blockTitle}>业主输入摘要</div><div className={styles.contextGrid}><div><span>关键系统/角色</span><strong>{assessment.keySystems || '未填写'}</strong></div><div><span>外部连接方式</span><strong>{assessment.externalConnections || '未填写'}</strong></div><div><span>维护接入方式</span><strong>{assessment.maintenanceAccessPath || '未填写'}</strong></div><div><span>初始网络边界</span><strong>{assessment.initialBoundaryNotes || '未填写'}</strong></div><div><span>工艺连续性要求</span><strong>{assessment.continuityRequirements || '未填写'}</strong></div><div><span>合规补充说明</span><strong>{assessment.complianceNotes || '未填写'}</strong></div><div><span>项目类型</span><strong>{getScenarioTypeLabel(projectMeta?.scenarioType)}</strong></div><div><span>目标 SL</span><strong>SL-{plan.targetSL}</strong></div></div></div><div className={styles.block}><div className={styles.blockTitle}>设计原则说明</div><FieldHint text="用于说明本轮分区、通信与边界设计的总体原则，帮助后续结果页解释为什么这样设计。" /><textarea className={styles.fullText} value={plan.designBasis || ''} onChange={(event) => setPlan((prev) => ({ ...prev, designBasis: event.target.value }))} placeholder="示例：按照关键控制区与远程接入区隔离的原则设计，优先控制远程维护边界与跨区通信。" /></div><div className={styles.grid}><div className={styles.block}><div className={styles.blockTitle}>目标安全等级</div><select value={plan.targetSL} onChange={(event) => setPlan((prev) => ({ ...prev, targetSL: Number(event.target.value) }))}>{[1, 2, 3, 4].map((level) => <option key={level} value={level}>SL-{level}</option>)}</select></div><div className={styles.block}><div className={styles.blockTitle}>功能需求关注点</div><div className={styles.blockHint}>系统根据需求澄清结果推导出的 IEC 62443 FR 关注方向，按 FR1-FR7 顺序展示。</div><div className={styles.noteList}>{(plan.requiredFR || []).length ? formatFrFocus(plan.requiredFR).map((item) => <div key={item.code} className={styles.note}><strong>{item.code} · {item.name}</strong><span>{item.description}</span></div>) : <div className={styles.emptyCell}>暂无 FR 关注项</div>}</div></div></div></div>;
       break;
     case 'zones':
       content = <div className={styles.grid}><div className={styles.block}><div className={styles.blockTitle}>Zone 草案</div><div className={styles.optionGrid}>{ZONE_TEMPLATES.map((zone) => <button key={zone.id} type="button" className={`${styles.optionCell} ${plan.zones.includes(zone.id) ? styles.optionCellActive : ''}`} onClick={() => toggleItem('zones', zone.id)}><strong>{zone.name}</strong><span>{zone.description}</span></button>)}</div></div><div className={styles.block}><div className={styles.blockTitle}>Conduit 类型</div><div className={styles.optionGrid}>{CONDUIT_TEMPLATES.map((conduit) => <button key={conduit.id} type="button" className={`${styles.optionCell} ${plan.conduits.includes(conduit.id) ? styles.optionCellActive : ''}`} onClick={() => toggleItem('conduits', conduit.id)}><strong>{conduit.name}</strong><span>{conduit.description}</span></button>)}</div></div></div>;
@@ -147,11 +154,11 @@ export function IntegratorWorkspace() {
   return (
     <ProjectStageShell
       stageNumber="02"
-      title="设计"
+      title="设计响应"
       projectName={state.projectMeta?.projectName}
       outputLabel={`步骤 ${currentStep + 1}/${STEPS.length} · ${step.title}`}
       statusText={isReviewStep ? '设计输入已形成规划结果候选' : '正在完善系统规划输入'}
-      statusPanel={<StatusSummaryPanel label="设计覆盖度" value={`${completionCount} / 6`} note="当前设计结果会影响能力需求、后续设备声明和差距闭环，不应只停留在文本描述层。" pills={[`步骤 ${currentStep + 1}/${STEPS.length}`, isReviewStep ? '可生成设计结果' : '待继续补齐']} />}
+      statusPanel={<StatusSummaryPanel label="设计覆盖度" value={`${completionCount} / 6`} note="当前设计响应会影响能力需求、后续能力声明和差距处置，不应只停留在文本描述层。" pills={[`步骤 ${currentStep + 1}/${STEPS.length}`, isReviewStep ? '可生成设计响应摘要' : '待继续补齐']} />}
       guidance={{ summary: step.guidance }}
     >
       {({ statusBar }) => (
@@ -159,10 +166,10 @@ export function IntegratorWorkspace() {
         <StepTabs items={STEPS} currentIndex={currentStep} onChange={setCurrentStep} />
         <div className={styles.panel}>{content}</div>
         {statusBar}
-        <NotePanel title="设计说明" notes={["请优先补充分区、通道、通信与边界控制等关键信息。", "如部分内容暂未确认，可先记录为待确认，并在输出设计结果前完成核对。"]} />
+        <NotePanel title="设计说明" notes={["请优先补充分区、通道、通信与边界控制等关键信息。", "如部分内容暂未确认，可先记录为待确认，并在输出设计响应摘要前完成核对。"]} />
         <WorkflowNavBar
           leftLabel={currentStep === 0 ? '返回需求结果' : '上一步'}
-          rightLabel={isReviewStep ? '生成设计结果' : '下一步'}
+          rightLabel={isReviewStep ? '生成设计响应摘要' : '下一步'}
           onLeftClick={currentStep === 0 ? () => navigate('/owner/result') : () => setCurrentStep((prev) => Math.max(prev - 1, 0))}
           onRightClick={isReviewStep ? () => finalizePlan('/integrator/result') : () => setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1))}
         />

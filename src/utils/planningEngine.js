@@ -66,7 +66,7 @@ export function buildCapabilityRequirementMatrix(riskProfile, targetSL, communic
         targetSL,
         requirementLevel: targetSL >= 3 ? 'high' : 'medium',
         implementationHint: communicationMatrix.complete
-          ? '结合通信矩阵、边界控制和设备声明进行核对。'
+          ? '结合通信矩阵、边界控制和能力声明进行核对。'
           : '需先补齐通信流后再确认边界侧能力要求。',
         traceability: {
           inputConditions: item.inputConditions || [],

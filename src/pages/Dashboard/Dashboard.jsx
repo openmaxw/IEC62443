@@ -7,10 +7,10 @@ import styles from './Dashboard.module.css';
 
 
 const ROLE_GUIDES = [
-  { role: '业主', focus: '补齐项目背景、关键资产和验收关注。', route: '/owner', action: '填写输入' },
-  { role: '集成商', focus: '查看风险翻译，形成 Zone / Conduit、通信和能力需求。', route: '/integrator', action: '进入集成设计' },
+  { role: '业主方', focus: '澄清业务场景、关键资产、安全担忧和验收关注。', route: '/owner', action: '澄清需求' },
+  { role: '集成商', focus: '基于项目输入形成 Zone / Conduit、通信和能力需求响应。', route: '/integrator', action: '进入设计响应' },
   { role: '设备商', focus: '围绕项目能力需求声明产品能力、证据、依赖和限制。', route: '/vendor', action: '声明能力' },
-  { role: '审核者', focus: '复核追溯链、差距闭环、IEC 映射和交付摘要。', route: '/report', action: '看交付' }
+  { role: '项目团队', focus: '复核追溯链、匹配差距、IEC 映射和交付摘要。', route: '/report', action: '查看交付摘要' }
 ];
 
 export function Dashboard() {
@@ -49,12 +49,12 @@ export function Dashboard() {
   return (
     <ProjectStageShell
       stageNumber="00"
-      title="工作台"
+      title="项目总览"
       projectName={viewModel.projectName}
       outputLabel={`总进度 ${viewModel.progress.completed} / ${viewModel.progress.total}`}
       statusText={viewModel.nextAction ? '待推进下一阶段' : '当前项目已形成完整阶段结果'}
       statusPanel={statusPanel}
-      guidance={{ summary: '您可在工作台查看当前项目进度、待补充事项与建议动作。' }}
+      guidance={{ summary: '您可在项目总览查看当前澄清与响应进度、待补充事项和建议动作。' }}
       toolbar={<><Button variant="secondary" size="small" onClick={handleLoadDemo}>加载演示项目</Button><Button variant="danger" size="small" onClick={handleReset}>重置项目</Button></>}
       hideStatus
     >
@@ -66,7 +66,7 @@ export function Dashboard() {
             <div className={styles.heroStats}>{viewModel.overviewStats.map((item) => <div key={item.label} className={styles.heroStat}><span>{item.label}</span><strong>{item.value}</strong></div>)}</div>
           </div>
           <div className={styles.heroAction}>
-            {viewModel.nextAction ? <Link to={viewModel.nextAction.route}><Button variant="primary" size="small">下一步：{viewModel.nextAction.label}</Button></Link> : <Link to="/report"><Button variant="secondary" size="small">查看交付中心</Button></Link>}
+            {viewModel.nextAction ? <Link to={viewModel.nextAction.route}><Button variant="primary" size="small">下一步：{viewModel.nextAction.label}</Button></Link> : <Link to="/report"><Button variant="secondary" size="small">查看交付摘要</Button></Link>}
           </div>
         </section>
 
@@ -74,10 +74,10 @@ export function Dashboard() {
           <Card title="建议动作">
             <div className={styles.nextActionCard}>
               <strong>{viewModel.nextAction?.label || '当前阶段已基本完成'}</strong>
-              <span>{viewModel.nextAction?.description || '可以转入交付中心查看阶段成果，或回到具体页面继续细化内容。'}</span>
+              <span>{viewModel.nextAction?.description || '可以转入交付摘要查看阶段成果，或回到具体页面继续细化内容。'}</span>
               <em className={styles.noteText}>该建议根据当前项目状态生成，便于您优先处理关键步骤。</em>
               <div className={styles.inlineActions}>
-                {viewModel.nextAction ? <Link to={viewModel.nextAction.route}><Button variant="primary" size="small">前往处理</Button></Link> : <Link to="/report"><Button variant="secondary" size="small">查看交付中心</Button></Link>}
+                {viewModel.nextAction ? <Link to={viewModel.nextAction.route}><Button variant="primary" size="small">前往处理</Button></Link> : <Link to="/report"><Button variant="secondary" size="small">查看交付摘要</Button></Link>}
               </div>
             </div>
           </Card>
@@ -93,7 +93,7 @@ export function Dashboard() {
 
         <section className={styles.notePanel}>
           <strong>使用说明</strong>
-          <em>建议优先处理缺失输入较多或系统推荐的阶段；如需快速了解整体流程，可先加载演示项目查看示例。</em>
+          <em>建议先完成需求澄清，再形成设计响应和能力声明，最后进入匹配闭环与交付摘要；如需快速了解整体流程，可先加载演示项目查看示例。</em>
         </section>
 
         <section className={styles.roleGuideGrid}>
