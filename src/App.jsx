@@ -13,6 +13,7 @@ import { VendorResult } from './pages/Vendor/VendorResult';
 import { SelectionMatrix } from './pages/Selection/SelectionMatrix';
 import { ReportCenter } from './pages/Report/ReportCenter';
 import { LearningMode } from './pages/Learning/LearningMode';
+import { PlatformGuide } from './pages/PlatformGuide/PlatformGuide';
 import { Dashboard } from './pages/Dashboard/Dashboard';
 import { TranslationCenter } from './pages/TranslationCenter/TranslationCenter';
 import { GapCenter } from './pages/Gap/GapCenter';
@@ -47,6 +48,7 @@ export default function App() {
               <Route path="/translation-center" element={<TranslationCenter />} />
               <Route path="/report" element={<ReportCenter />} />
               <Route path="/learning" element={<LearningMode />} />
+              <Route path="/platform-guide" element={<PlatformGuide />} />
             </Routes>
           </main>
         </AppErrorBoundary>

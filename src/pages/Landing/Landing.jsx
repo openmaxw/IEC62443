@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Button, NotePanel, SectionBlock } from '../../components/Common';
+import { Button, NotePanel } from '../../components/Common';
 import styles from './Landing.module.css';
 
 const SECTIONS = [
@@ -32,11 +32,11 @@ const SECTIONS = [
   },
   {
     tone: 'purple',
-    title: '角色价值呈现',
+    title: '三方对齐价值',
     cards: [
-      { title: '销售 / 顾问', points: ['用结构化问题引导客户表达真实需求', '将早期沟通转化为可继续推进的项目线索', '以 IEC 62443 项目方法提升专业可信度'] },
-      { title: 'FAE / 集成商', points: ['基于项目输入形成更清晰的设计依据', '用追溯链解释方案如何响应风险关注', '在方案阶段提前识别能力边界和补偿需求'] },
-      { title: '产品 / 设备团队', points: ['将产品功能转化为面向项目的能力声明', '明确证据类型、适用边界和外部依赖', '让客户更容易理解产品能力在项目中的价值'] }
+      { title: '业主方', points: ['把业务场景、关键系统和外部连接说清楚', '把安全担忧、业务后果和验收关注沉淀为项目输入', '减少“想做安全但说不清楚”的沟通损耗'] },
+      { title: '集成商', points: ['基于项目输入形成更清晰的设计依据', '用追溯链解释方案如何响应风险关注', '提前识别输入缺口、能力边界和补偿需求'] },
+      { title: '设备商', points: ['将产品能力转化为面向项目的能力声明', '明确证据类型、适用边界和外部依赖', '避免产品能力在项目语境中被误读或过度承诺'] }
     ]
   }
 ];
@@ -57,11 +57,12 @@ export function Landing() {
     <div className={styles.page}>
       <section className={styles.hero}>
         <div className={styles.heroBadge}>IEC 62443 需求转译与对齐平台</div>
-        <h1>将工业安全诉求转化为可响应、可追溯的项目语言。</h1>
+        <h1>将模糊的工业安全诉求转化为可响应、可追溯的项目语言。</h1>
         <p className={styles.lead}>面向 IEC 62443 项目前期沟通，帮助业主、集成商与设备商对齐需求输入、设计响应、设备能力与差距闭环。</p>
         <div className={styles.actions}>
           <Link to="/dashboard"><Button variant="primary" size="medium">进入项目总览</Button></Link>
-          <Link to="/learning"><Button variant="secondary" size="medium">查看平台说明</Button></Link>
+          <Link to="/learning"><Button variant="secondary" size="medium">IEC62443简明教程</Button></Link>
+          <Link to="/platform-guide"><Button variant="secondary" size="medium">查看平台说明</Button></Link>
         </div>
       </section>
 
