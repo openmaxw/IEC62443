@@ -1,24 +1,5 @@
-.workspace, .noteList, .statusAside { display: grid; gap: 10px; }
-.stepTabs { display: flex; gap: 8px; flex-wrap: wrap; }
-.stepTab { min-height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--color-table-border); background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03)); color: var(--color-text-secondary); font-size: var(--font-size-sm); font-weight: 700; transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast); }
-.stepTab:hover { transform: translateY(-1px); border-color: rgba(255,138,42,.28); background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.04)); color: var(--color-text); }
-.stepTabActive { border-color: rgba(255,138,42,.5); background: linear-gradient(180deg, rgba(255,138,42,.22), rgba(255,138,42,.1)); color: #fff1e6; box-shadow: inset 0 0 0 1px rgba(255,138,42,.24), 0 8px 20px rgba(169,79,18,.14); }
 .panel { border: 1px solid var(--color-table-border); border-radius: var(--radius-lg); background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.015)); padding: 12px; box-shadow: none; }
-.statusNote {
-  display: grid;
-  gap: 4px;
-  padding: 10px 12px;
-  border: 1px solid rgba(43, 122, 163, 0.22);
-  border-radius: var(--radius-md);
-  background: rgba(43, 122, 163, 0.08);
-}
-.statusNote span { color: var(--color-text-muted); font-size: var(--font-size-xs); }
-.statusNote strong { color: var(--color-text); }
-.statusNote em,
-.notePanel em { font-style: italic; color: var(--color-text-muted); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); }
-.statusPills { display: flex; gap: 8px; flex-wrap: wrap; }
-.statusPill { padding: 6px 10px; border-radius: 999px; border: 1px solid var(--color-table-border); background: rgba(255,255,255,.03); color: var(--color-text-secondary); font-size: var(--font-size-xs); font-weight: 600; }
-.notePanel { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--color-table-border); border-radius: var(--radius-md); background: rgba(255,255,255,.02); }
+
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .block { border: 1px solid var(--color-table-border); border-radius: var(--radius-md); background: rgba(255,255,255,.018); padding: 12px; display: grid; gap: 10px; }
 .blockTitle { font-size: var(--font-size-sm); font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em; }
@@ -56,7 +37,7 @@
 .note { padding: 10px 12px; border: 1px solid rgba(94, 146, 183, 0.18); border-radius: var(--radius-md); background: linear-gradient(180deg, rgba(94,146,183,.08), rgba(255,255,255,.02)); font-size: var(--font-size-sm); color: rgba(195, 204, 214, 0.8); display: grid; gap: 4px; }
 .note strong { color: var(--color-text); font-size: var(--font-size-md); }
 .note p { margin: 0; }
-.footerBar { display: flex; justify-content: space-between; gap: 10px; padding-top: 2px; }
+
 .empty { padding: 12px 14px; border: 1px dashed rgba(170, 184, 195, 0.26); border-radius: var(--radius-md); background: rgba(255,255,255,.018); color: var(--color-text-muted); font-size: var(--font-size-sm); }
 .groupTitle { font-weight: 700; color: var(--color-text); }
 .capabilityCode { font-family: var(--font-mono); font-size: var(--font-size-sm); color: #ffd6b8; }
@@ -70,3 +51,11 @@
 .reviewTable th,
 .reviewTable td { vertical-align: top; }
 .reviewTable td { padding-top: 10px; padding-bottom: 10px; }
+
+.invalidField input,
+.invalidField select,
+.invalidField textarea,
+.invalidField .optionCell {
+  border-color: rgba(255, 95, 95, 0.82) !important;
+  box-shadow: 0 0 0 1px rgba(255, 95, 95, 0.36), 0 0 0 3px rgba(255, 95, 95, 0.08) !important;
+}
