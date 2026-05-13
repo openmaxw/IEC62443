@@ -1,5 +1,17 @@
 # IEC 62443 需求转译与对齐平台
 
+> **权利声明 / Rights Notice**
+>
+> 本仓库公开展示，仅用于演示、审阅和作品展示目的。未经版权持有人事先书面许可，
+> 不得使用、复制、修改、部署、分发、再许可、商业化本软件，或基于本软件创作衍生作品。
+>
+> This repository is public for demonstration, review, and portfolio purposes only.
+> No permission is granted to use, copy, modify, deploy, distribute, sublicense,
+> commercialize, or create derivative works from this software without prior
+> written permission from the copyright holder.
+>
+> 详情见 [`LICENSE`](./LICENSE) 和 [`NOTICE`](./NOTICE)。
+
 **将工业安全诉求转化为可响应、可追溯的项目语言。**
 
 本系统是一个面向 IEC 62443 项目前期沟通的需求转译与对齐平台，用于将业主的工业安全诉求转化为项目语言，并帮助业主、集成商、设备商和项目团队对齐需求输入、设计响应、设备能力与差距闭环。
