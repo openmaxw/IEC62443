@@ -120,6 +120,7 @@
 @media (max-width: 1180px) {
   .shell {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .supportNav {
@@ -129,7 +130,69 @@
 
 @media (max-width: 768px) {
   .header {
-    padding: 10px 12px;
+    padding: 8px 10px;
+  }
+
+  .shell {
+    gap: 8px;
+  }
+
+  .brand {
+    gap: 10px;
+  }
+
+  .brandMark {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+  }
+
+  .brandMark svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .brandText strong {
+    font-size: 13px;
+    line-height: 1.2;
+  }
+
+  .nav {
+    gap: 8px;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .navLink {
+    min-width: max-content;
+    padding: 8px 10px;
+    border-radius: 999px;
+  }
+
+  .navLink span {
+    font-size: 13px;
+  }
+
+  .supportNav {
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 1px;
+    scrollbar-width: none;
+  }
+
+  .supportNav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .supportLink {
+    flex: 0 0 auto;
+    padding: 6px 9px;
+    font-size: 11px;
   }
 
   .brandText span,

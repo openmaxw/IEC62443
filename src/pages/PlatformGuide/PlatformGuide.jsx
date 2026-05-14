@@ -66,7 +66,18 @@ export function PlatformGuide() {
           <div className={styles.roleList}>{ALIGNMENT_VALUES.map((item) => <article key={item.title} className={styles.roleCard}><div><strong>{item.title}</strong><p>{item.value}</p></div><ul>{item.points.map((point) => <li key={point}>{point}</li>)}</ul><blockquote>{item.sentence}</blockquote></article>)}</div>
         </SectionBlock>
 
-        <NotePanel title="6. 当前边界" notes={["本系统不替代正式风险评估、认证或合规结论。", "本系统不替代详细工程设计和专家审查。", "演示数据不代表真实产品或项目背书。", "规则、映射和建议需要结合具体项目复核。"]} />
+        <SectionBlock title="6. 延伸阅读">
+          <section className={styles.viewpointCard}>
+            <div>
+              <span>观点文章</span>
+              <h2>从“产品参数”到“项目证据链”</h2>
+              <p>如果希望先从行业视角理解为什么 IEC 62443 出海项目不能只停留在功能清单，可以阅读这篇技术观点简报。</p>
+            </div>
+            <a href={`${import.meta.env.BASE_URL}iec62443-export-evidence-chain.html`} target="_blank" rel="noopener noreferrer">阅读文章</a>
+          </section>
+        </SectionBlock>
+
+        <NotePanel title="7. 当前边界" notes={["本系统不替代正式风险评估、认证或合规结论。", "本系统不替代详细工程设计和专家审查。", "演示数据不代表真实产品或项目背书。", "规则、映射和建议需要结合具体项目复核。"]} />
       </section>
     </div>
   );
