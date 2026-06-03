@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  base: '/IEC62443/',
+  base: '/IEC62443_Alignment/',
   plugins: [react()],
   server: {
     host: '0.0.0.0',
